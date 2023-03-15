@@ -71,14 +71,14 @@ async function main() {
             await execute(await blanksContract.setBicycleComponentManager(managerContract.address));
         }
 
-        if (!(await managerContract.hasRole(managerContract.REGISTRAR_ROLE(), blanksContract.address))) {
+        if (!(await managerContract.hasRole(await managerContract.REGISTRAR_ROLE(), blanksContract.address))) {
             console.log("Granting BlanksOpenSea the registrar role...");
-            await execute(await managerContract.grantRole(managerContract.REGISTRAR_ROLE(), blanksContract.address));
+            await execute(await managerContract.grantRole(await managerContract.REGISTRAR_ROLE(), blanksContract.address));
         }
 
-        if (!(await blanksContract.hasRole(blanksContract.PROXY_ROLE(), blanksUiContract.address))) {
+        if (!(await blanksContract.hasRole(await blanksContract.PROXY_ROLE(), blanksUiContract.address))) {
             console.log("Registering BlanksUI as proxy for BlanksOpenSea...");
-            await execute(await blanksContract.grantRole(blanksContract.PROXY_ROLE(), blanksUiContract.address));
+            await execute(await blanksContract.grantRole(await blanksContract.PROXY_ROLE(), blanksUiContract.address));
         }
     }
 

@@ -35,9 +35,10 @@ const deployed: {
         BlanksOpenSea: "0x025b85a56c9b495785171c64c44a65f0abfe1e7c",
     },
     ganache: {
-        BicycleComponentManager: "0xa0cE34473EC9FC0F50AD11b00377dBd48F4BBdd6",
-        BicycleComponents: "0x9592eC44622Ff441561F388a6CCc6D3e67B5fBF2",
-        BlanksOpenSea: "0x5C73d17D1ee8B83A547faC4F3c17B6A5216F0985",
+        BicycleComponentManager: "0x7ba471Ea78a94f180605165db6D11E38A831175B",
+        BicycleComponents: "0xA7Dc946c20166416CA7a880cCa79157c55d8966C",
+        BlanksOpenSea: "0xBc84AFCdD7d891d3b5a5B0FE09f8C02753f4DfC7",
+        BlanksUI: "0x43c5d4970a26Bd87a48F0AC827A959AaD192Eb62",
     },
 };
 

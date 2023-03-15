@@ -14,16 +14,8 @@
       "id": "proceedButton1",
       "onClick": {
         "default": {
-          "name": "viewTransfer",
+          "name": "viewRegister",
           "inputs": [
-            {
-              "name": "userAddress",
-              "type": "address"
-            },
-            {
-              "name": "tokenId",
-              "type": "uint256"
-            }
           ],
           "outputs": [
             {

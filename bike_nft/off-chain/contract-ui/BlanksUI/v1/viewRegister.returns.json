@@ -48,6 +48,82 @@
       "id": "registerImageURL",
       "placeholder": "https://...",
       "value": "https://"
+    },
+    {
+      "type": "button",
+      "label": "Register",
+      "id": "registerButton",
+      "onClick": {
+        "default": {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "userAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "registerFor",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "blankTokenId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "registerSerialNumber",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "registerName",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "registerDescription",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "registerImageURL",
+              "type": "string"
+            }
+          ],
+          "name": "register",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        "success": {
+          "inputs": [],
+          "name": "viewRegisterOnSuccess",
+          "outputs": [
+            {
+              "internalType": "string",
+              "name": "",
+              "type": "string"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        "failure": {
+          "inputs": [],
+          "name": "viewRegisterOnFailure",
+          "outputs": [
+            {
+              "internalType": "string",
+              "name": "",
+              "type": "string"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        }
+      }
     }
   ]
 }

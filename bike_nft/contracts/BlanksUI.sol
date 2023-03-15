@@ -37,14 +37,17 @@ contract BlanksUI is ERC2771Recipient {
 
     // @notice
     function register(
-        address userAddress,  // variable provided by the front-end
+        address userAddress,  // connected address as provided by the front-end
         address registerFor,
         uint256 blankTokenId,
         string memory registerSerialNumber,
         string memory registerName,
         string memory registerDescription,
         string memory registerImageURL
-    ) public {
+    )
+    public
+    returns (uint256 nftTokenId)
+    {
         require(
             // Note: `_msgSender()` checks whether `msg.sender` is a trusted forwarder.
             userAddress == _msgSender(),
@@ -56,7 +59,9 @@ contract BlanksUI is ERC2771Recipient {
         address blankTokenOwner = userAddress;
 
         BlanksOpenSea blanksContract = BlanksOpenSea(blanksContractAddress);
-        blanksContract.proxiedRegister(blankTokenOwner, registerFor, blankTokenId, registerSerialNumber, registerName, registerDescription, registerImageURL);
+        nftTokenId = blanksContract.proxiedRegister(blankTokenOwner, registerFor, blankTokenId, registerSerialNumber, registerName, registerDescription, registerImageURL);
+
+        return nftTokenId;
     }
 
     function viewEntryD(address userAddress) public view returns (string memory ui, uint256 blankTokenId, uint256 tokenCount) {

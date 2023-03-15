@@ -1,0 +1,16 @@
+{
+  "elements": [
+    {
+      "type": "text",
+      "id": "textOnRegisterSuccess",
+      "text": "You have successfully registered."
+    },
+    {
+      "type": "input",
+      "id": "nftTokenId",
+      "label": "NFT Token ID:",
+      "value": "",
+      "readOnly": true
+    }
+  ]
+}

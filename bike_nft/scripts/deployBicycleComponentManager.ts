@@ -68,7 +68,7 @@ async function main() {
             );
         }
 
-        await report(componentsContract).catch(e => console.log("Error:", e));
+        await report(managerContract).catch(e => console.log("Error:", e));
     }
 
     // Connect the contracts
