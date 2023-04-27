@@ -13,6 +13,7 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     mapping(address => string) public addressInfo;
+    mapping(uint256 => bool) public reportedMissing;
 
     event AddressInfoSet(address indexed addr, string info);
     event ComponentRegistered(address indexed to, uint256 indexed tokenId, string serialNumber, string uri);
@@ -50,13 +51,14 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
 
     // Modified from the `safeMint` function
     // Note that `_mint` will check for duplicate token IDs using `_exists`
-    function register(address to, string memory serialNumber, string memory uri)
+    function register(address to, string memory serialNumber, string memory uri, bool isMissing)
     public
     onlyRole(MINTER_ROLE)
     {
         uint256 tokenId = generateTokenId(serialNumber);
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, uri);
+        reportedMissing[tokenId] = isMissing;
         emit ComponentRegistered(to, tokenId, serialNumber, uri);
     }
 
