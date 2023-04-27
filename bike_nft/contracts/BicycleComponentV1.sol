@@ -16,7 +16,7 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
     mapping(uint256 => bool) public reportedMissing;
 
     event AddressInfoSet(address indexed addr, string info);
-    event ComponentRegistered(address indexed to, uint256 indexed tokenId, string serialNumber, string uri);
+    event ComponentRegistered(address indexed to, uint256 indexed tokenId, string serialNumber, string uri, bool isMissing);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -59,7 +59,7 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, uri);
         reportedMissing[tokenId] = isMissing;
-        emit ComponentRegistered(to, tokenId, serialNumber, uri);
+        emit ComponentRegistered(to, tokenId, serialNumber, uri, isMissing);
     }
 
     function _beforeTokenTransfer(address from, address to, uint256 tokenId, uint256 batchSize)
