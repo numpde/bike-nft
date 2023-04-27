@@ -49,6 +49,7 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
     }
 
     // Modified from the `safeMint` function
+    // Note that `_mint` will check for duplicate token IDs using `_exists`
     function register(address to, string memory serialNumber, string memory uri)
     public
     onlyRole(MINTER_ROLE)
