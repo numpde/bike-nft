@@ -15,6 +15,7 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
     mapping(address => string) public addressInfo;
 
     event AddressInfoSet(address indexed addr, string info);
+    event ComponentRegistered(address indexed to, uint256 indexed tokenId, string serialNumber, string uri);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -55,6 +56,7 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
         uint256 tokenId = generateTokenId(serialNumber);
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, uri);
+        emit ComponentRegistered(to, tokenId, serialNumber, uri);
     }
 
     function _beforeTokenTransfer(address from, address to, uint256 tokenId, uint256 batchSize)
