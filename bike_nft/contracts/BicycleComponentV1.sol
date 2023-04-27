@@ -17,6 +17,7 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
 
     event AddressInfoSet(address indexed addr, string info);
     event ComponentRegistered(address indexed to, uint256 indexed tokenId, string serialNumber, string uri, bool isMissing);
+    event MissingStatusUpdated(uint256 indexed tokenId, bool isMissing);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -60,6 +61,12 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
         _setTokenURI(tokenId, uri);
         reportedMissing[tokenId] = isMissing;
         emit ComponentRegistered(to, tokenId, serialNumber, uri, isMissing);
+    }
+
+    function reportAsMissing(uint256 tokenId, bool isMissing) public {
+        require(ownerOf(tokenId) == msg.sender, "Caller is not the owner of the token");
+        reportedMissing[tokenId] = isMissing;
+        emit MissingStatusUpdated(tokenId, isMissing);
     }
 
     function _beforeTokenTransfer(address from, address to, uint256 tokenId, uint256 batchSize)
