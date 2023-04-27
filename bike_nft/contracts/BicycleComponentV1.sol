@@ -14,6 +14,7 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
 
     mapping(address => string) public addressInfo;
 
+    event AddressInfoSet(address indexed addr, string info);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -96,5 +97,6 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
     function setAddressInfo(address addr, string memory info) public {
         require(bytes(info).length > 0, "Info string cannot be empty");
         addressInfo[addr] = info;
+        emit AddressInfoSet(addr, info);
     }
 }
