@@ -12,6 +12,9 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
+    mapping(address => string) public addressInfo;
+
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -80,5 +83,11 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
     returns (bool)
     {
         return super.supportsInterface(interfaceId);
+    }
+
+    // Additional functions
+
+    function setAddressInfo(address addr, string memory info) public {
+        addressInfo[addr] = info;
     }
 }
