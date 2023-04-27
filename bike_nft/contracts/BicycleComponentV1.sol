@@ -39,10 +39,12 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
         _unpause();
     }
 
-    function safeMint(address to, uint256 tokenId, string memory uri)
+    // Modified from the `safeMint` function
+    function register(address to, string memory serialNumber, string memory uri)
     public
     onlyRole(MINTER_ROLE)
     {
+        uint256 tokenId = uint256(keccak256(abi.encodePacked(serialNumber)));
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, uri);
     }
