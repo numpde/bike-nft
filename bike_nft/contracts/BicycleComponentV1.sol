@@ -66,7 +66,10 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
         emit ComponentRegistered(to, tokenId, serialNumber, uri, isMissing);
     }
 
-    function reportAsMissing(uint256 tokenId, bool isMissing) public onlyRole(REPORT_ROLE) {
+    function reportAsMissing(uint256 tokenId, bool isMissing)
+    public
+    onlyRole(REPORT_ROLE)
+    {
         reportedMissing[tokenId] = isMissing;
         emit MissingStatusUpdated(tokenId, isMissing);
     }
