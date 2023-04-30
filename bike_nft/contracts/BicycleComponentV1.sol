@@ -71,6 +71,25 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
         emit MissingStatusUpdated(tokenId, isMissing);
     }
 
+    /**
+     * @dev Extends the default behavior of `_isApprovedOrOwner` from the inherited ERC721 contract.
+     * Checks if the given `spender` is either the owner of the specified `tokenId`, has been approved to handle it,
+     * has been granted "multiple approval" for that specific `tokenId`, or has the admin role.
+     * Additionally, this implementation checks if the token exists using `_exists(tokenId)`.
+     *
+     * @notice The default behavior (super._isApprovedOrOwner) checks for owner or single approval,
+     * and requires the token to exist only per docstring.
+     *
+     * @param spender The address to check for approval or ownership.
+     * @param tokenId The token ID to check for the given `spender`.
+     * @return bool True if the `spender` is either the owner, approved,
+     *         has "multiple approval" for the token, or has the admin role.
+     */
+    function _isApprovedOrOwner(address spender, uint256 tokenId) internal view virtual override returns (bool) {
+        require(_exists(tokenId), "ERC721: operator query for nonexistent token");
+        return super._isApprovedOrOwner(spender, tokenId) || _tokenOperatorApprovals[tokenId][spender] || hasRole(ADMIN_ROLE, spender);
+    }
+
     function _beforeTokenTransfer(address from, address to, uint256 tokenId, uint256 batchSize)
     internal
     whenNotPaused
