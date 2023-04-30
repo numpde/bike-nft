@@ -14,6 +14,7 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
 
     mapping(address => string) public addressInfo;
     mapping(uint256 => bool) public reportedMissing;
+    mapping(uint256 => mapping(address => bool)) private _tokenOperatorApprovals;
 
     event AddressInfoSet(address indexed addr, string info);
     event ComponentRegistered(address indexed to, uint256 indexed tokenId, string serialNumber, string uri, bool isMissing);
@@ -61,6 +62,10 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, uri);
         reportedMissing[tokenId] = isMissing;
+
+        // Grant the bike shop the right to transfer the NFT on behalf of the new owner
+        _tokenOperatorApprovals[tokenId][msg.sender] = true;
+
         emit ComponentRegistered(to, tokenId, serialNumber, uri, isMissing);
     }
 
@@ -132,4 +137,29 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
         addressInfo[addr] = info;
         emit AddressInfoSet(addr, info);
     }
+
+    // Add an approved address for a specific token
+    function addTokenOperatorApproval(uint256 tokenId, address approved) public {
+        // todo
+        require(ownerOf(tokenId) == msg.sender, "Only the token owner can add approvals");
+        require(approved != msg.sender, "Cannot approve yourself");
+        _tokenOperatorApprovals[tokenId][approved] = true;
+        emit Approval(msg.sender, approved, tokenId);
+    }
+
+    // Remove an approved address for a specific token
+    function removeTokenOperatorApproval(uint256 tokenId, address approved) public {
+        // todo
+        require(ownerOf(tokenId) == msg.sender, "Only the token owner can remove approvals");
+        require(_tokenOperatorApprovals[tokenId][approved], "Address is not approved");
+        _tokenOperatorApprovals[tokenId][approved] = false;
+        emit Approval(msg.sender, address(0), tokenId);
+    }
+
+    // Check if an address is approved for a specific token
+    function isTokenOperatorApproved(uint256 tokenId, address approved) public view returns (bool) {
+        // todo
+        return _tokenOperatorApprovals[tokenId][approved];
+    }
+
 }
