@@ -11,7 +11,6 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable, ERC721URIStorageUpgradeable, PausableUpgradeable, AccessControlUpgradeable {
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-    bytes32 public constant REPORT_ROLE = keccak256("REPORT_ROLE");
 
     mapping(address => string) public addressInfo;
     mapping(uint256 => bool) public reportedMissing;
@@ -36,7 +35,6 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
 
         _grantRole(PAUSER_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, msg.sender);
-        _grantRole(REPORT_ROLE, msg.sender);
     }
 
     function pause() public onlyRole(PAUSER_ROLE) {
@@ -68,7 +66,6 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
 
     function reportAsMissing(uint256 tokenId, bool isMissing)
     public
-    onlyRole(REPORT_ROLE)
     {
         reportedMissing[tokenId] = isMissing;
         emit MissingStatusUpdated(tokenId, isMissing);
