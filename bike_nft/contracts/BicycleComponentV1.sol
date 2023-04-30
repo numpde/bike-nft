@@ -54,7 +54,7 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
 
     // Modified from the `safeMint` function
     // Note that `_mint` will check for duplicate token IDs using `_exists`
-    function register(address to, string memory serialNumber, string memory uri, bool isMissing)
+    function register(address to, string memory serialNumber, string memory uri)
     public
     onlyRole(MINTER_ROLE)
     {
@@ -64,7 +64,6 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
         uint256 tokenId = generateTokenId(serialNumber);
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, uri);
-        reportedMissing[tokenId] = isMissing;
 
         // Grant the bike shop the right to transfer the NFT on behalf of the new owner
         _tokenOperatorApprovals[tokenId][msg.sender] = true;
