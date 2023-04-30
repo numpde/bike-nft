@@ -58,6 +58,9 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
     public
     onlyRole(MINTER_ROLE)
     {
+        // Assume that `msg.sender` is a bike shop registering
+        // a new component with the `serialNumber` for a customer (`to`)
+
         uint256 tokenId = generateTokenId(serialNumber);
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, uri);
