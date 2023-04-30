@@ -74,6 +74,8 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
     function reportAsMissing(uint256 tokenId, bool isMissing)
     public
     {
+        require(_exists(tokenId), "Nonexistent token");
+        require(_isApprovedOrOwner(msg.sender, tokenId), "Not approved or owner");
         reportedMissing[tokenId] = isMissing;
         emit MissingStatusUpdated(tokenId, isMissing);
     }
