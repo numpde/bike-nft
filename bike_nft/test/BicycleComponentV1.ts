@@ -73,6 +73,28 @@ describe("BicycleComponentV1", function () {
 
                 expect(ownerOf).to.equal(other.address);
             });
+
+            it("Should assign initial uri correctly", async function () {
+                const {bicycleComponentV1, owner, other, serialNumber, uri} = await loadFixture(register);
+
+                const tokenId = await bicycleComponentV1.generateTokenId(serialNumber);
+                const tokenURI = await bicycleComponentV1.tokenURI(tokenId);
+
+                expect(tokenURI).to.equal(uri);
+            });
+
+            it("Should approve sender as operator for the newly minted token", async function () {
+                const {bicycleComponentV1, owner, other, serialNumber, uri} = await loadFixture(register);
+
+                const tokenId = await bicycleComponentV1.generateTokenId(serialNumber);
+                const isApproved = await bicycleComponentV1.tokenOperatorApproval(tokenId, owner.address);
+
+                expect(isApproved).to.be.true;
+            });
+
+            it("Should fail if the sender is not a minter", async function () {
+                // TODO: Implement
+            });
         });
     });
 });
