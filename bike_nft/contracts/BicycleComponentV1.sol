@@ -19,6 +19,8 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
     event AddressInfoSet(address indexed addr, string info);
     event ComponentRegistered(address indexed to, uint256 indexed tokenId, string serialNumber, string uri, bool isMissing);
     event MissingStatusUpdated(uint256 indexed tokenId, bool indexed isMissing);
+    event TokenOperatorApprovalUpdated(uint256 indexed tokenId, address indexed operator, bool approved);
+
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -67,6 +69,7 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
 
         // Grant the bike shop the right to handle the NFT on behalf of the new owner
         _tokenOperatorApproval[tokenId][msg.sender] = true;
+        TokenOperatorApprovalUpdated(tokenId, operator, approved);
 
         emit ComponentRegistered(to, tokenId, serialNumber, uri, isMissing);
     }
@@ -171,6 +174,6 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
         require(_isApprovedOrOwner(msg.sender, tokenId), "Insufficient permissions for approval");
 
         _tokenOperatorApproval[tokenId][operator] = approved;
-        emit TokenOperatorApproval(msg.sender, operator, tokenId);
+        TokenOperatorApprovalUpdated(tokenId, operator, approved);
     }
 }
