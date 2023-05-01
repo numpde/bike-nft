@@ -46,7 +46,7 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
         _unpause();
     }
 
-    // Convenience function to get the token ID from the serial number
+    // Convert a `serialNumber` string to a `tokenId` uint256
     function generateTokenId(string memory serialNumber) public pure returns (uint256) {
         uint256 tokenId = uint256(keccak256(abi.encodePacked(serialNumber)));
         return tokenId;
