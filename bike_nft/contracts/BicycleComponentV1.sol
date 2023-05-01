@@ -12,7 +12,7 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
-    mapping(address => string) public addressInfo;
+    mapping(address => string) private _addressInfo;
     mapping(uint256 => bool) public reportedMissing;
     mapping(uint256 => mapping(address => bool)) public tokenOperatorApprovals;
 
@@ -139,9 +139,13 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
 
     // Additional functions
 
+    function addressInfo(address addr) public view returns (string memory) {
+        return _addressInfo[addr];
+    }
+
     function setAddressInfo(address addr, string memory info) public {
         require(bytes(info).length > 0, "Info string cannot be empty");
-        addressInfo[addr] = info;
+        _addressInfo[addr] = info;
         emit AddressInfoSet(addr, info);
     }
 
