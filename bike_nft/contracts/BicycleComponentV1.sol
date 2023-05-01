@@ -131,7 +131,7 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
         return super.supportsInterface(interfaceId);
     }
 
-    // Additional functions
+    // Additional getters / setters
 
     function missingStatus(uint256 tokenId) public view returns (bool) {
         _requireMinted(tokenId);
