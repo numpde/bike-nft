@@ -118,6 +118,16 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
         super._beforeTokenTransfer(from, to, tokenId, batchSize);
     }
 
+    function _afterTokenTransfer(address from, address to, uint256 tokenId, uint256 batchSize)
+    internal
+    override(ERC721Upgradeable)
+    {
+        // todo: revoke approval conditionally
+        super._afterTokenTransfer(from, to, tokenId, batchSize);
+    }
+
+
+
     // The following functions are overrides required by Solidity.
 
     function _burn(uint256 tokenId)
