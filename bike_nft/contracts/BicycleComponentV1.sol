@@ -71,7 +71,7 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
 
         // Grant the bike shop the right to handle the NFT on behalf of the new owner
         _tokenOperatorApproval[tokenId][msg.sender] = true;
-        TokenOperatorApprovalUpdated(tokenId, operator, approved);
+        emit TokenOperatorApprovalUpdated(tokenId, operator, approved);
 
         emit ComponentRegistered(to, tokenId, serialNumber, uri, isMissing);
     }
@@ -176,6 +176,6 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
         require(_isApprovedOrOwner(msg.sender, tokenId), "Insufficient permissions for approval");
 
         _tokenOperatorApproval[tokenId][operator] = approved;
-        TokenOperatorApprovalUpdated(tokenId, operator, approved);
+        emit TokenOperatorApprovalUpdated(tokenId, operator, approved);
     }
 }
