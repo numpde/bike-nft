@@ -14,7 +14,7 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
 
     mapping(address => string) public addressInfo;
     mapping(uint256 => bool) public reportedMissing;
-    mapping(uint256 => mapping(address => bool)) private _tokenOperatorApprovals;
+    mapping(uint256 => mapping(address => bool)) public tokenOperatorApprovals;
 
     event AddressInfoSet(address indexed addr, string info);
     event ComponentRegistered(address indexed to, uint256 indexed tokenId, string serialNumber, string uri, bool isMissing);
@@ -66,7 +66,7 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
         _setTokenURI(tokenId, uri);
 
         // Grant the bike shop the right to transfer the NFT on behalf of the new owner
-        _tokenOperatorApprovals[tokenId][msg.sender] = true;
+        tokenOperatorApprovals[tokenId][msg.sender] = true;
 
         emit ComponentRegistered(to, tokenId, serialNumber, uri, isMissing);
     }
@@ -96,7 +96,7 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
      */
     function _isApprovedOrOwner(address spender, uint256 tokenId) internal view virtual override returns (bool) {
         require(_exists(tokenId), "ERC721: operator query for nonexistent token");
-        return super._isApprovedOrOwner(spender, tokenId) || _tokenOperatorApprovals[tokenId][spender] || hasRole(ADMIN_ROLE, spender);
+        return super._isApprovedOrOwner(spender, tokenId) || tokenOperatorApprovals[tokenId][spender] || hasRole(ADMIN_ROLE, spender);
     }
 
     function _beforeTokenTransfer(address from, address to, uint256 tokenId, uint256 batchSize)
@@ -147,7 +147,7 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
         // todo
         require(ownerOf(tokenId) == msg.sender, "Only the token owner can add approvals");
         require(approved != msg.sender, "Cannot approve yourself");
-        _tokenOperatorApprovals[tokenId][approved] = true;
+        tokenOperatorApprovals[tokenId][approved] = true;
         emit Approval(msg.sender, approved, tokenId);
     }
 
@@ -155,15 +155,8 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
     function removeTokenOperatorApproval(uint256 tokenId, address approved) public {
         // todo
         require(ownerOf(tokenId) == msg.sender, "Only the token owner can remove approvals");
-        require(_tokenOperatorApprovals[tokenId][approved], "Address is not approved");
-        _tokenOperatorApprovals[tokenId][approved] = false;
+        require(tokenOperatorApprovals[tokenId][approved], "Address is not approved");
+        tokenOperatorApprovals[tokenId][approved] = false;
         emit Approval(msg.sender, address(0), tokenId);
     }
-
-    // Check if an address is approved for a specific token
-    function isTokenOperatorApproved(uint256 tokenId, address approved) public view returns (bool) {
-        // todo
-        return _tokenOperatorApprovals[tokenId][approved];
-    }
-
 }
