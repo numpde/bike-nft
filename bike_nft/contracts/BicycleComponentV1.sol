@@ -14,7 +14,7 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
 
     mapping(address => string) private _addressInfo;
     mapping(uint256 => bool) private _missingStatus;
-    mapping(uint256 => mapping(address => bool)) public tokenOperatorApprovals;
+    mapping(uint256 => mapping(address => bool)) private _tokenOperatorApproval;
 
     event AddressInfoSet(address indexed addr, string info);
     event ComponentRegistered(address indexed to, uint256 indexed tokenId, string serialNumber, string uri, bool isMissing);
@@ -65,8 +65,8 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, uri);
 
-        // Grant the bike shop the right to transfer the NFT on behalf of the new owner
-        tokenOperatorApprovals[tokenId][msg.sender] = true;
+        // Grant the bike shop the right to handle the NFT on behalf of the new owner
+        _tokenOperatorApproval[tokenId][msg.sender] = true;
 
         emit ComponentRegistered(to, tokenId, serialNumber, uri, isMissing);
     }
@@ -88,7 +88,7 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
     function _isApprovedOrOwner(address spender, uint256 tokenId) internal view virtual override returns (bool) {
         _requireMinted(tokenId);
 
-        return super._isApprovedOrOwner(spender, tokenId) || tokenOperatorApprovals[tokenId][spender] || hasRole(ADMIN_ROLE, spender);
+        return super._isApprovedOrOwner(spender, tokenId) || _tokenOperatorApproval[tokenId][spender] || hasRole(ADMIN_ROLE, spender);
     }
 
     function _beforeTokenTransfer(address from, address to, uint256 tokenId, uint256 batchSize)
@@ -155,22 +155,18 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
         emit AddressInfoSet(addr, info);
     }
 
-    // Add an approved address for a specific token
-    function addTokenOperatorApproval(uint256 tokenId, address approved) public {
+    function tokenOperatorApproval(uint256 tokenId, address operator) public view returns (bool) {
         _requireMinted(tokenId);
 
-        require(ownerOf(tokenId) == msg.sender, "Only the token owner can add approvals");
-        require(approved != msg.sender, "Cannot approve yourself");
-        tokenOperatorApprovals[tokenId][approved] = true;
-        emit Approval(msg.sender, approved, tokenId);
+        return _tokenOperatorApproval[tokenId][operator];
     }
 
-    // Remove an approved address for a specific token
-    function removeTokenOperatorApproval(uint256 tokenId, address approved) public {
-        // todo
-        require(ownerOf(tokenId) == msg.sender, "Only the token owner can remove approvals");
-        require(tokenOperatorApprovals[tokenId][approved], "Address is not approved");
-        tokenOperatorApprovals[tokenId][approved] = false;
-        emit Approval(msg.sender, address(0), tokenId);
+    function setTokenOperatorApproval(uint256 tokenId, address operator, bool approved) public {
+        _requireMinted(tokenId);
+
+        require(_isApprovedOrOwner(msg.sender, tokenId), "Insufficient permissions for approval");
+
+        _tokenOperatorApproval[tokenId][operator] = approved;
+        emit TokenOperatorApproval(msg.sender, operator, tokenId);
     }
 }
