@@ -146,11 +146,15 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
     }
 
     function addressInfo(address addr) public view returns (string memory) {
+        string memory info = _addressInfo[addr];
+        require(bytes(info).length > 0, "Address info has not been set");
+
         return _addressInfo[addr];
     }
 
     function setAddressInfo(address addr, string memory info) public {
         require(bytes(info).length > 0, "Info string cannot be empty");
+
         _addressInfo[addr] = info;
         emit AddressInfoSet(addr, info);
     }
