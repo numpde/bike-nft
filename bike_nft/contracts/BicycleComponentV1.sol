@@ -76,6 +76,16 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
         emit ComponentRegistered(to, tokenId, serialNumber, uri);
     }
 
+    // todo: is this a good name? need a private implementation?
+    function transfer(string memory serialNumber, address to)
+    public
+    {
+        uint256 tokenId = generateTokenId(serialNumber);
+        address from = ownerOf(tokenId);
+
+        safeTransferFrom(from, to, tokenId);
+    }
+
     /**
      * @dev Extends the default behavior of `_isApprovedOrOwner` from the inherited ERC721 contract.
      * Checks if the given `spender` is either the owner of the specified `tokenId`, has been approved to handle it,
