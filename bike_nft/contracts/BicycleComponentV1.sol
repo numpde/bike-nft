@@ -96,6 +96,10 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
         return super._isApprovedOrOwner(spender, tokenId) || _tokenOperatorApproval[tokenId][spender] || hasRole(DEFAULT_ADMIN_ROLE, spender);
     }
 
+    function isApprovedOrOwner(address spender, uint256 tokenId) public view returns (bool) {
+        return _isApprovedOrOwner(spender, tokenId);
+    }
+
     function _beforeTokenTransfer(address from, address to, uint256 tokenId, uint256 batchSize)
     internal
     whenNotPaused
