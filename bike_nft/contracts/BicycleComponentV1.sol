@@ -13,12 +13,12 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     mapping(address => string) private _addressInfo;
-    mapping(uint256 => bool) public reportedMissing;
+    mapping(uint256 => bool) private _missingStatus;
     mapping(uint256 => mapping(address => bool)) public tokenOperatorApprovals;
 
     event AddressInfoSet(address indexed addr, string info);
     event ComponentRegistered(address indexed to, uint256 indexed tokenId, string serialNumber, string uri, bool isMissing);
-    event MissingStatusUpdated(uint256 indexed tokenId, bool isMissing);
+    event MissingStatusUpdated(uint256 indexed tokenId, bool indexed isMissing);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -69,17 +69,6 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
         tokenOperatorApprovals[tokenId][msg.sender] = true;
 
         emit ComponentRegistered(to, tokenId, serialNumber, uri, isMissing);
-    }
-
-    function reportAsMissing(uint256 tokenId, bool isMissing)
-    public
-    {
-        _requireMinted(tokenId);
-
-        require(_isApprovedOrOwner(msg.sender, tokenId), "The sender does not have the right to report on this token");
-
-        reportedMissing[tokenId] = isMissing;
-        emit MissingStatusUpdated(tokenId, isMissing);
     }
 
     /**
@@ -138,6 +127,23 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
     }
 
     // Additional functions
+
+    function missingStatus(uint256 tokenId) public view returns (bool) {
+        _requireMinted(tokenId);
+
+        return _missingStatus[tokenId];
+    }
+
+    function setMissingStatus(uint256 tokenId, bool isMissing)
+    public
+    {
+        _requireMinted(tokenId);
+
+        require(_isApprovedOrOwner(msg.sender, tokenId), "The sender does not have the right to report on this token");
+
+        _missingStatus[tokenId] = isMissing;
+        emit MissingStatusUpdated(tokenId, isMissing);
+    }
 
     function addressInfo(address addr) public view returns (string memory) {
         return _addressInfo[addr];
