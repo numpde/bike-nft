@@ -20,6 +20,20 @@ describe("BicycleComponentV1", function () {
     }
 
 
+    async function registerComponent() {
+        const {bicycleComponentV1, owner, other} = await loadFixture(deployBicycleComponentFixture);
+
+        const serialNumber = "SN12345678";
+        const uri = "https://example.com/" + serialNumber;
+
+        const tokenId = await bicycleComponentV1.generateTokenId(serialNumber);
+
+        await bicycleComponentV1.register(other.address, serialNumber, uri);
+
+        return {bicycleComponentV1, sender: owner, customer: other, serialNumber, uri, tokenId};
+    }
+
+
     describe("Deployment", function () {
         it("Should deploy", async function () {
             const {bicycleComponentV1} = await loadFixture(deployBicycleComponentFixture);
@@ -53,29 +67,19 @@ describe("BicycleComponentV1", function () {
             expect(tokenId).to.equal(ethers.BigNumber.from("71287863191742338490528408279695658820772154164895693571530902880079996237432"));
         });
 
+
         describe("Registration", function () {
-            async function register() {
-                const {bicycleComponentV1, owner, other} = await loadFixture(deployBicycleComponentFixture);
-
-                const serialNumber = "SN12345678";
-                const uri = "https://example.com/" + serialNumber;
-
-                await bicycleComponentV1.register(other.address, serialNumber, uri);
-
-                return {bicycleComponentV1, owner, other, serialNumber, uri};
-            }
 
             it("Should assign initial ownership correctly", async function () {
-                const {bicycleComponentV1, owner, other, serialNumber, uri} = await loadFixture(register);
+                const {bicycleComponentV1, customer, tokenId} = await loadFixture(registerComponent);
 
-                const tokenId = await bicycleComponentV1.generateTokenId(serialNumber);
                 const ownerOf = await bicycleComponentV1.ownerOf(tokenId);
 
-                expect(ownerOf).to.equal(other.address);
+                expect(ownerOf).to.equal(customer.address);
             });
 
-            it("Should assign initial uri correctly", async function () {
-                const {bicycleComponentV1, owner, other, serialNumber, uri} = await loadFixture(register);
+            it("Should assign initial URI correctly", async function () {
+                const {bicycleComponentV1, owner, other, serialNumber, uri} = await loadFixture(registerComponent);
 
                 const tokenId = await bicycleComponentV1.generateTokenId(serialNumber);
                 const tokenURI = await bicycleComponentV1.tokenURI(tokenId);
@@ -84,17 +88,57 @@ describe("BicycleComponentV1", function () {
             });
 
             it("Should approve sender as operator for the newly minted token", async function () {
-                const {bicycleComponentV1, owner, other, serialNumber, uri} = await loadFixture(register);
+                const {bicycleComponentV1, sender, serialNumber} = await loadFixture(registerComponent);
 
                 const tokenId = await bicycleComponentV1.generateTokenId(serialNumber);
-                const isApproved = await bicycleComponentV1.tokenOperatorApproval(tokenId, owner.address);
+                const isApproved = await bicycleComponentV1.tokenOperatorApproval(tokenId, sender.address);
 
                 expect(isApproved).to.be.true;
             });
 
             it("Should fail if the sender is not a minter", async function () {
+                const {bicycleComponentV1, owner, other} = await loadFixture(deployBicycleComponentFixture);
+
                 // TODO: Implement
             });
+
+            it("Should emit a TokenOperatorApprovalUpdated for sender event", async function () {
+                const {bicycleComponentV1, owner, other} = await loadFixture(deployBicycleComponentFixture);
+
+                const serialNumber = "SN12345678";
+                const uri = "https://example.com/" + serialNumber;
+
+                const tokenId = await bicycleComponentV1.generateTokenId(serialNumber);
+
+                await expect(bicycleComponentV1.register(other.address, serialNumber, uri))
+                    .to.emit(bicycleComponentV1, "TokenOperatorApprovalUpdated")
+                    .withArgs(tokenId, owner.address, true);
+            });
+
+            it("Should emit a ComponentRegistered for new owner event", async function () {
+                const {bicycleComponentV1, owner, other} = await loadFixture(deployBicycleComponentFixture);
+
+                const serialNumber = "SN12345678";
+                const uri = "https://example.com/" + serialNumber;
+
+                const tokenId = await bicycleComponentV1.generateTokenId(serialNumber);
+
+                await expect(bicycleComponentV1.register(other.address, serialNumber, uri))
+                    .to.emit(bicycleComponentV1, "ComponentRegistered")
+                    .withArgs(other.address, tokenId, serialNumber, uri);
+            });
         });
+
+        describe("_isApprovedOrOwner", function () {
+            it("Should be true for the current owner of a token", async function () {
+                const {bicycleComponentV1, customer, tokenId} = await loadFixture(registerComponent);
+
+                const isApprovedOrOwner = await bicycleComponentV1.isApprovedOrOwner(customer.address, tokenId);
+                expect(isApprovedOrOwner).to.equal(true);
+            });
+
+            // todo: more
+        });
+
     });
 });
