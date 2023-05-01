@@ -71,7 +71,7 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
 
         // Grant the bike shop the right to handle the NFT on behalf of the new owner
         _tokenOperatorApproval[tokenId][msg.sender] = true;
-        emit TokenOperatorApprovalUpdated(tokenId, operator, approved);
+        emit TokenOperatorApprovalUpdated(tokenId, msg.sender, true);
 
         emit ComponentRegistered(to, tokenId, serialNumber, uri, isMissing);
     }
