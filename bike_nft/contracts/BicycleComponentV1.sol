@@ -19,7 +19,7 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
     mapping(uint256 => mapping(address => bool)) private _tokenOperatorApproval;
 
     event AddressInfoSet(address indexed addr, string info);
-    event ComponentRegistered(address indexed to, uint256 indexed tokenId, string serialNumber, string uri, bool isMissing);
+    event ComponentRegistered(address indexed to, uint256 indexed tokenId, string serialNumber, string uri);
     event MissingStatusUpdated(uint256 indexed tokenId, bool indexed isMissing);
     event TokenOperatorApprovalUpdated(uint256 indexed tokenId, address indexed operator, bool approved);
 
@@ -73,7 +73,7 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
         _tokenOperatorApproval[tokenId][msg.sender] = true;
         emit TokenOperatorApprovalUpdated(tokenId, msg.sender, true);
 
-        emit ComponentRegistered(to, tokenId, serialNumber, uri, isMissing);
+        emit ComponentRegistered(to, tokenId, serialNumber, uri);
     }
 
     /**
