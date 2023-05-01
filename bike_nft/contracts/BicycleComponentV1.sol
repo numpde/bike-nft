@@ -74,8 +74,10 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
     function reportAsMissing(uint256 tokenId, bool isMissing)
     public
     {
-        require(_exists(tokenId), "Nonexistent token");
-        require(_isApprovedOrOwner(msg.sender, tokenId), "Not approved or owner");
+        _requireMinted(tokenId);
+
+        require(_isApprovedOrOwner(msg.sender, tokenId), "The sender does not have the right to report on this token");
+
         reportedMissing[tokenId] = isMissing;
         emit MissingStatusUpdated(tokenId, isMissing);
     }
@@ -95,7 +97,8 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
      *         has "multiple approval" for the token, or has the admin role.
      */
     function _isApprovedOrOwner(address spender, uint256 tokenId) internal view virtual override returns (bool) {
-        require(_exists(tokenId), "ERC721: operator query for nonexistent token");
+        _requireMinted(tokenId);
+
         return super._isApprovedOrOwner(spender, tokenId) || tokenOperatorApprovals[tokenId][spender] || hasRole(ADMIN_ROLE, spender);
     }
 
@@ -144,7 +147,8 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
 
     // Add an approved address for a specific token
     function addTokenOperatorApproval(uint256 tokenId, address approved) public {
-        // todo
+        _requireMinted(tokenId);
+
         require(ownerOf(tokenId) == msg.sender, "Only the token owner can add approvals");
         require(approved != msg.sender, "Cannot approve yourself");
         tokenOperatorApprovals[tokenId][approved] = true;
