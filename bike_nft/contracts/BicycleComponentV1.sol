@@ -157,15 +157,21 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
 
     // Additional getters / setters
 
-    function missingStatus(uint256 tokenId) public view returns (bool) {
+    function missingStatus(string memory serialNumber)
+    public view returns (bool)
+    {
+        uint256 tokenId = generateTokenId(serialNumber);
+
         _requireMinted(tokenId);
 
         return _missingStatus[tokenId];
     }
 
-    function setMissingStatus(uint256 tokenId, bool isMissing)
+    function setMissingStatus(string memory serialNumber, bool isMissing)
     public
     {
+        uint256 tokenId = generateTokenId(serialNumber);
+
         _requireMinted(tokenId);
 
         require(_isApprovedOrOwner(msg.sender, tokenId), "The sender does not have the right to report on this token");
