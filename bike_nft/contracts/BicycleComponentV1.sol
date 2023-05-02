@@ -122,8 +122,13 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
     internal
     override(ERC721Upgradeable)
     {
-        // todo: revoke approval conditionally
         super._afterTokenTransfer(from, to, tokenId, batchSize);
+
+        // Note: we do not revoke operator approval when transferring tokens
+        // because we typically want the minter to retain the operator right.
+        // Otherwise, here would be the place to do it.
+        // If the owner has approved another operator, it's their responsibility
+        // (but they have to revoke the right /before/ transferring the token).
     }
 
 
