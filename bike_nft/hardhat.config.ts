@@ -19,17 +19,20 @@ function getEnvVariable(name: string): string {
   return value;
 }
 
-const myGoerliPrivateKey = getEnvVariable("MY_GOERLI_PRIVATE_KEY");
-const myInfuraProjectId = getEnvVariable("MY_INFURA_PROJECT_ID");
+const myInfuraApiKey = getEnvVariable("INFURA_API_KEY");
 
 const config: HardhatUserConfig = {
   solidity: "0.8.18",
   networks: {
-//     goerli: {
-//       // Ref: https://docs.infura.io/infura/networks/ethereum/how-to/choose-a-network
-//       url: `https://goerli.infura.io/v3/${myInfuraProjectId}`,
-//       accounts: [myGoerliPrivateKey],
-//     },
+    sepolia: {
+        url: `https://sepolia.infura.io/v3/${myInfuraApiKey}`,
+        accounts: [getEnvVariable("SEPOLIA_10_PRIVATE_KEY")],
+    },
+
+    mumbai: {
+        url: `https://polygon-mumbai.infura.io/v3/${myInfuraApiKey}`,
+        accounts: [getEnvVariable("MUMBAI_10_PRIVATE_KEY")],
+    }
   },
 };
 
