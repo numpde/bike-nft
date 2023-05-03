@@ -7,22 +7,26 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URISto
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+
 
 /// @title Bicycle Component NFT Contract
 /// @notice This contract manages bicycle components as NFTs.
-contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable, ERC721URIStorageUpgradeable, PausableUpgradeable, AccessControlUpgradeable {
+contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable, ERC721URIStorageUpgradeable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable {
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
+
+    uint256 public _minAmountOnRegister;
 
     mapping(address => string) private _addressInfo;
     mapping(uint256 => bool) private _missingStatus;
     mapping(uint256 => mapping(address => bool)) private _tokenOperatorApproval;
 
     event AddressInfoSet(address indexed addr, string info);
-    event ComponentRegistered(address indexed to, uint256 indexed tokenId, string serialNumber, string uri);
-    event MissingStatusUpdated(uint256 indexed tokenId, bool indexed isMissing);
+    event ComponentRegistered(address indexed to, uint256 indexed tokenId, string indexed serialNumber, string uri);
+    event MissingStatusUpdated(string indexed serialNumber, bool indexed isMissing);
     event TokenOperatorApprovalUpdated(uint256 indexed tokenId, address indexed operator, bool approved);
-
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -35,8 +39,12 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
         __ERC721URIStorage_init();
         __Pausable_init();
         __AccessControl_init();
+        __UUPSUpgradeable_init();
+
+        _minAmountOnRegister = 0.0 ether;
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(UPGRADER_ROLE, msg.sender);
 
         _grantRole(PAUSER_ROLE, msg.sender);
         _grantRole(MINTER_ROLE, msg.sender);
@@ -50,6 +58,13 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
         _unpause();
     }
 
+    function _authorizeUpgrade(address newImplementation)
+    internal
+    onlyRole(UPGRADER_ROLE)
+    override
+    {}
+
+
     // Convert a `serialNumber` string to a `tokenId` uint256
     function generateTokenId(string memory serialNumber) public pure returns (uint256) {
         uint256 tokenId = uint256(keccak256(abi.encodePacked(serialNumber)));
@@ -60,8 +75,11 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
     // This will check for duplicate token IDs using `_exists`
     function register(address to, string memory serialNumber, string memory uri)
     public
+    payable
     onlyRole(MINTER_ROLE)
     {
+        require(msg.value >= _minAmountOnRegister, "Payment is less than the minimum `_minAmountOnRegister`");
+
         // Assume that `msg.sender` is a bike shop registering
         // a new component with the `serialNumber` for a customer (`to`)
 
@@ -73,16 +91,25 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
         _tokenOperatorApproval[tokenId][msg.sender] = true;
         emit TokenOperatorApprovalUpdated(tokenId, msg.sender, true);
 
+        //
         emit ComponentRegistered(to, tokenId, serialNumber, uri);
+
+        // Return the excess amount to the sender
+
+        uint256 remainingAmount = msg.value - _minAmountOnRegister;
+
+        if (remainingAmount > 0) {
+            payable(msg.sender).transfer(remainingAmount);
+        }
     }
 
-    // todo: is this a good name? need a private implementation?
     function transfer(string memory serialNumber, address to)
     public
     {
         uint256 tokenId = generateTokenId(serialNumber);
         address from = ownerOf(tokenId);
 
+        // `safeTransferFrom` will consult `_isApprovedOrOwner` on `msg.sender` before calling `_safeTransfer`
         safeTransferFrom(from, to, tokenId);
     }
 
@@ -131,8 +158,6 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
         // (but they have to revoke the right /before/ transferring the token).
     }
 
-
-
     // The following functions are overrides required by Solidity.
 
     function _burn(uint256 tokenId)
@@ -160,6 +185,18 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
         return super.supportsInterface(interfaceId);
     }
 
+    // Withdrawal
+
+    function withdraw() public {
+        withdrawTo(msg.sender);
+    }
+
+    function withdrawTo(address to) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        uint256 contractBalance = address(this).balance;
+        require(contractBalance > 0, "There is nothing to withdraw");
+        payable(to).transfer(contractBalance);
+    }
+
     // Additional getters / setters
 
     function missingStatus(string memory serialNumber)
@@ -182,21 +219,21 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
         require(_isApprovedOrOwner(msg.sender, tokenId), "The sender does not have the right to report on this token");
 
         _missingStatus[tokenId] = isMissing;
-        emit MissingStatusUpdated(tokenId, isMissing);
+        emit MissingStatusUpdated(serialNumber, isMissing);
     }
 
-    function addressInfo(address addr) public view returns (string memory) {
-        string memory info = _addressInfo[addr];
+    function addressInfo(address account) public view returns (string memory) {
+        string memory info = _addressInfo[account];
         require(bytes(info).length > 0, "Address info has not been set");
 
-        return _addressInfo[addr];
+        return _addressInfo[account];
     }
 
-    function setAddressInfo(address addr, string memory info) public {
+    function setAddressInfo(address account, string memory info) public {
         require(bytes(info).length > 0, "Info string cannot be empty");
 
-        _addressInfo[addr] = info;
-        emit AddressInfoSet(addr, info);
+        _addressInfo[account] = info;
+        emit AddressInfoSet(account, info);
     }
 
     function tokenOperatorApproval(uint256 tokenId, address operator) public view returns (bool) {
@@ -212,5 +249,13 @@ contract BicycleComponentV1 is Initializable, ERC721Upgradeable, ERC721Enumerabl
 
         _tokenOperatorApproval[tokenId][operator] = approved;
         emit TokenOperatorApprovalUpdated(tokenId, operator, approved);
+    }
+
+    function minAmountOnRegister() public view returns (uint256) {
+        return _minAmountOnRegister;
+    }
+
+    function setMinAmountOnRegister(uint256 newMinAmount) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        _minAmountOnRegister = newMinAmount;
     }
 }
