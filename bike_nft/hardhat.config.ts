@@ -33,6 +33,12 @@ const config: HardhatUserConfig = {
         },
     },
 
+    etherscan: {
+        apiKey: {
+            polygonMumbai: getEnvVariable("POLYGONSCAN_API_KEY"),
+        }
+    },
+
     networks: {
         ganache: {
             url: "HTTP://127.0.0.1:7545",
