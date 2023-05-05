@@ -142,6 +142,22 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
 
     // Additional getters / setters
 
+    function uri(string memory serialNumber)
+    public view returns (string memory)
+    {
+        return BicycleComponents(nftContractAddress).tokenURI(generateTokenId(serialNumber));
+    }
+
+    function setUri(string memory serialNumber, string memory uri)
+    public
+    {
+        uint256 tokenId = generateTokenId(serialNumber);
+
+        _requireSenderCanHandle(tokenId);
+
+        BicycleComponents(nftContractAddress).setTokenURI(tokenId, uri);
+    }
+
     function missingStatus(string memory serialNumber)
     public view returns (bool)
     {
