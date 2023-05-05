@@ -35,7 +35,7 @@ async function deployBicycleComponentManagerFixture() {
     await managerContract.connect(deployer).grantRole(managerContract.DEFAULT_ADMIN_ROLE(), admin.address);
 
     // Grant the minter role to the shop
-    await managerContract.connect(deployer).grantRole(managerContract.MINTER_ROLE(), shop.address);
+    await managerContract.connect(admin).grantRole(managerContract.MINTER_ROLE(), shop.address);
 
     return {componentsContract, managerContract, deployer, admin, manager, upgrader, pauser, shop, customer, third};
 }
