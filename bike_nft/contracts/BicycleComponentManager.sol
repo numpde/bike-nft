@@ -182,6 +182,13 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
     function setAccountInfo(address account, string memory info) public {
         require(bytes(info).length > 0, "Info string is empty");
 
+        require(
+            hasRole(MINTER_ROLE, msg.sender) ||
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender) ||
+            account == msg.sender,
+            "Insufficient rights"
+        );
+
         _accountInfo[account] = info;
         emit AccountInfoSet(account, info);
     }
