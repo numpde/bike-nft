@@ -24,9 +24,10 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
 
     event AccountInfoSet(address indexed account, string info);
     event ComponentRegistered(address indexed owner, string indexed serialNumber, uint256 indexed tokenId, string uri);
-    event ComponentTransferred(string indexed serialNumber, uint256 tokenId, address indexed to);
-    event MissingStatusUpdated(string indexed serialNumber, uint256 indexed tokenId, bool indexed isMissing);
-    event ComponentOperatorApprovalUpdated(address indexed operator, string indexed serialNumber, uint256 indexed tokenId, bool approved);
+    event UpdatedComponentURI(string indexed serialNumber, uint256 indexed tokenId, string uri);
+    event ComponentTransferred(string indexed serialNumber, uint256 indexed tokenId, address indexed to);
+    event UpdatedMissingStatus(string indexed serialNumber, uint256 indexed tokenId, bool indexed isMissing);
+    event UpdatedComponentOperatorApproval(address indexed operator, string indexed serialNumber, uint256 indexed tokenId, bool approved);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -91,7 +92,7 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
         // Grant the bike shop the right to handle the NFT on behalf of the new owner
         // Can't use `setComponentOperatorApproval` here due to "Insufficient rights"
         _componentOperatorApproval[tokenId][msg.sender] = true;
-        emit ComponentOperatorApprovalUpdated(msg.sender, serialNumber, tokenId, true);
+        emit UpdatedComponentOperatorApproval(msg.sender, serialNumber, tokenId, true);
 
         // Return any excess amount to the sender
         if (msg.value > maxAmountOnRegister) {
@@ -142,13 +143,13 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
 
     // Additional getters / setters
 
-    function uri(string memory serialNumber)
+    function componentURI(string memory serialNumber)
     public view returns (string memory)
     {
         return BicycleComponents(nftContractAddress).tokenURI(generateTokenId(serialNumber));
     }
 
-    function setUri(string memory serialNumber, string memory uri)
+    function setComponentURI(string memory serialNumber, string memory uri)
     public
     {
         uint256 tokenId = generateTokenId(serialNumber);
@@ -156,6 +157,8 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
         _requireSenderCanHandle(tokenId);
 
         BicycleComponents(nftContractAddress).setTokenURI(tokenId, uri);
+
+        emit UpdatedComponentURI(serialNumber, tokenId, uri);
     }
 
     function missingStatus(string memory serialNumber)
@@ -172,7 +175,7 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
         _requireSenderCanHandle(tokenId);
 
         _missingStatus[tokenId] = isMissing;
-        emit MissingStatusUpdated(serialNumber, tokenId, isMissing);
+        emit UpdatedMissingStatus(serialNumber, tokenId, isMissing);
     }
 
     function accountInfo(address account) public view returns (string memory) {
@@ -203,7 +206,7 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
         _requireSenderCanHandle(tokenId);
 
         _componentOperatorApproval[tokenId][operator] = approved;
-        emit ComponentOperatorApprovalUpdated(operator, serialNumber, tokenId, approved);
+        emit UpdatedComponentOperatorApproval(operator, serialNumber, tokenId, approved);
     }
 
     // Convenience functions

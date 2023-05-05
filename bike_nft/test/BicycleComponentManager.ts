@@ -281,7 +281,7 @@ describe("BicycleComponentManager", function () {
             await expect(action).to.be.revertedWith(reason);
         });
 
-        it("Should emit a ComponentOperatorApprovalUpdated", async function () {
+        it("Should emit a UpdatedComponentOperatorApproval", async function () {
             const {managerContract, shop, third} = await loadFixture(deployBicycleComponentManagerFixture);
 
             const serialNumber = "SN12345678";
@@ -292,7 +292,7 @@ describe("BicycleComponentManager", function () {
 
             // Note: The shop grants itself the approval for the future.
             await expect(action)
-                .to.emit(managerContract, "ComponentOperatorApprovalUpdated")
+                .to.emit(managerContract, "UpdatedComponentOperatorApproval")
                 .withArgs(shop.address, serialNumber, tokenId, true);
         });
 
@@ -326,7 +326,33 @@ describe("BicycleComponentManager", function () {
         });
     });
 
-    describe("componentOperatorApproval", function () {
+    describe("Component URI", function () {
+        it("Should allow an admin/minter/owner to change component URI", async function () {
+            const {managerContract, admin, shop, customer, serialNumber} = await loadFixture(registerComponent);
+
+            for (const account of [admin, shop, customer]) {
+                const uri = "https://example.com/" + serialNumber + "/" + account.address;
+
+                const action = managerContract.connect(account).setComponentURI(serialNumber, uri);
+                await expect(action).to.emit(managerContract, "UpdatedComponentURI");
+
+                await expect(await managerContract.componentURI(serialNumber)).to.equal(uri);
+            }
+        });
+
+        it("Should not allow a third party to change component URI", async function () {
+            const {managerContract, third, serialNumber} = await loadFixture(registerComponent);
+
+            const uri = "https://example.com/" + serialNumber + "/" + third.address;
+
+            const action = managerContract.connect(third).setComponentURI(serialNumber, uri);
+            const reason = "Insufficient rights";
+
+            await expect(action).to.be.revertedWith(reason);
+        });
+    });
+
+    describe("Component operator approval", function () {
         it("Should be false for a generic owner of a token", async function () {
             const {managerContract, serialNumber, customer} = await loadFixture(registerComponent);
 
@@ -353,15 +379,15 @@ describe("BicycleComponentManager", function () {
             await expect(isApprovedAfter).to.be.true;
         });
 
-        it("Should emit ComponentOperatorApprovalUpdated event", async function () {
+        it("Should emit UpdatedComponentOperatorApproval event", async function () {
             const {managerContract, admin, serialNumber, tokenId, third} = await loadFixture(registerComponent);
 
             await expect(managerContract.connect(admin).setComponentOperatorApproval(serialNumber, third.address, true))
-                .to.emit(managerContract, "ComponentOperatorApprovalUpdated")
+                .to.emit(managerContract, "UpdatedComponentOperatorApproval")
                 .withArgs(third.address, serialNumber, tokenId, true);
 
             await expect(managerContract.connect(admin).setComponentOperatorApproval(serialNumber, third.address, false))
-                .to.emit(managerContract, "ComponentOperatorApprovalUpdated")
+                .to.emit(managerContract, "UpdatedComponentOperatorApproval")
                 .withArgs(third.address, serialNumber, tokenId, false);
         });
 
@@ -671,15 +697,49 @@ describe("BicycleComponentManager", function () {
 
             // But an admin can still set the missing status
             await expect(managerContract.connect(admin).setMissingStatus(serialNumber, true))
-                .to.emit(managerContract, "MissingStatusUpdated")
+                .to.emit(managerContract, "UpdatedMissingStatus")
         });
 
-        it("Should emit a MissingStatusUpdated after a successful update", async function () {
+        it("Should emit a UpdatedMissingStatus after a successful update", async function () {
             const {managerContract, serialNumber, tokenId, customer} = await loadFixture(registerComponent);
 
             await expect(managerContract.connect(customer).setMissingStatus(serialNumber, true))
-                .to.emit(managerContract, "MissingStatusUpdated")
+                .to.emit(managerContract, "UpdatedMissingStatus")
                 .withArgs(serialNumber, tokenId, true);
+        });
+    });
+
+    describe("Account info", async function () {
+        it("Should allow to set own account info", async function () {
+            const {managerContract, third} = await loadFixture(registerComponent);
+
+            const info = `My account (${third.address})`;
+
+            const action = managerContract.connect(third).setAccountInfo(third.address, info);
+            await expect(action).to.emit(managerContract, "AccountInfoSet");
+
+            const newAccountInfo = await managerContract.accountInfo(third.address);
+            await expect(newAccountInfo).to.equal(info);
+        });
+
+        it("Should not allow a generic user to set other's info", async function () {
+            const {managerContract, customer, third} = await loadFixture(registerComponent);
+
+            const info = `My account (${third.address})`;
+            const action = managerContract.connect(customer).setAccountInfo(third.address, info);
+
+            await expect(action).to.be.revertedWith("Insufficient rights");
+        });
+
+        it("Should allow an admin or minter to set other's info", async function () {
+            const {managerContract, deployer, admin, shop, third} = await loadFixture(registerComponent);
+
+            const info = `My account (${third.address})`;
+
+            for (const account of [deployer, admin, shop]) {
+                const action = managerContract.connect(account).setAccountInfo(third.address, info);
+                await expect(action).to.emit(managerContract, "AccountInfoSet");
+            }
         });
     });
 });
