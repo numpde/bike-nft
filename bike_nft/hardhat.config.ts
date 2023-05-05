@@ -5,6 +5,9 @@ import "@nomicfoundation/hardhat-toolbox";
 import '@nomiclabs/hardhat-ethers';
 import '@openzeppelin/hardhat-upgrades';
 
+// https://cryptodevops.academy/automatically-calculate-the-size-of-a-solidity-smart-contract-with-hardhat-contract-sizer-905f1077442d
+require('hardhat-contract-sizer');
+
 // Load environment variables
 import * as dotenv from "dotenv";
 
