@@ -262,7 +262,11 @@ describe("BicycleComponentManager", function () {
             await expect(tokenURI).to.equal(uri);
 
             // Check that the owner of the token is the customer
-            const owner = await componentsContract.ownerOf(tokenId);
+            const ownerOf = await componentsContract.ownerOf(tokenId);
+            await expect(ownerOf).to.equal(customer.address);
+
+            // Check the convenience function `componentOwner`
+            const owner = await managerContract.componentOwner(serialNumber);
             await expect(owner).to.equal(customer.address);
         });
 

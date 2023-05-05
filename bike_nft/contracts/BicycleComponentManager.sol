@@ -180,4 +180,10 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
     function setMaxAmountOnRegister(uint256 newAmount) public onlyRole(DEFAULT_ADMIN_ROLE) {
         maxAmountOnRegister = newAmount;
     }
+
+    // Convenience functions
+
+    function componentOwner(string memory serialNumber) public view returns (address) {
+        return BicycleComponents(nftContractAddress).ownerOf(generateTokenId(serialNumber));
+    }
 }
