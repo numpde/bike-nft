@@ -137,17 +137,56 @@ describe("BicycleComponents", function () {
         });
     });
 
-    describe("Token URI", function () {
-        it("Should allow the manager to set the token URI", async function () {
+    describe("Burning", function () {
+        it("Should allow the manager to burn a token", async function () {
             const {contract, tokenId, manager} = await loadFixture(mintTokenFixture);
 
-            const newUri = "https://yahoo.com/search?q=" + tokenId;
-
-            const action = contract.connect(manager).setTokenURI(tokenId, newUri);
+            const action = contract.connect(manager).burn(tokenId);
             await expect(action).to.not.be.reverted;
+        });
 
-            const actualUri = await contract.tokenURI(tokenId);
-            expect(actualUri).to.equal(newUri);
+        it("Should allow the owner to burn their token", async function () {
+            const {contract, tokenId, customer} = await loadFixture(mintTokenFixture);
+
+            const action = contract.connect(customer).burn(tokenId);
+            await expect(action).to.not.be.reverted;
+        });
+
+        it("Should not allow the minter to burn their token", async function () {
+            const {contract, tokenId, shop} = await loadFixture(mintTokenFixture);
+
+            const action = contract.connect(shop).burn(tokenId);
+            await expect(action).to.be.revertedWith("Not owner/approved");
+        });
+
+        it("Should not allow a third party to burn a token", async function () {
+            const {contract, tokenId, third} = await loadFixture(mintTokenFixture);
+
+            const action = contract.connect(third).burn(tokenId);
+            await expect(action).to.be.revertedWith("Not owner/approved");
+        });
+    });
+
+    describe("Token URI", function () {
+        it("Should return the correct token URI", async function () {
+            const {contract, customer, uri, tokenId} = await loadFixture(mintTokenFixture);
+
+            const action = contract.connect(customer).tokenURI(tokenId);
+            await expect(await action).to.equal(uri);
+        });
+
+        it("Should allow the manager/minter/owner to set the token URI", async function () {
+            const {contract, tokenId, manager, shop, customer} = await loadFixture(mintTokenFixture);
+
+            for (const account of [manager, shop, customer]) {
+                const newUri = "https://google.com/search?q=" + tokenId + "/" + account.address;
+
+                const action = contract.connect(manager).setTokenURI(tokenId, newUri);
+                await expect(action).to.not.be.reverted;
+
+                const actualUri = await contract.tokenURI(tokenId);
+                expect(actualUri).to.equal(newUri);
+            }
         });
 
         it("Should not allow others to set the token URI", async function () {
@@ -175,7 +214,7 @@ describe("BicycleComponents", function () {
             expect(newOwner).to.equal(third.address);
         });
 
-        it("Should not allow even the admins to transfer", async function () {
+        it("Should not allow the admins to transfer", async function () {
             const {contract, tokenId, deployer, admin, third} = await loadFixture(mintTokenFixture);
 
             for (const address of [deployer, admin]) {
@@ -203,6 +242,15 @@ describe("BicycleComponents", function () {
 
             const action = contract.connect(customer).transfer(tokenId, third.address);
             await expect(action).to.not.be.reverted;
+        });
+
+        it("Should not allow transfer to the zero address", async function () {
+            const {contract, tokenId, customer} = await loadFixture(mintTokenFixture);
+
+            const action = contract.connect(customer).transfer(tokenId, ethers.constants.AddressZero);
+            const reason = "ERC721: transfer to the zero address";
+
+            await expect(action).to.be.revertedWith(reason);
         });
 
         it("Should allow the `transferFrom` function", async function () {
