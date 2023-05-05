@@ -130,6 +130,16 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
         payable(to).transfer(contractBalance);
     }
 
+    // Value on register
+
+    function setMinAmountOnRegister(uint256 newAmount) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        minAmountOnRegister = newAmount;
+    }
+
+    function setMaxAmountOnRegister(uint256 newAmount) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        maxAmountOnRegister = newAmount;
+    }
+
     // Additional getters / setters
 
     function missingStatus(string memory serialNumber)
@@ -171,14 +181,6 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
 
         _componentOperatorApproval[tokenId][operator] = approved;
         emit ComponentOperatorApprovalUpdated(operator, serialNumber, tokenId, approved);
-    }
-
-    function setMinAmountOnRegister(uint256 newAmount) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        minAmountOnRegister = newAmount;
-    }
-
-    function setMaxAmountOnRegister(uint256 newAmount) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        maxAmountOnRegister = newAmount;
     }
 
     // Convenience functions
