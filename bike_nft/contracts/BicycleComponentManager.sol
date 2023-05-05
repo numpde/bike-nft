@@ -183,7 +183,7 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
 
     // Convenience functions
 
-    function componentOwner(string memory serialNumber) public view returns (address) {
+    function ownerOf(string memory serialNumber) public view returns (address) {
         return BicycleComponents(nftContractAddress).ownerOf(generateTokenId(serialNumber));
     }
 }

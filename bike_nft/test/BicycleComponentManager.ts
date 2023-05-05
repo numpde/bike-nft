@@ -262,12 +262,12 @@ describe("BicycleComponentManager", function () {
             await expect(tokenURI).to.equal(uri);
 
             // Check that the owner of the token is the customer
-            const ownerOf = await componentsContract.ownerOf(tokenId);
-            await expect(ownerOf).to.equal(customer.address);
+            const owner1 = await componentsContract.ownerOf(tokenId);
+            await expect(owner1).to.equal(customer.address);
 
-            // Check the convenience function `componentOwner`
-            const owner = await managerContract.componentOwner(serialNumber);
-            await expect(owner).to.equal(customer.address);
+            // Check the convenience function of the manager contract
+            const owner2 = await managerContract.ownerOf(serialNumber);
+            await expect(owner2).to.equal(customer.address);
         });
 
         it("Should fail if the registrar is not a minter", async function () {
