@@ -59,7 +59,7 @@ contract BicycleComponents is Initializable, ERC721Upgradeable, ERC721Enumerable
      */
     function _isApprovedOrOwner(address spender, uint256 tokenId) internal view virtual override returns (bool) {
         _requireMinted(tokenId);
-         return super._isApprovedOrOwner(spender, tokenId) || hasRole(NFT_MANAGER_ROLE, spender);
+        return super._isApprovedOrOwner(spender, tokenId) || hasRole(NFT_MANAGER_ROLE, spender);
     }
 
     // Note: This is defined as "external"
