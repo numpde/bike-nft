@@ -155,7 +155,7 @@ describe("BicycleComponents", function () {
 
             for (const address of [deployer, admin, third]) {
                 const action = contract.connect(address).setTokenURI(tokenId, "https://yahoo.com/search?q=" + tokenId);
-                const reason = "AccessControl: account " + address.address.toLowerCase() + " is missing role " + await contract.NFT_MANAGER_ROLE();
+                const reason = "Not owner/approved";
                 await expect(action).to.be.revertedWith(reason);
             }
         });
@@ -176,24 +176,25 @@ describe("BicycleComponents", function () {
         });
 
         it("Should not allow even the admins to transfer", async function () {
-            const {contract, customer, tokenId, deployer, admin, third} = await loadFixture(mintTokenFixture);
+            const {contract, tokenId, deployer, admin, third} = await loadFixture(mintTokenFixture);
 
             for (const address of [deployer, admin]) {
                 const action = contract.connect(address).transfer(tokenId, third.address);
-                const reason = "AccessControl: account " + address.address.toLowerCase() + " is missing role " + await contract.NFT_MANAGER_ROLE();
+                const reason = "ERC721: caller is not token owner or approved";
                 await expect(action).to.be.revertedWith(reason);
             }
         });
 
         it("Should not allow a random stranger to transfer", async function () {
-            const {contract, customer, tokenId, third} = await loadFixture(mintTokenFixture);
+            const {contract, tokenId, third} = await loadFixture(mintTokenFixture);
 
             const action = contract.connect(third).transfer(tokenId, third.address);
-            const reason = "AccessControl: account " + third.address.toLowerCase() + " is missing role " + await contract.NFT_MANAGER_ROLE();
+            const reason = "ERC721: caller is not token owner or approved";
+
             await expect(action).to.be.revertedWith(reason);
         });
 
-        it("Should not allow a generic owner to transfer", async function () {
+        it("Should allow a generic owner to transfer", async function () {
             const {contract, customer, tokenId, third} = await loadFixture(mintTokenFixture);
 
             // Check that `customer` is the owner of the token
@@ -201,24 +202,23 @@ describe("BicycleComponents", function () {
             expect(initialOwner).to.equal(customer.address);
 
             const action = contract.connect(customer).transfer(tokenId, third.address);
-            const reason = "AccessControl: account " + customer.address.toLowerCase() + " is missing role " + await contract.NFT_MANAGER_ROLE();
-            await expect(action).to.be.revertedWith(reason);
+            await expect(action).to.not.be.reverted;
         });
 
-        it("Should not allow the `transferFrom` function", async function () {
+        it("Should allow the `transferFrom` function", async function () {
             const {contract, manager, tokenId, customer, third} = await loadFixture(mintTokenFixture);
 
             const action = contract.connect(manager).transferFrom(customer.address, third.address, tokenId);
-            const reason = "Use `transfer`";
-            await expect(action).to.be.revertedWith(reason);
+
+            await expect(action).to.not.be.reverted;
         });
 
-        it("Should not allow the `safeTransferFrom` function", async function () {
+        it("Should allow the `safeTransferFrom` function", async function () {
             const {contract, manager, tokenId, customer, third} = await loadFixture(mintTokenFixture);
 
             const action = contract.connect(manager).transferFrom(customer.address, third.address, tokenId);
-            const reason = "Use `transfer`";
-            await expect(action).to.be.revertedWith(reason);
+
+            await expect(action).to.not.be.reverted;
         });
     });
 
@@ -282,38 +282,43 @@ describe("BicycleComponents", function () {
     });
 
     describe("Operator approval", function () {
-        it("Should not allow `approve`", async function () {
+        it("Should allow `approve`", async function () {
             const {contract, customer, tokenId, third} = await loadFixture(mintTokenFixture);
 
-            const reason = "Approval disabled";
-
             const action1 = contract.connect(customer).approve(third.address, tokenId);
-            await expect(action1).to.be.revertedWith(reason);
+            await expect(action1).to.not.be.reverted;
 
             const action2 = contract.connect(customer).getApproved(tokenId);
-            await expect(await action2).to.equal(ethers.constants.AddressZero);
+            await expect(await action2).to.equal(third.address);
+
+            const action3 = contract.connect(third).transferFrom(customer.address, third.address, tokenId);
+            await expect(action3).to.not.be.reverted;
         });
 
-        it("Should not allow `setApprovalForAll`", async function () {
-            const {contract, customer, third} = await loadFixture(mintTokenFixture);
-
-            const reason = "Approval disabled";
+        it("Should allow `setApprovalForAll`", async function () {
+            const {contract, customer, third, tokenId} = await loadFixture(mintTokenFixture);
 
             const action1 = contract.connect(customer).setApprovalForAll(third.address, true);
-            await expect(action1).to.be.revertedWith(reason);
+            await expect(action1).to.not.be.reverted;
 
             const action2 = contract.connect(customer).isApprovedForAll(customer.address, third.address);
-            await expect(await action2).to.equal(false);
+            await expect(await action2).to.equal(true);
+
+            const action3 = contract.connect(third).transferFrom(customer.address, third.address, tokenId);
+            await expect(action3).to.not.be.reverted;
         });
 
         it("Should provide a meaningful `isApprovedOrOwner`", async function () {
-            const {contract, manager, customer, tokenId} = await loadFixture(mintTokenFixture);
+            const {contract, manager, customer, third, tokenId} = await loadFixture(mintTokenFixture);
 
-            const action1 = contract.connect(customer).isApprovedOrOwner(customer.address, tokenId);
+            const action1 = contract.connect(third).isApprovedOrOwner(customer.address, tokenId);
             await expect(await action1).to.equal(true);
 
-            const action2 = contract.connect(manager).isApprovedOrOwner(manager.address, tokenId);
-            await expect(await action2).to.equal(false);
+            const action2 = contract.connect(third).isApprovedOrOwner(manager.address, tokenId);
+            await expect(await action2).to.equal(true);
+
+            const action3 = contract.connect(third).isApprovedOrOwner(third.address, tokenId);
+            await expect(await action3).to.equal(false);
         });
 
         it("Should define `isApprovedOrOwner` as external", async function () {

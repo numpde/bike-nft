@@ -49,69 +49,47 @@ contract BicycleComponents is Initializable, ERC721Upgradeable, ERC721Enumerable
     }
 
     /**
-     * @dev Overrides the default behavior of `_isApprovedOrOwner` from the inherited ERC721 contract.
-     * Instead of the usual checks, only requires `sender` to have the NFT_MANAGER_ROLE.
+     * @dev Extends the default behavior of `_isApprovedOrOwner` from the inherited ERC721 contract.
+     * In addition to the usual checks, allows `sender` to have the NFT_MANAGER_ROLE.
      * Moreover, this checks that the token exists using `_requireMinted`.
-     *
-     * Thus, `transferFrom` and `safeTransferFrom` will only work if the sender has the NFT_MANAGER_ROLE.
      *
      * @param spender The address to check for approval or ownership.
      * @param tokenId The token ID to check for the given `spender`.
-     * @return bool True if the `spender` has the NFT_MANAGER_ROLE.
+     * @return bool True if the `spender` is owner, has approval or has the NFT_MANAGER_ROLE.
      */
     function _isApprovedOrOwner(address spender, uint256 tokenId) internal view virtual override returns (bool) {
         _requireMinted(tokenId);
-        return hasRole(NFT_MANAGER_ROLE, spender);
-
-        // To extend the default behavior, use:
-        // return super._isApprovedOrOwner(spender, tokenId) || hasRole(NFT_MANAGER_ROLE, spender);
+         return super._isApprovedOrOwner(spender, tokenId) || hasRole(NFT_MANAGER_ROLE, spender);
     }
 
-    // Disable approval mechanisms since we override the default behavior of `_isApprovedOrOwner`
-
-    function approve(address, uint256) public pure override(ERC721Upgradeable, IERC721Upgradeable) {
-        revert("Approval disabled");
-    }
-
-    function getApproved(uint256) public pure override(ERC721Upgradeable, IERC721Upgradeable) returns (address) {
-        return address(0);
-    }
-
-    function setApprovalForAll(address, bool) public pure override(ERC721Upgradeable, IERC721Upgradeable) {
-        revert("Approval disabled");
-    }
-
-    function isApprovedForAll(address, address) public pure override(ERC721Upgradeable, IERC721Upgradeable) returns (bool) {
-        return false;
-    }
-
-    // Define as "external" because it's different from the internal `_isApprovedOrOwner`
+    // Note: This is defined as "external"
     function isApprovedOrOwner(address spender, uint256 tokenId) external view returns (bool) {
-        _requireMinted(tokenId);
-        return super._isApprovedOrOwner(spender, tokenId);
+        return _isApprovedOrOwner(spender, tokenId);
     }
 
     // ROLE SENTRIES: Pausing the contract
 
-    function pause() public onlyRole(PAUSER_ROLE) {
+    function pause() external onlyRole(PAUSER_ROLE) {
         _pause();
     }
 
-    function unpause() public onlyRole(PAUSER_ROLE) {
+    function unpause() external onlyRole(PAUSER_ROLE) {
         _unpause();
     }
 
     // ROLE SENTRIES: Managing tokens
 
-    function safeMint(address to, uint256 tokenId) public onlyRole(NFT_MANAGER_ROLE) {
+    function safeMint(address to, uint256 tokenId) external onlyRole(NFT_MANAGER_ROLE) {
         _safeMint(to, tokenId);
     }
 
-    function setTokenURI(uint256 tokenId, string memory _tokenURI) public onlyRole(NFT_MANAGER_ROLE) {
-        _setTokenURI(tokenId, _tokenURI);
+    function setTokenURI(uint256 tokenId, string memory uri) external {
+        require(_isApprovedOrOwner(msg.sender, tokenId), "Not owner/approved");
+        _setTokenURI(tokenId, uri);
     }
 
-    function burn(uint256 tokenId) public onlyRole(NFT_MANAGER_ROLE) {
+    function burn(uint256 tokenId) external {
+        require(_isApprovedOrOwner(msg.sender, tokenId), "Not owner/approved");
         _burn(tokenId);
     }
 
@@ -124,18 +102,10 @@ contract BicycleComponents is Initializable, ERC721Upgradeable, ERC721Enumerable
     override
     {}
 
-    // Only allow `transfer` for the NFTs of this contract
+    // Convenience function for token transfer
 
-    function transfer(uint256 tokenId, address to) public onlyRole(NFT_MANAGER_ROLE) {
+    function transfer(uint256 tokenId, address to) external {
         super.safeTransferFrom(ownerOf(tokenId), to, tokenId);
-    }
-
-    function transferFrom(address, address, uint256) public pure override(ERC721Upgradeable, IERC721Upgradeable) {
-        revert("Use `transfer`");
-    }
-
-    function safeTransferFrom(address, address, uint256) public pure override(ERC721Upgradeable, IERC721Upgradeable) {
-        revert("Use `transfer`");
     }
 
     // The following functions are overrides required by Solidity because:
