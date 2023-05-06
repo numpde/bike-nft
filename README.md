@@ -1,4 +1,4 @@
-# Bicycle registration on blockchain
+# Bicycle registration on the blockchain
 
 We love cycling for the joy and convenience. But bicycle theft puts a huge damper on both.
 
