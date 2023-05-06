@@ -678,15 +678,22 @@ describe("BicycleComponentManager", function () {
             await expect(await managerContract.missingStatus(serialNumber)).to.be.true;
         });
 
+        it("Should not allow another minter to set the missing status", async function () {
+            const {managerContract, serialNumber, admin, third: another_shop} = await loadFixture(registerComponent);
+
+            // Grant `another_shop` the minter role
+            await managerContract.connect(admin).grantRole(managerContract.MINTER_ROLE(), another_shop.address);
+
+            // `another_shop` does not have operator approval for this component
+            const isApproved = await managerContract.componentOperatorApproval(serialNumber, another_shop.address);
+            await expect(isApproved).to.be.false;
+
+            const action = managerContract.connect(another_shop).setMissingStatus(serialNumber, true);
+            await expect(action).to.be.revertedWith("Insufficient rights");
+        });
+
         it("Should not allow the minter to set status if the customer has revoked approval", async function () {
-            const {
-                managerContract,
-                admin,
-                shop,
-                customer,
-                serialNumber,
-                tokenId
-            } = await loadFixture(registerComponent);
+            const {managerContract, admin, shop, customer, serialNumber} = await loadFixture(registerComponent);
 
             // Current owner revokes the minter's approval
             await managerContract.connect(customer).setComponentOperatorApproval(serialNumber, shop.address, false);
