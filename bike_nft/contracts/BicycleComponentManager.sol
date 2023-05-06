@@ -188,6 +188,8 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
     function setAccountInfo(address account, string memory info) public {
         require(bytes(info).length > 0, "Info string is empty");
 
+        // Note, this is about addresses, not tokens, and is
+        // therefore different from `_requireSenderCanHandle`
         require(
             hasRole(MINTER_ROLE, msg.sender) ||
             hasRole(DEFAULT_ADMIN_ROLE, msg.sender) ||
