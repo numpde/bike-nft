@@ -88,9 +88,11 @@ describe("Scenarios", function () {
         await step03_assignRole(managerContract.connect(admin), shop, "MINTER_ROLE");
     });
 
-    it("Basic workflow", async function () {
+    it("Bicycle component registration", async function () {
+        // A shop registers a bicycle component to a customer
         await step04_registerComponent(managerContract.connect(shop), customer.address, serialNumber1, uri1);
 
+        // Check
         const owner = await managerContract.connect(admin).ownerOf(serialNumber1);
         await expect(owner).to.equal(customer.address);
     });
