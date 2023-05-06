@@ -2,8 +2,8 @@ import {expect} from "chai";
 import {ethers, upgrades} from "hardhat";
 
 async function step00_getAddresses() {
-    const [deployer, admin, manager, upgrader, pauser, shop, customer, third] = await ethers.getSigners();
-    return {deployer, admin, manager, upgrader, pauser, shop, customer, third};
+    const [deployer, admin, upgrader, pauser, shop1, shop2, customer1, customer2, third] = await ethers.getSigners();
+    return {deployer, admin, upgrader, pauser, shop1, shop2, customer1, customer2, third};
 }
 
 async function step01_deployContracts(deployer) {
@@ -57,9 +57,10 @@ describe("Scenarios", function () {
     let snapshotId;
 
     let componentsContract, managerContract;
-    let deployer, admin, manager, upgrader, pauser, shop, customer, third;
+    let deployer, admin, upgrader, pauser, shop1, shop2, customer1, customer2, third;
 
-    const serialNumber1 = "SN1234567890", uri1 = `Cannondale ${serialNumber1}`;
+    const serialNumber1 = "SN-12345678", uri1 = `Cannondale ${serialNumber1}`;
+    const serialNumber2 = "SN-23456789", uri2 = `Campagnolo ${serialNumber2}`;
 
     beforeEach(async function () {
         if (snapshotId) {
@@ -76,7 +77,7 @@ describe("Scenarios", function () {
     // The following `it` blocks share the EVM
 
     it("Get addresses", async function () {
-        ({deployer, admin, manager, upgrader, pauser, shop, customer, third} = await step00_getAddresses());
+        ({deployer, admin, upgrader, pauser, shop1, shop2, customer1, customer2, third} = await step00_getAddresses());
     });
 
     it("Setup contracts", async function () {
@@ -85,15 +86,25 @@ describe("Scenarios", function () {
         await step02_linkContracts(deployer, managerContract, componentsContract);
 
         await step03_assignRole(managerContract.connect(deployer), admin, "DEFAULT_ADMIN_ROLE");
-        await step03_assignRole(managerContract.connect(admin), shop, "MINTER_ROLE");
+        await step03_assignRole(managerContract.connect(admin), shop1, "MINTER_ROLE");
+        await step03_assignRole(managerContract.connect(admin), shop2, "MINTER_ROLE");
     });
 
-    it("Bicycle component registration", async function () {
+    it("Bicycle component registration 1", async function () {
         // A shop registers a bicycle component to a customer
-        await step04_registerComponent(managerContract.connect(shop), customer.address, serialNumber1, uri1);
+        await step04_registerComponent(managerContract.connect(shop1), customer1.address, serialNumber1, uri1);
 
         // Check
         const owner = await managerContract.connect(admin).ownerOf(serialNumber1);
-        await expect(owner).to.equal(customer.address);
+        await expect(owner).to.equal(customer1.address);
+    });
+
+    it("Bicycle component registration 2", async function () {
+        // Another shop registers another bicycle component to another customer
+        await step04_registerComponent(managerContract.connect(shop2), customer2.address, serialNumber2, uri2);
+
+        // Check
+        const owner = await managerContract.connect(admin).ownerOf(serialNumber2);
+        await expect(owner).to.equal(customer2.address);
     });
 });
