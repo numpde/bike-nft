@@ -9,9 +9,11 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-
-/// @title Bicycle Component NFT Contract
-/// @notice This contract stores bicycle components as NFTs.
+/**
+ * @title Bicycle Component NFT Base Contract
+ * @notice This contract stores bicycle components as NFTs.
+ * @dev This is a fairly generic upgradable ERC-721 contract.
+ */
 abstract contract BicycleComponentsBase is Initializable, ERC721Upgradeable, ERC721EnumerableUpgradeable, ERC721URIStorageUpgradeable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable {
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
@@ -93,7 +95,16 @@ abstract contract BicycleComponentsBase is Initializable, ERC721Upgradeable, ERC
     }
 }
 
-
+/**
+ * @title Bicycle Component NFT Contract
+ * @notice Extends the base ERC-721 contract `BicycleComponentsBase`.
+ * @dev This contract modifies the core logic of token management permissions
+ * by overriding `_isApprovedOrOwner`. Specifically, it allows any address with
+ * the NFT_MANAGER_ROLE to manage the NFTs of this contract. Moreover:
+ *  - Only an address with this role can mint (via `safeMint`).
+ *  - An owner, approved address, or address with the NFT_MANAGER_ROLE can
+ *    transfer, set the token URI, and burn tokens.
+ */
 contract BicycleComponents is BicycleComponentsBase {
     bytes32 public constant NFT_MANAGER_ROLE = keccak256("NFT_MANAGER_ROLE");
 
@@ -123,32 +134,30 @@ contract BicycleComponents is BicycleComponentsBase {
         return super._isApprovedOrOwner(spender, tokenId) || hasRole(NFT_MANAGER_ROLE, spender);
     }
 
-    // Note: This is defined as "external"
     function isApprovedOrOwner(address spender, uint256 tokenId) external view returns (bool) {
         return _isApprovedOrOwner(spender, tokenId);
     }
 
-    // Minting and burning
+    // Minting: NFT_MANAGER_ROLE only
 
     function safeMint(address to, uint256 tokenId) external onlyRole(NFT_MANAGER_ROLE) {
         _safeMint(to, tokenId);
     }
+
+    // Functions that require `_isApprovedOrOwner`
 
     function burn(uint256 tokenId) external {
         require(_isApprovedOrOwner(msg.sender, tokenId), "Not owner/approved");
         _burn(tokenId);
     }
 
-    // Re-setting token URI
-
     function setTokenURI(uint256 tokenId, string memory uri) external {
         require(_isApprovedOrOwner(msg.sender, tokenId), "Not owner/approved");
         _setTokenURI(tokenId, uri);
     }
 
-    // Convenience function for token transfer
-
     function transfer(uint256 tokenId, address to) external {
+        // Note: safeTransferFrom will check for `_isApprovedOrOwner`
         super.safeTransferFrom(ownerOf(tokenId), to, tokenId);
     }
 }
