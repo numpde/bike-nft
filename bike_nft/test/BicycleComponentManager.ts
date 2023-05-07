@@ -3,7 +3,7 @@ import {expect} from "chai";
 import {ethers, upgrades} from "hardhat";
 
 async function deployBicycleComponentManagerFixture() {
-    const [deployer, admin, manager, upgrader, pauser, shop, customer, third] = await ethers.getSigners();
+    const [deployer, admin, upgrader, pauser, shop, customer, third] = await ethers.getSigners();
 
     // First deploy the managed contract
 
@@ -37,7 +37,7 @@ async function deployBicycleComponentManagerFixture() {
     // Grant the minter role to the shop
     await managerContract.connect(admin).grantRole(managerContract.REGISTRAR_ROLE(), shop.address);
 
-    return {componentsContract, managerContract, deployer, admin, manager, upgrader, pauser, shop, customer, third};
+    return {componentsContract, managerContract, deployer, admin, upgrader, pauser, shop, customer, third};
 }
 
 async function registerComponent() {
