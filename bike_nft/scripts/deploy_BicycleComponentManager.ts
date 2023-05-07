@@ -26,7 +26,11 @@ async function main() {
         value: 0
     });
 
-    await report(componentsContract);
+    try {
+        await report(componentsContract);
+    } catch (e) {
+        console.log("Error:", e);
+    }
 
     // Then deploy the manager contract
 
@@ -40,7 +44,11 @@ async function main() {
         value: 0
     });
 
-    await report(managerContract);
+    try {
+        await report(managerContract);
+    } catch (e) {
+        console.log("Error:", e);
+    }
 
     // Connect the contracts
 
