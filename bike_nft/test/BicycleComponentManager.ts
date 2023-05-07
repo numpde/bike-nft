@@ -73,6 +73,30 @@ describe("BicycleComponentManager", function () {
         });
     });
 
+    describe("Connect to the NFT contract", function () {
+        it("Should connect in fixture", async function () {
+            const {managerContract, componentsContract} = await loadFixture(deployBicycleComponentManagerFixture);
+
+            await expect(await managerContract.nftContractAddress()).to.equal(componentsContract.address);
+        });
+
+        it("Should allow an admin to connect", async function () {
+            const {managerContract, admin} = await loadFixture(deployBicycleComponentManagerFixture);
+
+            const action = managerContract.connect(admin).setNftContractAddress(ethers.constants.AddressZero);
+            await expect(action).to.not.be.reverted;
+        });
+
+        it("Should not allow a non-admin to connect", async function () {
+            const {managerContract, shop} = await loadFixture(deployBicycleComponentManagerFixture);
+
+            const reason = "AccessControl: account " + shop.address.toLowerCase() + " is missing role " + await managerContract.DEFAULT_ADMIN_ROLE();
+
+            const action = managerContract.connect(shop).setNftContractAddress(ethers.constants.AddressZero);
+            await expect(action).to.be.revertedWith(reason);
+        });
+    });
+
     describe("Serial number", function () {
         it("Should generate a consistent tokenId from serialNumber", async function () {
             const {managerContract} = await loadFixture(deployBicycleComponentManagerFixture);
