@@ -86,8 +86,9 @@ describe("Scenarios", function () {
         await step02_linkContracts(deployer, managerContract, componentsContract);
 
         await step03_assignRole(managerContract.connect(deployer), admin, "DEFAULT_ADMIN_ROLE");
-        await step03_assignRole(managerContract.connect(admin), shop1, "MINTER_ROLE");
-        await step03_assignRole(managerContract.connect(admin), shop2, "MINTER_ROLE");
+
+        await step03_assignRole(managerContract.connect(admin), shop1, "REGISTRAR_ROLE");
+        await step03_assignRole(managerContract.connect(admin), shop2, "REGISTRAR_ROLE");
     });
 
     it("Bicycle component registration 1", async function () {

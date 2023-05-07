@@ -381,4 +381,17 @@ describe("BicycleComponents", function () {
             // expect(fAbiFragment.visibility).to.equal("external");
         });
     });
+
+    describe("Upgrading the contract", function () {
+        it("Should to upgrade the contract", async function () {
+            const {contract} = await loadFixture(deployBicycleComponentsFixture);
+
+            const UpgradedContract = await ethers.getContractFactory("BicycleComponentsUpgrade");
+
+            const upgradedContract = await upgrades.upgradeProxy(contract.address, UpgradedContract);
+
+            const action1 = upgradedContract.getVersion();
+            await expect(await action1).to.equal(2);
+        });
+    });
 });
