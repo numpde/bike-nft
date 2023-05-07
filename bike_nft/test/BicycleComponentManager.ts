@@ -35,7 +35,7 @@ async function deployBicycleComponentManagerFixture() {
     await managerContract.connect(deployer).grantRole(managerContract.DEFAULT_ADMIN_ROLE(), admin.address);
 
     // Grant the minter role to the shop
-    await managerContract.connect(admin).grantRole(managerContract.MINTER_ROLE(), shop.address);
+    await managerContract.connect(admin).grantRole(managerContract.REGISTRAR_ROLE(), shop.address);
 
     return {componentsContract, managerContract, deployer, admin, manager, upgrader, pauser, shop, customer, third};
 }
@@ -65,7 +65,7 @@ describe("BicycleComponentManager", function () {
         it("Should grant initial roles to the deployer", async function () {
             const {managerContract, deployer} = await loadFixture(deployBicycleComponentManagerFixture);
 
-            const roles = ["DEFAULT_ADMIN_ROLE", "PAUSER_ROLE", "MINTER_ROLE", "UPGRADER_ROLE"];
+            const roles = ["DEFAULT_ADMIN_ROLE", "PAUSER_ROLE", "REGISTRAR_ROLE", "UPGRADER_ROLE"];
 
             for (const role of roles) {
                 await expect(await managerContract.hasRole(managerContract[role](), deployer.address)).to.be.true;
@@ -276,7 +276,7 @@ describe("BicycleComponentManager", function () {
             const serialNumber = "SN_ILLICIT";
 
             const action = managerContract.connect(third).register(third.address, serialNumber, "URI");
-            const reason = "AccessControl: account " + third.address.toLowerCase() + " is missing role " + await managerContract.MINTER_ROLE();
+            const reason = "AccessControl: account " + third.address.toLowerCase() + " is missing role " + await managerContract.REGISTRAR_ROLE();
 
             await expect(action).to.be.revertedWith(reason);
         });
@@ -449,7 +449,7 @@ describe("BicycleComponentManager", function () {
 
             // Customer does not have a special role
 
-            const roles = ["DEFAULT_ADMIN_ROLE", "PAUSER_ROLE", "MINTER_ROLE", "UPGRADER_ROLE"];
+            const roles = ["DEFAULT_ADMIN_ROLE", "PAUSER_ROLE", "REGISTRAR_ROLE", "UPGRADER_ROLE"];
 
             for (const role of roles) {
                 await expect(await managerContract.hasRole(managerContract[role](), customer.address)).to.be.false;
@@ -682,7 +682,7 @@ describe("BicycleComponentManager", function () {
             const {managerContract, serialNumber, admin, third: another_shop} = await loadFixture(registerComponent);
 
             // Grant `another_shop` the minter role
-            await managerContract.connect(admin).grantRole(managerContract.MINTER_ROLE(), another_shop.address);
+            await managerContract.connect(admin).grantRole(managerContract.REGISTRAR_ROLE(), another_shop.address);
 
             // `another_shop` does not have operator approval for this component
             const isApproved = await managerContract.componentOperatorApproval(serialNumber, another_shop.address);

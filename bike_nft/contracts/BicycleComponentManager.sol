@@ -13,8 +13,8 @@ import "./BicycleComponents.sol";
 /// @notice This contract manages the BicycleComponents NFT contract.
 contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable {
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
-    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
+    bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
 
     uint256 public minAmountOnRegister;
     uint256 public maxAmountOnRegister;
@@ -43,10 +43,10 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
         __UUPSUpgradeable_init();
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _grantRole(UPGRADER_ROLE, msg.sender);
 
         _grantRole(PAUSER_ROLE, msg.sender);
-        _grantRole(MINTER_ROLE, msg.sender);
+        _grantRole(UPGRADER_ROLE, msg.sender);
+        _grantRole(REGISTRAR_ROLE, msg.sender);
     }
 
     function pause() public onlyRole(PAUSER_ROLE) {
@@ -75,7 +75,7 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
     function register(address owner, string memory serialNumber, string memory uri)
     public
     payable
-    onlyRole(MINTER_ROLE)
+    onlyRole(REGISTRAR_ROLE)
     {
         require(msg.value >= minAmountOnRegister, "Insufficient payment");
 
@@ -191,7 +191,7 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
         // Note, this is about addresses, not tokens, and is
         // therefore different from `_requireSenderCanHandle`
         require(
-            hasRole(MINTER_ROLE, msg.sender) ||
+            hasRole(REGISTRAR_ROLE, msg.sender) ||
             hasRole(DEFAULT_ADMIN_ROLE, msg.sender) ||
             account == msg.sender,
             "Insufficient rights"
