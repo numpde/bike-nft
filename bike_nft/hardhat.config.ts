@@ -36,6 +36,11 @@ const config: HardhatUserConfig = {
         },
     },
 
+    paths: {
+        sources: "./contracts",
+    },
+
+
     etherscan: {
         apiKey: {
             polygonMumbai: getEnvVariable("POLYGONSCAN_API_KEY"),
