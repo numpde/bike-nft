@@ -383,12 +383,15 @@ describe("BicycleComponents", function () {
     });
 
     describe("Upgrading the contract", function () {
-        it("Should to upgrade the contract", async function () {
-            const {contract} = await loadFixture(deployBicycleComponentsFixture);
+        it("Should upgrade the contract", async function () {
+            const {contract, upgrader} = await loadFixture(deployBicycleComponentsFixture);
+
+            // check that upgrade has the right role
+            const UPGRADER_ROLE = await contract.UPGRADER_ROLE();
+            expect(await contract.hasRole(UPGRADER_ROLE, upgrader.address)).to.be.true;
 
             const UpgradedContract = await ethers.getContractFactory("BicycleComponentsUpgrade");
-
-            const upgradedContract = await upgrades.upgradeProxy(contract.address, UpgradedContract);
+            const upgradedContract = await upgrades.upgradeProxy(contract.address, UpgradedContract.connect(upgrader));
 
             const action1 = upgradedContract.getVersion();
             await expect(await action1).to.equal(2);
