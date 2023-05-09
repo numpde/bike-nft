@@ -384,17 +384,24 @@ describe("BicycleComponents", function () {
 
     describe("Upgrading the contract", function () {
         it("Should upgrade the contract", async function () {
-            const {contract, upgrader} = await loadFixture(deployBicycleComponentsFixture);
-
-            // check that upgrade has the right role
-            const UPGRADER_ROLE = await contract.UPGRADER_ROLE();
-            expect(await contract.hasRole(UPGRADER_ROLE, upgrader.address)).to.be.true;
+            const {contract, upgrader, third} = await loadFixture(deployBicycleComponentsFixture);
 
             const UpgradedContract = await ethers.getContractFactory("BicycleComponentsUpgrade");
+
+            // `third` cannot upgrade
+            const action = upgrades.upgradeProxy(contract.address, UpgradedContract.connect(third));
+            const reason = `AccessControl: account ${third.address.toLowerCase()} is missing role ${await contract.UPGRADER_ROLE()}`;
+            await expect(action).to.be.revertedWith(reason);
+
+            // `upgrader` has the right role
+            const UPGRADER_ROLE = await contract.UPGRADER_ROLE();
+            await expect(await contract.hasRole(UPGRADER_ROLE, upgrader.address)).to.be.true;
+
+            // `upgrader` can upgrade
             const upgradedContract = await upgrades.upgradeProxy(contract.address, UpgradedContract.connect(upgrader));
 
-            const action1 = upgradedContract.getVersion();
-            await expect(await action1).to.equal(2);
+            // Check that the new contract is the upgraded one
+            await expect(await upgradedContract.getVersion()).to.equal(2);
         });
     });
 });
