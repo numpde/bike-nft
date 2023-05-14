@@ -40,7 +40,6 @@ async function deployBicycleComponentManagerFixture() {
     return {componentsContract, managerContract, deployer, admin, upgrader, pauser, shop, customer, third};
 }
 
-attach
 async function registerComponent() {
     const {managerContract, shop, customer, ...etc} = await loadFixture(deployBicycleComponentManagerFixture);
 
