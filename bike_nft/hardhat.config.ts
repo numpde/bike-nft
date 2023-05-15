@@ -61,7 +61,12 @@ const config: HardhatUserConfig = {
         mumbai: {
             url: `https://polygon-mumbai.infura.io/v3/${myInfuraApiKey}`,
             accounts: [getEnvVariable("MUMBAI_10_PRIVATE_KEY")],
-        }
+        },
+
+        polygon: {
+            url: `https://polygon-mainnet.infura.io/v3/${myInfuraApiKey}`,
+            accounts: [getEnvVariable("BIKE_DEPLOYER_POLYGON_PRIVATE_KEY")],
+        },
     },
 };
 
