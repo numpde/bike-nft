@@ -70,4 +70,19 @@ const config: HardhatUserConfig = {
     },
 };
 
+
+const deployed = {
+    polygon: {
+        BicycleComponentManager: "0xd7334783B80B31Cf039fE615169B1f513d8d84ED",
+        BicycleComponents: "0x8DdF2e56DbBE7cF86e6cC2EA2c473Ca66654dCAA",
+    },
+    mumbai: {
+        BicycleComponentManager: "0x5aec9a71fd38a6234ce6a2fade9b693dd8466c9b",
+        BicycleComponents: "0x52b371e38cdcd877e347e45d7d231f384d68599c",
+    },
+    ganache: {
+    },
+};
+
 export default config;
+export {deployed};
