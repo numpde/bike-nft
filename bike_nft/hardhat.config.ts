@@ -44,6 +44,7 @@ const config: HardhatUserConfig = {
     etherscan: {
         apiKey: {
             polygonMumbai: getEnvVariable("POLYGONSCAN_API_KEY"),
+            polygon: getEnvVariable("POLYGONSCAN_API_KEY"),
         }
     },
 

@@ -1,6 +1,7 @@
 import {loadFixture} from "@nomicfoundation/hardhat-network-helpers";
 import {expect} from "chai";
 import {ethers, upgrades} from "hardhat";
+import {Buffer} from 'buffer';
 
 async function deployBicycleComponentManagerFixture() {
     const [deployer, admin, upgrader, pauser, shop, customer, third] = await ethers.getSigners();
@@ -373,6 +374,45 @@ describe("BicycleComponentManager", function () {
             const reason = "Insufficient rights";
 
             await expect(action).to.be.revertedWith(reason);
+        });
+
+        it("Should set the on-chain metadata correctly", async function () {
+            const {managerContract, customer, serialNumber} = await loadFixture(registerComponent);
+
+            interface BikeData {
+                name: string;
+                description: string;
+                image: string;
+            }
+
+            const referenceMetadata: BikeData = {
+                name: "Scalpel HT Carbon 4",
+                description: "A hardtail with razor-sharp precision, Shimano shifting & 100mm RockShox SID fork",
+                image: "https://embed.widencdn.net/img/dorelrl/24egss6ejx/1700px@1x/C21_C25401U_Scalpel_HT_Crb_4_ARD_3Q.webp?color=f3f3f3&q=95",
+            }
+
+            const action = managerContract.connect(customer).setOnChainComponentURI(
+                serialNumber, referenceMetadata.name, referenceMetadata.description, referenceMetadata.image
+            );
+
+            await expect(action).to.emit(managerContract, "UpdatedComponentURI");
+
+            // Now check the on-chain metadata
+
+            function decodeURI(uri: string): BikeData {
+                const prefix = "data:application/json;base64,";
+                const base64EncodedJson = uri.startsWith(prefix) ? uri.slice(prefix.length) : uri;
+                const decodedJson = Buffer.from(base64EncodedJson, 'base64').toString('utf8');
+
+                return JSON.parse(decodedJson);
+            }
+
+            const uri = await managerContract.componentURI(serialNumber);
+            const candidateMetadata: BikeData = decodeURI(uri);
+
+            await expect(candidateMetadata).to.deep.equal(referenceMetadata);
+
+            console.log("URI: " + uri);
         });
     });
 

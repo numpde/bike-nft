@@ -6,6 +6,8 @@ import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
+import "@openzeppelin/contracts-upgradeable/utils/Base64Upgradeable.sol";
+
 import "./BicycleComponents.sol";
 
 
@@ -162,6 +164,21 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
         BicycleComponents(nftContractAddress).setTokenURI(tokenId, uri);
 
         emit UpdatedComponentURI(serialNumber, tokenId, uri);
+    }
+
+    function setOnChainComponentURI(string memory serialNumber, string memory name, string memory description, string memory imageURL)
+    public
+    {
+        string memory uri = string(
+            abi.encodePacked(
+                "data:application/json;base64,",
+                Base64Upgradeable.encode(bytes(abi.encodePacked(
+                    '{"name":"', name, '", "description":"', description, '", "image":"', imageURL, '"}'
+                )))
+            )
+        );
+
+        setComponentURI(serialNumber, uri);
     }
 
     function missingStatus(string memory serialNumber)
