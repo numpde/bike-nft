@@ -58,10 +58,9 @@ describe("Blanks", function () {
             const {deployer, shop1} = await getSigners();
 
             const tokenId = blanks.MY_BLANK_NFT_TOKEN_ID();
-            const amount = 1;
-            const data = "0x";
+            const amount = 10;
 
-            const action = blanks.connect(deployer).mint(shop1.address, tokenId, amount, data);
+            const action = blanks.connect(deployer).mint(shop1.address, tokenId, amount, "0x");
             await expect(action).not.to.be.reverted;
         });
     });
@@ -71,27 +70,28 @@ describe("Blanks", function () {
             const {blanks, managerContract, componentsContract} = await loadFixture(deployAllAndLinkFixture);
             const {deployer, shop1} = await getSigners();
 
-            const serialNumber = "1234567890";
+            const serialNumber = "SN12345678";
+            const amount = 10;
 
             // mint
             const blankTokenId = blanks.MY_BLANK_NFT_TOKEN_ID();
-            const action1 = blanks.connect(deployer).mint(shop1.address, blankTokenId, 10, "0x");
+            const action1 = blanks.connect(deployer).mint(shop1.address, blankTokenId, amount, "0x");
             await expect(action1).not.to.be.reverted;
 
             // register
             const action2 = blanks.connect(shop1).register(serialNumber, "My Bike", "My Bike Description", "https://example.com/image.png");
             await expect(action2).not.to.be.reverted;
 
-            // get the tokenId from the serial number
+            // component contract's token ID from the serial number
             const remoteTokenId = managerContract.generateTokenId(serialNumber);
 
-            // check that the shop has the token in the components contract
+            // the shop has the token in the components contract
             const remoteBalance = await componentsContract.connect(shop1).balanceOf(shop1.address, remoteTokenId);
             await expect(remoteBalance).to.equal(1);
 
-            // check that the shop now has 9 blanks left
+            // the shop now has 9 blanks left
             const blankBalance = await blanks.balanceOf(shop1.address, blankTokenId);
-            await expect(blankBalance).to.equal(9);
+            await expect(blankBalance).to.equal(amount - 1);
         });
     });
 });
