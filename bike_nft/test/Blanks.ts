@@ -68,17 +68,30 @@ describe("Blanks", function () {
 
     describe("Registration", function () {
         it("Should allow registration by the shop", async function () {
-            const {blanks} = await loadFixture(deployAllAndLinkFixture);
+            const {blanks, managerContract, componentsContract} = await loadFixture(deployAllAndLinkFixture);
             const {deployer, shop1} = await getSigners();
 
+            const serialNumber = "1234567890";
+
             // mint
-            const tokenId = blanks.MY_BLANK_NFT_TOKEN_ID();
-            const action1 = blanks.connect(deployer).mint(shop1.address, tokenId, 10, "0x");
+            const blankTokenId = blanks.MY_BLANK_NFT_TOKEN_ID();
+            const action1 = blanks.connect(deployer).mint(shop1.address, blankTokenId, 10, "0x");
             await expect(action1).not.to.be.reverted;
 
             // register
-            const action2 = blanks.connect(shop1).register("1234567890", "My Bike", "My Bike Description", "https://example.com/image.png");
+            const action2 = blanks.connect(shop1).register(serialNumber, "My Bike", "My Bike Description", "https://example.com/image.png");
             await expect(action2).not.to.be.reverted;
+
+            // get the tokenId from the serial number
+            const remoteTokenId = managerContract.generateTokenId(serialNumber);
+
+            // check that the shop has the token in the components contract
+            const remoteBalance = await componentsContract.connect(shop1).balanceOf(shop1.address, remoteTokenId);
+            await expect(remoteBalance).to.equal(1);
+
+            // check that the shop now has 9 blanks left
+            const blankBalance = await blanks.balanceOf(shop1.address, blankTokenId);
+            await expect(blankBalance).to.equal(9);
         });
     });
 });
