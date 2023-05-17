@@ -102,8 +102,14 @@ describe("Blanks", function () {
             const action1 = blanks.connect(deployer).mint(shop1.address, blankTokenId, amount, "0x");
             await expect(action1).not.to.be.reverted;
 
+            const metadata = {
+                name: "My Bike",
+                description: "My Bike Description",
+                image: "https://example.com/image.png",
+            }
+
             // register
-            const action2 = blanks.connect(shop1).register(serialNumber, "My Bike", "My Bike Description", "https://example.com/image.png");
+            const action2 = blanks.connect(shop1).register(serialNumber, metadata.name, metadata.description, metadata.image);
             await expect(action2).not.to.be.reverted;
 
             // component contract's token ID from the serial number
@@ -116,6 +122,11 @@ describe("Blanks", function () {
             // the shop now has 9 blanks left
             const blankBalance = await blanks.balanceOf(shop1.address, blankTokenId);
             await expect(blankBalance).to.equal(amount - 1);
+
+            // the remote URI
+            const referenceURI = "data:application/json;base64," + Buffer.from(JSON.stringify(metadata)).toString('base64');
+            const candidateURI = await componentsContract.tokenURI(remoteTokenId);
+            await expect(candidateURI).to.equal(referenceURI);
         });
     });
 
