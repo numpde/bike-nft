@@ -1,7 +1,7 @@
 import {ethers, upgrades} from "hardhat";
 import {deployed} from "../hardhat.config";
 
-import {getNetworkName} from "../utils/utils";
+import {execute, getNetworkName} from "../utils/utils";
 import {report} from "./deployBicycleComponentManager";
 
 
@@ -39,8 +39,8 @@ async function main() {
     {
         console.log("Linking contracts...");
 
-        await blanksContract.setBicycleComponentManager(managerContract.address);
-        await managerContract.grantRole(managerContract.REGISTRAR_ROLE(), blanksContract.address);
+        await execute(await blanksContract.setBicycleComponentManager(managerContract.address));
+        await execute(await managerContract.grantRole(managerContract.REGISTRAR_ROLE(), blanksContract.address));
     }
 }
 

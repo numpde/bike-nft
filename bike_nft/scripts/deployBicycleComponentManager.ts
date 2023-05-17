@@ -1,6 +1,8 @@
 import {ethers, upgrades} from "hardhat";
 import {deployed} from "../hardhat.config";
-import {getNetworkName} from "../utils/utils";
+
+import {execute, getNetworkName} from "../utils/utils";
+
 
 export async function report(contract) {
     console.log(`Contract here: ${contract.address} by ${contract.deployTransaction?.from}`);
@@ -72,11 +74,13 @@ async function main() {
 
     // Connect the contracts
     {
+        console.log("Connecting contracts...");
+
         // Link the manager contract to the managed contract
-        await managerContract.setNftContractAddress(componentsContract.address);
+        await execute(await managerContract.setNftContractAddress(componentsContract.address));
 
         // Register the manager contract with the managed contract
-        await componentsContract.hireManager(managerContract.address);
+        await execute(await componentsContract.hireManager(managerContract.address));
     }
 }
 
