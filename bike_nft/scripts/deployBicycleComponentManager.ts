@@ -2,7 +2,7 @@ import {ethers, upgrades} from "hardhat";
 import {deployed} from "../hardhat.config";
 import {getNetworkName} from "../utils/utils";
 
-async function report(contract) {
+export async function report(contract) {
     console.log(`Contract here: ${contract.address} by ${contract.deployTransaction?.from}`);
 
     const proxyAddress = contract.address;
@@ -18,9 +18,6 @@ async function report(contract) {
 async function main() {
     const chainId = await ethers.provider.getNetwork().then(network => network.chainId);
 
-    const BicycleComponents = await ethers.getContractFactory("BicycleComponents");
-    const BicycleComponentManager = await ethers.getContractFactory("BicycleComponentManager");
-
     // Get or deploy the managed components contract
     let componentsContract;
     {
@@ -31,6 +28,8 @@ async function main() {
         } else {
             console.log("Deploying BicycleComponents...")
 
+            const BicycleComponents = await ethers.getContractFactory("BicycleComponents");
+
             componentsContract = await upgrades.deployProxy(
                 BicycleComponents,
                 [],
@@ -40,11 +39,7 @@ async function main() {
                     value: 0,
                 }
             );
-
-            console.log("Contract deployed to address:", componentsContract.address);
         }
-
-        console.log("Contract address:", componentsContract.address)
 
         await report(componentsContract).catch(e => console.log("Error:", e));
     }
@@ -57,7 +52,9 @@ async function main() {
         if (deployedAddress) {
             managerContract = await ethers.getContractAt("BicycleComponentManager", deployedAddress);
         } else {
-            console.log("Deploying BicycleComponentManager...")
+            console.log("Deploying BicycleComponentManager...");
+
+            const BicycleComponentManager = await ethers.getContractFactory("BicycleComponentManager");
 
             managerContract = await upgrades.deployProxy(
                 BicycleComponentManager,
@@ -83,9 +80,6 @@ async function main() {
     }
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
-main().catch((error) => {
-    console.error(error);
-    process.exitCode = 1;
-});
+if (require.main === module) {
+    main().catch(console.error);
+}

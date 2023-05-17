@@ -40,7 +40,7 @@ async function deployAllAndLinkFixture() {
 
     // link
     await blanks.connect(deployer).setBicycleComponentManager(managerContract.address);
-    await managerContract.grantRole(managerContract.REGISTRAR_ROLE(), blanks.address);
+    await managerContract.connect(deployer).grantRole(managerContract.REGISTRAR_ROLE(), blanks.address);
 
     return {blanks, componentsContract, managerContract};
 }
