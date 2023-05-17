@@ -82,6 +82,8 @@ const deployed = {
         BicycleComponents: "0x52b371e38cdcd877e347e45d7d231f384d68599c",
     },
     ganache: {
+        BicycleComponentManager: "0xa0cE34473EC9FC0F50AD11b00377dBd48F4BBdd6",
+        BicycleComponents: "0x9592eC44622Ff441561F388a6CCc6D3e67B5fBF2",
     },
 };
 

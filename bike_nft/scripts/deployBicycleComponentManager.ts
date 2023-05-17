@@ -1,7 +1,9 @@
 import {ethers, upgrades} from "hardhat";
+import {deployed} from "../hardhat.config";
+import {getNetworkName} from "../utils/utils";
 
 async function report(contract) {
-    console.log(`Contract here: ${contract.address} by ${contract.deployTransaction.from}`);
+    console.log(`Contract here: ${contract.address} by ${contract.deployTransaction?.from}`);
 
     const proxyAddress = contract.address;
     console.log("Proxy Address:", proxyAddress);
@@ -14,49 +16,71 @@ async function report(contract) {
 }
 
 async function main() {
-    // First deploy the managed contract
+    const chainId = await ethers.provider.getNetwork().then(network => network.chainId);
 
     const BicycleComponents = await ethers.getContractFactory("BicycleComponents");
+    const BicycleComponentManager = await ethers.getContractFactory("BicycleComponentManager");
 
-    console.log("Deploying BicycleComponents...")
+    // Get or deploy the managed components contract
+    let componentsContract;
+    {
+        const deployedAddress = deployed[getNetworkName(chainId)]?.BicycleComponents;
 
-    const componentsContract = await upgrades.deployProxy(BicycleComponents, [], {
-        initializer: 'initialize',
-        kind: 'uups',
-        value: 0
-    });
+        if (deployedAddress) {
+            componentsContract = await ethers.getContractAt("BicycleComponents", deployedAddress);
+        } else {
+            console.log("Deploying BicycleComponents...")
 
-    try {
-        await report(componentsContract);
-    } catch (e) {
-        console.log("Error:", e);
+            componentsContract = await upgrades.deployProxy(
+                BicycleComponents,
+                [],
+                {
+                    initializer: 'initialize',
+                    kind: 'uups',
+                    value: 0,
+                }
+            );
+
+            console.log("Contract deployed to address:", componentsContract.address);
+        }
+
+        console.log("Contract address:", componentsContract.address)
+
+        await report(componentsContract).catch(e => console.log("Error:", e));
     }
 
     // Then deploy the manager contract
+    let managerContract;
+    {
+        const deployedAddress = deployed[getNetworkName(chainId)]?.BicycleComponentManager;
 
-    const BicycleComponentManager = await ethers.getContractFactory("BicycleComponentManager");
+        if (deployedAddress) {
+            managerContract = await ethers.getContractAt("BicycleComponentManager", deployedAddress);
+        } else {
+            console.log("Deploying BicycleComponentManager...")
 
-    console.log("Deploying BicycleComponentManager...")
+            managerContract = await upgrades.deployProxy(
+                BicycleComponentManager,
+                [],
+                {
+                    initializer: 'initialize',
+                    kind: 'uups',
+                    value: 0,
+                }
+            );
+        }
 
-    const managerContract = await upgrades.deployProxy(BicycleComponentManager, [], {
-        initializer: 'initialize',
-        kind: 'uups',
-        value: 0
-    });
-
-    try {
-        await report(managerContract);
-    } catch (e) {
-        console.log("Error:", e);
+        await report(componentsContract).catch(e => console.log("Error:", e));
     }
 
     // Connect the contracts
+    {
+        // Link the manager contract to the managed contract
+        await managerContract.setNftContractAddress(componentsContract.address);
 
-    // Link the manager contract to the managed contract
-    await managerContract.setNftContractAddress(componentsContract.address);
-
-    // Register the manager contract with the managed contract
-    await componentsContract.hireManager(managerContract.address);
+        // Register the manager contract with the managed contract
+        await componentsContract.hireManager(managerContract.address);
+    }
 }
 
 // We recommend this pattern to be able to use async/await everywhere

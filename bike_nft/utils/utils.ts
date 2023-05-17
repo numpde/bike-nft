@@ -12,7 +12,7 @@ export function getNetworkName(chainId: number): string {
         case 80001:
             return 'mumbai';
         default:
-            return 'unknown';
+            throw new Error('Unknown network');
     }
 }
 

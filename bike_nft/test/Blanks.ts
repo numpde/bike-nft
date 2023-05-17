@@ -1,6 +1,7 @@
 import {loadFixture} from "@nomicfoundation/hardhat-network-helpers";
 import {ethers, upgrades} from "hardhat";
 import {expect} from "chai";
+
 import {getSigners} from "./signers";
 import {deployBicycleComponentManagerFixture} from "./BicycleComponentManager";
 
