@@ -91,6 +91,8 @@ contract BlanksOpenSea is BlanksBase {
     address public owner;
     address public bicycleComponentManager;
 
+    mapping (uint256 => string) public customTokenURI;
+
     uint256 public constant MY_BLANK_NFT_TOKEN_ID = 0x0000000000000000000000000000000AFADEDFACEFACADE0FADEAFBA0BABB0B0;
 
     event Registered(address indexed tokenOwner, string indexed serialNumber, string tokenURI);
@@ -103,6 +105,22 @@ contract BlanksOpenSea is BlanksBase {
     function setBicycleComponentManager(address bcmAddress) public onlyRole(DEFAULT_ADMIN_ROLE) {
         bicycleComponentManager = bcmAddress;
     }
+
+    // Token URI: use the default, unless the token has a custom URI
+
+    function setCustomTokenURI(uint256 tokenId, string memory newURI) public onlyRole(URI_SETTER_ROLE) {
+        customTokenURI[tokenId] = newURI;
+    }
+
+    function uri(uint256 id) public view override returns (string memory) {
+        if (bytes(customTokenURI[id]).length > 0) {
+            return customTokenURI[id];
+        }
+
+        return super.uri(id);
+    }
+
+    // Blank conversion to NFT
 
     // Register a bicycle serial number with the BicycleComponentManager
     function register(string memory serialNumber, string memory name, string memory description, string memory imageURL)
@@ -147,7 +165,11 @@ contract BlanksOpenSea is BlanksBase {
             // Alternative:
             // (bool refundSuccess, ) = payable(msg.sender).call{value: refundAmount}("");
 
-            require(refundSuccess, "Failed to refund excess value");
+            require(refundSuccess, "BlanksOpenSea: Failed to refund excess value");
         }
+    }
+
+    // Fallback
+    receive() external payable {
     }
 }

@@ -102,7 +102,8 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
 
         // Return any excess amount to the sender
         if (msg.value > maxAmountOnRegister) {
-            payable(msg.sender).transfer(msg.value - maxAmountOnRegister);
+            bool success = payable(msg.sender).send(msg.value - maxAmountOnRegister);
+            require(success, "BicycleComponentManager: Failed to send excess amount");
         }
     }
 
