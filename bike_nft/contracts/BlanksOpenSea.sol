@@ -176,7 +176,12 @@ contract BlanksOpenSea is BlanksBase {
         }
     }
 
-    // Fallback
+    // Fallback & withdraw
+
     receive() external payable {
+    }
+
+    function withdraw() public onlyRole(DEFAULT_ADMIN_ROLE) {
+        payable(msg.sender).transfer(address(this).balance);
     }
 }
