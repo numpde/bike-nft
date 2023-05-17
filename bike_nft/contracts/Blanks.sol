@@ -23,7 +23,7 @@ abstract contract BlanksBase is Initializable, ERC1155Upgradeable, AccessControl
         _disableInitializers();
     }
 
-    function initialize() initializer public {
+    function initialize() initializer public virtual {
         __ERC1155_init("");
         __AccessControl_init();
         __Pausable_init();
@@ -96,6 +96,13 @@ contract BlanksOpenSea is BlanksBase {
     uint256 public constant MY_BLANK_NFT_TOKEN_ID = 0x0000000000000000000000000000000AFADEDFACEFACADE0FADEAFBA0BABB0B0;
 
     event Registered(address indexed tokenOwner, string indexed serialNumber, string tokenURI);
+
+    function initialize() initializer public override {
+        BlanksBase.initialize();
+        owner = msg.sender;
+
+        _mint(msg.sender, MY_BLANK_NFT_TOKEN_ID, 10_000, "");
+    }
 
     // https://support.opensea.io/hc/en-us/articles/4403934341907-How-do-I-import-my-contract-automatically-
     function claimOwnership() public onlyRole(DEFAULT_ADMIN_ROLE) {

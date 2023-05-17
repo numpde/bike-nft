@@ -6,6 +6,7 @@ import {report} from "./deployBicycleComponentManager";
 
 
 async function main() {
+    const [deployer] = await ethers.getSigners();
     const chainId = await ethers.provider.getNetwork().then(network => network.chainId);
 
     const managerContract = await ethers.getContractAt("BicycleComponentManager", deployed[getNetworkName(chainId)].BicycleComponentManager);
@@ -30,6 +31,10 @@ async function main() {
                     value: 0,
                 }
             );
+
+            console.log("Minting blanks...");
+
+            await execute(await blanksContract.mint(deployer.address, 1000, ));
         }
 
         await report(blanksContract).catch(e => console.log("Error:", e));

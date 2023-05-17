@@ -51,6 +51,14 @@ describe("Blanks", function () {
             const {blanks} = await loadFixture(deployBlanksFixture);
             await expect(blanks).to.exist;
         });
+
+        it("Should initialize with minted tokens", async function () {
+            const {blanks} = await loadFixture(deployBlanksFixture);
+            const {deployer} = await getSigners();
+
+            const balance = await blanks.balanceOf(deployer.address, await blanks.MY_BLANK_NFT_TOKEN_ID());
+            await expect(balance).to.be.gt(0);
+        });
     });
 
     describe("Minting", function () {
