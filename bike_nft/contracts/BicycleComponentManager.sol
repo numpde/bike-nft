@@ -6,14 +6,15 @@ import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-import "@openzeppelin/contracts-upgradeable/utils/Base64Upgradeable.sol";
-
 import "./BicycleComponents.sol";
+import "./Utils.sol";
 
 
 /// @title Bicycle Component Manager Contract
 /// @notice This contract manages the BicycleComponents NFT contract.
 contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable {
+    using Utils for string;
+
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
@@ -166,17 +167,12 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
         emit UpdatedComponentURI(serialNumber, tokenId, uri);
     }
 
-    function setOnChainComponentURI(string memory serialNumber, string memory name, string memory description, string memory imageURL)
+    function setOnChainComponentMetadata(string memory serialNumber, string memory name, string memory description, string memory imageURL)
     public
     {
-        string memory uri = string(
-            abi.encodePacked(
-                "data:application/json;base64,",
-                Base64Upgradeable.encode(bytes(abi.encodePacked(
-                    '{"name":"', name, '", "description":"', description, '", "image":"', imageURL, '"}'
-                )))
-            )
-        );
+        string[] memory emptyArray;
+
+        string memory uri = string("").stringifyOnChainMetadata(name, description, imageURL, emptyArray, emptyArray).packJSON();
 
         setComponentURI(serialNumber, uri);
     }

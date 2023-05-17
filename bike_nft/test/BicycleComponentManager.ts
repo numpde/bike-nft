@@ -1,30 +1,42 @@
 import {loadFixture} from "@nomicfoundation/hardhat-network-helpers";
-import {expect} from "chai";
 import {ethers, upgrades} from "hardhat";
+import {expect} from "chai";
+
+// noinspection TypeScriptCheckImport
 import {Buffer} from 'buffer';
 
-async function deployBicycleComponentManagerFixture() {
-    const [deployer, admin, upgrader, pauser, shop, customer, third] = await ethers.getSigners();
+import {getSigners} from "./signers";
+import {deployBicycleComponentsFixture} from "./BicycleComponents";
+
+
+export async function deployBicycleComponentManagerFixture() {
+    const {deployer, admin, shop1, shop2} = await getSigners();
+
+    // // Deploy the Utils library
+    // const {library: utilsLibrary} = await deployUtilsFixture();
 
     // First deploy the managed contract
 
-    const BicycleComponents = await ethers.getContractFactory("BicycleComponents");
-
-    const componentsContract = await upgrades.deployProxy(BicycleComponents, [], {
-        initializer: 'initialize',
-        kind: 'uups',
-        value: 0
-    });
+    const {contract: componentsContract} = await deployBicycleComponentsFixture();
 
     // Then deploy the manager contract
 
-    const BicycleComponentManager = await ethers.getContractFactory("BicycleComponentManager");
+    const BicycleComponentManager = await ethers.getContractFactory(
+        "BicycleComponentManager",
+        {
+            libraries: {},
+        },
+    );
 
-    const managerContract = await upgrades.deployProxy(BicycleComponentManager, [], {
-        initializer: 'initialize',
-        kind: 'uups',
-        value: 0
-    });
+    const managerContract = await upgrades.deployProxy(
+        BicycleComponentManager.connect(deployer),
+        [],
+        {
+            initializer: 'initialize',
+            kind: 'uups',
+            value: 0
+        }
+    );
 
     // Link the manager contract to the managed contract
     await managerContract.connect(deployer).setNftContractAddress(componentsContract.address);
@@ -35,23 +47,25 @@ async function deployBicycleComponentManagerFixture() {
     // Grant the admin role to the admin
     await managerContract.connect(deployer).grantRole(managerContract.DEFAULT_ADMIN_ROLE(), admin.address);
 
-    // Grant the minter role to the shop
-    await managerContract.connect(admin).grantRole(managerContract.REGISTRAR_ROLE(), shop.address);
+    // Grant the minter/registrar role to the shops
+    await managerContract.connect(admin).grantRole(managerContract.REGISTRAR_ROLE(), shop1.address);
+    await managerContract.connect(admin).grantRole(managerContract.REGISTRAR_ROLE(), shop2.address);
 
-    return {componentsContract, managerContract, deployer, admin, upgrader, pauser, shop, customer, third};
+    return {componentsContract, managerContract, deployer, admin, shop1, shop2};
 }
 
-async function registerComponent() {
-    const {managerContract, shop, customer, ...etc} = await loadFixture(deployBicycleComponentManagerFixture);
+async function registerComponent(): Promise<{ managerContract, shop1, customer1, serialNumber, uri, tokenId }> {
+    const {managerContract, shop1, ...etc} = await loadFixture(deployBicycleComponentManagerFixture);
+    const {customer1} = await getSigners();
 
     const serialNumber = "SN12345678";
     const uri = "https://example.com/" + serialNumber;
 
     const tokenId = await managerContract.generateTokenId(serialNumber);
 
-    await managerContract.connect(shop).register(customer.address, serialNumber, uri);
+    await managerContract.connect(shop1).register(customer1.address, serialNumber, uri);
 
-    return {managerContract, shop, customer, serialNumber, uri, tokenId, ...etc};
+    return {managerContract, shop1, customer1, serialNumber, uri, tokenId, ...etc};
 }
 
 describe("BicycleComponentManager", function () {
@@ -89,11 +103,11 @@ describe("BicycleComponentManager", function () {
         });
 
         it("Should not allow a non-admin to connect", async function () {
-            const {managerContract, shop} = await loadFixture(deployBicycleComponentManagerFixture);
+            const {managerContract, shop1} = await loadFixture(deployBicycleComponentManagerFixture);
 
-            const reason = "AccessControl: account " + shop.address.toLowerCase() + " is missing role " + await managerContract.DEFAULT_ADMIN_ROLE();
+            const reason = "AccessControl: account " + shop1.address.toLowerCase() + " is missing role " + await managerContract.DEFAULT_ADMIN_ROLE();
 
-            const action = managerContract.connect(shop).setNftContractAddress(ethers.constants.AddressZero);
+            const action = managerContract.connect(shop1).setNftContractAddress(ethers.constants.AddressZero);
             await expect(action).to.be.revertedWith(reason);
         });
     });
@@ -145,30 +159,26 @@ describe("BicycleComponentManager", function () {
         });
 
         it("Should not allow a non-admin to set amounts", async function () {
-            const {managerContract, shop} = await loadFixture(deployBicycleComponentManagerFixture);
+            const {managerContract, shop1} = await loadFixture(deployBicycleComponentManagerFixture);
 
-            const reason = "AccessControl: account " + shop.address.toLowerCase() + " is missing role " + await managerContract.DEFAULT_ADMIN_ROLE();
+            const reason = "AccessControl: account " + shop1.address.toLowerCase() + " is missing role " + await managerContract.DEFAULT_ADMIN_ROLE();
 
             // Min amount
 
             const newMinAmountOnRegister = ethers.utils.parseUnits("0.001", "ether");
-            const action1 = managerContract.connect(shop).setMinAmountOnRegister(newMinAmountOnRegister);
+            const action1 = managerContract.connect(shop1).setMinAmountOnRegister(newMinAmountOnRegister);
             await expect(action1).to.be.revertedWith(reason);
 
             // Max amount
 
             const newMaxAmountOnRegister = ethers.utils.parseUnits("100", "ether");
-            const action2 = managerContract.connect(shop).setMaxAmountOnRegister(newMaxAmountOnRegister);
+            const action2 = managerContract.connect(shop1).setMaxAmountOnRegister(newMaxAmountOnRegister);
             await expect(action2).to.be.revertedWith(reason);
         });
 
         it("Should revert if underfunded when registering", async function () {
-            const {
-                managerContract,
-                admin,
-                shop,
-                customer
-            } = await loadFixture(deployBicycleComponentManagerFixture);
+            const {managerContract, admin, shop1} = await loadFixture(deployBicycleComponentManagerFixture);
+            const {customer1} = await getSigners();
 
             const minAmountOnRegister = ethers.utils.parseUnits("2", "ether");
             await managerContract.connect(admin).setMinAmountOnRegister(minAmountOnRegister);
@@ -177,13 +187,14 @@ describe("BicycleComponentManager", function () {
             const uri = "https://example.com/" + serialNumber;
             const value = ethers.utils.parseUnits("1", "ether");
 
-            const action = managerContract.connect(shop).register(customer.address, serialNumber, uri, {value: value});
+            const action = managerContract.connect(shop1).register(customer1.address, serialNumber, uri, {value: value});
 
             await expect(action).to.be.revertedWith("Insufficient payment");
         });
 
         it("Should return excess funds when registering a component", async function () {
-            const {managerContract, admin, shop, customer} = await loadFixture(deployBicycleComponentManagerFixture);
+            const {managerContract, admin, shop1} = await loadFixture(deployBicycleComponentManagerFixture);
+            const {customer1} = await getSigners();
 
             const maxAmountOnRegister = ethers.utils.parseUnits("1", "ether");
             await managerContract.connect(admin).setMaxAmountOnRegister(maxAmountOnRegister);
@@ -198,7 +209,7 @@ describe("BicycleComponentManager", function () {
             await expect(await ethers.provider.getBalance(managerContract.address)).to.equal(0);
 
             // Register with an amount that is more than the minimum
-            await managerContract.connect(shop).register(customer.address, serialNumber, uri, {value: valueToSend});
+            await managerContract.connect(shop1).register(customer1.address, serialNumber, uri, {value: valueToSend});
 
             // Check that the contract's balance is "valueToSend - maxAmountOnRegister"
             const contractBalance = await ethers.provider.getBalance(managerContract.address);
@@ -206,13 +217,14 @@ describe("BicycleComponentManager", function () {
         });
 
         it("Should allow an admin to withdraw the contract balance to the admin", async function () {
-            const {managerContract, admin, shop, customer} = await loadFixture(deployBicycleComponentManagerFixture);
+            const {managerContract, admin, shop1} = await loadFixture(deployBicycleComponentManagerFixture);
+            const {customer1} = await getSigners();
 
             const amount = 1_000_000_000;
             await managerContract.connect(admin).setMinAmountOnRegister(amount);
             await managerContract.connect(admin).setMaxAmountOnRegister(amount);
 
-            await managerContract.connect(shop).register(customer.address, "SN", "URI", {value: amount});
+            await managerContract.connect(shop1).register(customer1.address, "SN", "URI", {value: amount});
 
             // Withdraw the contract balance to the admin to avoid counting gas
             const action = managerContract.connect(admin).withdraw();
@@ -221,13 +233,8 @@ describe("BicycleComponentManager", function () {
         });
 
         it("Should allow an admin to withdraw the contract balance to any address", async function () {
-            const {
-                managerContract,
-                admin,
-                shop,
-                customer,
-                third
-            } = await loadFixture(deployBicycleComponentManagerFixture);
+            const {managerContract, admin, shop1} = await loadFixture(deployBicycleComponentManagerFixture);
+            const {customer1, third} = await getSigners();
 
             const thirdBalanceBefore = await ethers.provider.getBalance(third.address);
 
@@ -235,7 +242,7 @@ describe("BicycleComponentManager", function () {
             await managerContract.connect(admin).setMinAmountOnRegister(amount);
             await managerContract.connect(admin).setMaxAmountOnRegister(amount);
 
-            await managerContract.connect(shop).register(customer.address, "SN", "URI", {value: amount});
+            await managerContract.connect(shop1).register(customer1.address, "SN", "URI", {value: amount});
 
             // Withdraw the contract balance to a `third` to avoid counting gas
             await managerContract.connect(admin).withdrawTo(third.address);
@@ -250,12 +257,13 @@ describe("BicycleComponentManager", function () {
         });
 
         it("Should not allow a non-admin to withdraw the contract balance", async function () {
-            const {managerContract, shop, customer} = await loadFixture(deployBicycleComponentManagerFixture);
+            const {managerContract, shop1} = await loadFixture(deployBicycleComponentManagerFixture);
+            const {customer1} = await getSigners();
 
-            await managerContract.connect(shop).register(customer.address, "SN", "URI", {value: 1});
+            await managerContract.connect(shop1).register(customer1.address, "SN", "URI", {value: 1});
 
-            const action = managerContract.connect(shop).withdraw();
-            const reason = "AccessControl: account " + shop.address.toLowerCase() + " is missing role " + await managerContract.DEFAULT_ADMIN_ROLE();
+            const action = managerContract.connect(shop1).withdraw();
+            const reason = "AccessControl: account " + shop1.address.toLowerCase() + " is missing role " + await managerContract.DEFAULT_ADMIN_ROLE();
 
             await expect(action).to.be.revertedWith(reason);
         });
@@ -268,19 +276,15 @@ describe("BicycleComponentManager", function () {
 
     describe("Registration 1", function () {
         it("Should mint a token correctly on registration", async function () {
-            const {
-                managerContract,
-                componentsContract,
-                shop,
-                customer
-            } = await loadFixture(deployBicycleComponentManagerFixture);
+            const {managerContract, componentsContract} = await loadFixture(deployBicycleComponentManagerFixture);
+            const {shop1, customer1} = await getSigners();
 
             const serialNumber = "SN12345678";
             const uri = "https://example.com/" + serialNumber;
 
             const tokenId = managerContract.generateTokenId(serialNumber);
 
-            await managerContract.connect(shop).register(customer.address, serialNumber, uri);
+            await managerContract.connect(shop1).register(customer1.address, serialNumber, uri);
 
             // Check that the token exists in the components contract
             const tokenURI = await componentsContract.tokenURI(tokenId);
@@ -288,15 +292,16 @@ describe("BicycleComponentManager", function () {
 
             // Check that the owner of the token is the customer
             const owner1 = await componentsContract.ownerOf(tokenId);
-            await expect(owner1).to.equal(customer.address);
+            await expect(owner1).to.equal(customer1.address);
 
             // Check the convenience function of the manager contract
             const owner2 = await managerContract.ownerOf(serialNumber);
-            await expect(owner2).to.equal(customer.address);
+            await expect(owner2).to.equal(customer1.address);
         });
 
         it("Should fail if the registrar is not a minter", async function () {
-            const {managerContract, third} = await loadFixture(deployBicycleComponentManagerFixture);
+            const {managerContract} = await loadFixture(deployBicycleComponentManagerFixture);
+            const {third} = await getSigners();
 
             const serialNumber = "SN_ILLICIT";
 
@@ -307,55 +312,59 @@ describe("BicycleComponentManager", function () {
         });
 
         it("Should emit a UpdatedComponentOperatorApproval", async function () {
-            const {managerContract, shop, third} = await loadFixture(deployBicycleComponentManagerFixture);
+            const {managerContract} = await loadFixture(deployBicycleComponentManagerFixture);
+            const {shop1, third} = await getSigners();
 
             const serialNumber = "SN12345678";
 
             const tokenId = await managerContract.generateTokenId(serialNumber);
 
-            const action = managerContract.connect(shop).register(third.address, serialNumber, "URI");
+            const action = managerContract.connect(shop1).register(third.address, serialNumber, "URI");
 
             // Note: The shop grants itself the approval for the future.
             await expect(action)
                 .to.emit(managerContract, "UpdatedComponentOperatorApproval")
-                .withArgs(shop.address, serialNumber, tokenId, true);
+                .withArgs(shop1.address, serialNumber, tokenId, true);
         });
 
         it("Should emit a ComponentRegistered", async function () {
-            const {managerContract, shop, customer} = await loadFixture(deployBicycleComponentManagerFixture);
+            const {managerContract} = await loadFixture(deployBicycleComponentManagerFixture);
+            const {shop1, customer1} = await getSigners();
 
             const serialNumber = "SN12345678";
             const uri = "https://example.com/" + serialNumber;
 
             const tokenId = await managerContract.generateTokenId(serialNumber);
 
-            await expect(managerContract.connect(shop).register(customer.address, serialNumber, uri))
+            await expect(managerContract.connect(shop1).register(customer1.address, serialNumber, uri))
                 .to.emit(managerContract, "ComponentRegistered")
-                .withArgs(customer.address, serialNumber, tokenId, uri);
+                .withArgs(customer1.address, serialNumber, tokenId, uri);
         });
     });
 
     describe("Registration 2", function () {
         it("Should approve the registrar as operator for the component", async function () {
-            const {managerContract, shop, serialNumber} = await loadFixture(registerComponent);
-            const isApproved = await managerContract.componentOperatorApproval(serialNumber, shop.address);
+            const {managerContract, shop1, serialNumber} = await loadFixture(registerComponent);
+            const isApproved = await managerContract.componentOperatorApproval(serialNumber, shop1.address);
 
             await expect(isApproved).to.be.true;
         });
 
         it("Should not allow to register the same serial number twice", async function () {
-            const {managerContract, shop, third, serialNumber, uri} = await loadFixture(registerComponent);
+            const {managerContract, shop1, serialNumber, uri} = await loadFixture(registerComponent);
+            const {third} = await getSigners();
 
-            await expect(managerContract.connect(shop).register(third.address, serialNumber, uri))
+            await expect(managerContract.connect(shop1).register(third.address, serialNumber, uri))
                 .to.be.revertedWith("ERC721: token already minted");
         });
     });
 
     describe("Component URI", function () {
         it("Should allow an admin/minter/owner to change component URI", async function () {
-            const {managerContract, admin, shop, customer, serialNumber} = await loadFixture(registerComponent);
+            const {managerContract, serialNumber} = await loadFixture(registerComponent);
+            const {admin, shop1, customer1} = await getSigners();
 
-            for (const account of [admin, shop, customer]) {
+            for (const account of [admin, shop1, customer1]) {
                 const uri = "https://example.com/" + serialNumber + "/" + account.address;
 
                 const action = managerContract.connect(account).setComponentURI(serialNumber, uri);
@@ -366,7 +375,8 @@ describe("BicycleComponentManager", function () {
         });
 
         it("Should not allow a third party to change component URI", async function () {
-            const {managerContract, third, serialNumber} = await loadFixture(registerComponent);
+            const {managerContract, serialNumber} = await loadFixture(registerComponent);
+            const {third} = await getSigners();
 
             const uri = "https://example.com/" + serialNumber + "/" + third.address;
 
@@ -377,7 +387,7 @@ describe("BicycleComponentManager", function () {
         });
 
         it("Should set the on-chain metadata correctly", async function () {
-            const {managerContract, customer, serialNumber} = await loadFixture(registerComponent);
+            const {managerContract, customer1, serialNumber} = await loadFixture(registerComponent);
 
             interface BikeData {
                 name: string;
@@ -388,10 +398,10 @@ describe("BicycleComponentManager", function () {
             const referenceMetadata: BikeData = {
                 name: "Scalpel HT Carbon 4",
                 description: "A hardtail with razor-sharp precision, Shimano shifting & 100mm RockShox SID fork",
-                image: "https://embed.widencdn.net/img/dorelrl/24egss6ejx/1700px@1x/C21_C25401U_Scalpel_HT_Crb_4_ARD_3Q.webp?color=f3f3f3&q=95",
+                image: "https://embed.widencdn.net/img/`dorelrl/24egss6ejx/1700px@1x/C21_C25401U_Scalpel_HT_Crb_4_ARD_3Q.webp?color=f3f3f3&q=95",
             }
 
-            const action = managerContract.connect(customer).setOnChainComponentURI(
+            const action = managerContract.connect(customer1).setOnChainComponentMetadata(
                 serialNumber, referenceMetadata.name, referenceMetadata.description, referenceMetadata.image
             );
 
@@ -411,28 +421,28 @@ describe("BicycleComponentManager", function () {
             const candidateMetadata: BikeData = decodeURI(uri);
 
             await expect(candidateMetadata).to.deep.equal(referenceMetadata);
-
-            console.log("URI: " + uri);
         });
     });
 
     describe("Component operator approval", function () {
         it("Should be false for a generic owner of a token", async function () {
-            const {managerContract, serialNumber, customer} = await loadFixture(registerComponent);
+            const {managerContract, serialNumber, customer1} = await loadFixture(registerComponent);
 
-            const isApproved = await managerContract.componentOperatorApproval(serialNumber, customer.address);
+            const isApproved = await managerContract.componentOperatorApproval(serialNumber, customer1.address);
             await expect(isApproved).to.equal(false);
         });
 
         it("Should be false for a third party", async function () {
-            const {managerContract, serialNumber, third} = await loadFixture(registerComponent);
+            const {managerContract, serialNumber} = await loadFixture(registerComponent);
+            const {third} = await getSigners();
 
             const isApproved = await managerContract.componentOperatorApproval(serialNumber, third.address);
             await expect(isApproved).to.equal(false);
         });
 
         it("Should set approval for a given operator and tokenId", async function () {
-            const {managerContract, admin, serialNumber, third} = await loadFixture(registerComponent);
+            const {managerContract, serialNumber} = await loadFixture(registerComponent);
+            const {admin, third} = await getSigners();
 
             const isApprovedBefore = await managerContract.componentOperatorApproval(serialNumber, third.address);
             await expect(isApprovedBefore).to.be.false;
@@ -444,7 +454,8 @@ describe("BicycleComponentManager", function () {
         });
 
         it("Should emit UpdatedComponentOperatorApproval event", async function () {
-            const {managerContract, admin, serialNumber, tokenId, third} = await loadFixture(registerComponent);
+            const {managerContract, serialNumber, tokenId} = await loadFixture(registerComponent);
+            const {admin, third} = await getSigners();
 
             await expect(managerContract.connect(admin).setComponentOperatorApproval(serialNumber, third.address, true))
                 .to.emit(managerContract, "UpdatedComponentOperatorApproval")
@@ -456,7 +467,8 @@ describe("BicycleComponentManager", function () {
         });
 
         it("Should allow setting approval for a non-existing component", async function () {
-            const {managerContract, deployer, third} = await loadFixture(registerComponent);
+            const {managerContract} = await loadFixture(registerComponent);
+            const {deployer, third} = await getSigners();
 
             const action = managerContract.connect(deployer).setComponentOperatorApproval("SNX", third.address, true);
 
@@ -464,7 +476,8 @@ describe("BicycleComponentManager", function () {
         });
 
         it("Should not allow setting approval for a component not managed by the sender", async function () {
-            const {managerContract, serialNumber, shop, customer, third} = await loadFixture(registerComponent);
+            const {managerContract, serialNumber} = await loadFixture(registerComponent);
+            const {shop1, customer1, third} = await getSigners();
 
             function approve(address) {
                 return managerContract.connect(third).setComponentOperatorApproval(serialNumber, address, true);
@@ -472,29 +485,24 @@ describe("BicycleComponentManager", function () {
 
             const reason = "Insufficient rights";
 
-            await expect(approve(shop.address)).to.be.revertedWith(reason);
+            await expect(approve(shop1.address)).to.be.revertedWith(reason);
             await expect(approve(third.address)).to.be.revertedWith(reason);
-            await expect(approve(customer.address)).to.be.revertedWith(reason);
+            await expect(approve(customer1.address)).to.be.revertedWith(reason);
         });
 
         it("Should allow granting approval to the component owner", async function () {
-            const {
-                managerContract,
-                componentsContract,
-                serialNumber,
-                tokenId,
-                customer
-            } = await loadFixture(registerComponent);
+            const {managerContract, componentsContract, serialNumber, tokenId} = await loadFixture(registerComponent);
+            const {customer1} = await getSigners();
 
             const ownerOf = await componentsContract.ownerOf(tokenId);
-            await expect(ownerOf).to.equal(customer.address);
+            await expect(ownerOf).to.equal(customer1.address);
 
-            const isApprovedBefore = await managerContract.componentOperatorApproval(serialNumber, customer.address);
+            const isApprovedBefore = await managerContract.componentOperatorApproval(serialNumber, customer1.address);
             await expect(isApprovedBefore).to.be.false;
 
-            await expect(managerContract.setComponentOperatorApproval(serialNumber, customer.address, true)).to.not.be.reverted;
+            await expect(managerContract.setComponentOperatorApproval(serialNumber, customer1.address, true)).to.not.be.reverted;
 
-            const isApprovedAfter = await managerContract.componentOperatorApproval(serialNumber, customer.address);
+            const isApprovedAfter = await managerContract.componentOperatorApproval(serialNumber, customer1.address);
             await expect(isApprovedAfter).to.be.true;
         });
 
@@ -504,31 +512,32 @@ describe("BicycleComponentManager", function () {
                 componentsContract,
                 serialNumber,
                 tokenId,
-                customer,
-                third
+                customer1
             } = await loadFixture(registerComponent);
 
+            const {third} = await getSigners();
+
             const ownerOf = await componentsContract.ownerOf(tokenId);
-            await expect(ownerOf).to.equal(customer.address);
+            await expect(ownerOf).to.equal(customer1.address);
 
             // Customer does not have a special role
 
             const roles = ["DEFAULT_ADMIN_ROLE", "PAUSER_ROLE", "REGISTRAR_ROLE", "UPGRADER_ROLE"];
 
             for (const role of roles) {
-                await expect(await managerContract.hasRole(managerContract[role](), customer.address)).to.be.false;
+                await expect(await managerContract.hasRole(managerContract[role](), customer1.address)).to.be.false;
             }
 
             // Initially, neither customer nor third are approved operators
-            await expect(await managerContract.componentOperatorApproval(serialNumber, customer.address)).to.be.false;
+            await expect(await managerContract.componentOperatorApproval(serialNumber, customer1.address)).to.be.false;
             await expect(await managerContract.componentOperatorApproval(serialNumber, third.address)).to.be.false;
 
             // Customer grants approval to third
-            await managerContract.connect(customer).setComponentOperatorApproval(serialNumber, third.address, true);
+            await managerContract.connect(customer1).setComponentOperatorApproval(serialNumber, third.address, true);
             await expect(await managerContract.componentOperatorApproval(serialNumber, third.address)).to.be.true;
 
             // Customer revokes approval from third
-            await managerContract.connect(customer).setComponentOperatorApproval(serialNumber, third.address, false);
+            await managerContract.connect(customer1).setComponentOperatorApproval(serialNumber, third.address, false);
             await expect(await managerContract.componentOperatorApproval(serialNumber, third.address)).to.be.false;
         });
 
@@ -539,29 +548,30 @@ describe("BicycleComponentManager", function () {
                 managerContract,
                 serialNumber,
                 tokenId,
-                shop,
-                customer,
-                third
+                shop1,
+                customer1
             } = await loadFixture(registerComponent);
 
+            const {third} = await getSigners();
+
             // Initially, `shop` has approval
-            await expect(await managerContract.componentOperatorApproval(serialNumber, shop.address)).to.be.true;
+            await expect(await managerContract.componentOperatorApproval(serialNumber, shop1.address)).to.be.true;
 
             // For example, `shop` can mark the component as missing
-            const action1 = managerContract.connect(shop).setMissingStatus(serialNumber, true);
+            const action1 = managerContract.connect(shop1).setMissingStatus(serialNumber, true);
             await expect(action1).not.to.be.reverted;
 
             // Customer gives approval to `third`
-            await managerContract.connect(customer).setComponentOperatorApproval(serialNumber, third.address, true);
+            await managerContract.connect(customer1).setComponentOperatorApproval(serialNumber, third.address, true);
 
             // Approval of `shop` is revoked by `third`
-            await managerContract.connect(third).setComponentOperatorApproval(serialNumber, shop.address, false);
+            await managerContract.connect(third).setComponentOperatorApproval(serialNumber, shop1.address, false);
 
             // Now, `shop` does not have approval
-            await expect(await managerContract.componentOperatorApproval(tokenId, shop.address)).to.be.false;
+            await expect(await managerContract.componentOperatorApproval(tokenId, shop1.address)).to.be.false;
 
             // For example, `shop` can no longer mark the component as missing
-            const action2 = managerContract.connect(shop).setMissingStatus(serialNumber, true);
+            const action2 = managerContract.connect(shop1).setMissingStatus(serialNumber, true);
             await expect(action2).to.be.revertedWith("Insufficient rights");
         });
 
@@ -569,14 +579,15 @@ describe("BicycleComponentManager", function () {
             const {
                 managerContract,
                 componentsContract,
-                customer,
-                third,
+                customer1,
                 serialNumber,
                 tokenId
             } = await loadFixture(registerComponent);
 
+            const {third} = await getSigners();
+
             // Customer gives approval to `third`
-            await managerContract.connect(customer).setComponentOperatorApproval(serialNumber, third.address, true);
+            await managerContract.connect(customer1).setComponentOperatorApproval(serialNumber, third.address, true);
 
             // `third` performs the transfer
             await managerContract.connect(third).transfer(serialNumber, third.address);
@@ -593,15 +604,15 @@ describe("BicycleComponentManager", function () {
                 managerContract,
                 componentsContract,
                 serialNumber,
-                customer,
-                third,
                 tokenId
             } = await loadFixture(registerComponent);
 
-            const ownerBefore = await componentsContract.ownerOf(tokenId);
-            await expect(ownerBefore).to.equal(customer.address);
+            const {customer1, third} = await getSigners();
 
-            await managerContract.connect(customer).transfer(serialNumber, third.address);
+            const ownerBefore = await componentsContract.ownerOf(tokenId);
+            await expect(ownerBefore).to.equal(customer1.address);
+
+            await managerContract.connect(customer1).transfer(serialNumber, third.address);
 
             const ownerAfter = await componentsContract.ownerOf(tokenId);
             await expect(ownerAfter).to.equal(third.address);
@@ -612,20 +623,22 @@ describe("BicycleComponentManager", function () {
                 managerContract,
                 componentsContract,
                 serialNumber,
-                customer,
-                third,
+                customer1,
                 tokenId
             } = await loadFixture(registerComponent);
 
-            await expect(managerContract.connect(customer).transfer(serialNumber, third.address))
+            const {third} = await getSigners();
+
+            await expect(managerContract.connect(customer1).transfer(serialNumber, third.address))
                 .to.emit(componentsContract, "Transfer")
-                .withArgs(customer.address, third.address, tokenId);
+                .withArgs(customer1.address, third.address, tokenId);
         });
 
         it("Should emit a ComponentTransferred event after a successful transfer", async function () {
-            const {managerContract, serialNumber, customer, third, tokenId} = await loadFixture(registerComponent);
+            const {managerContract, serialNumber, tokenId} = await loadFixture(registerComponent);
+            const {customer1, third} = await getSigners();
 
-            await expect(managerContract.connect(customer).transfer(serialNumber, third.address))
+            await expect(managerContract.connect(customer1).transfer(serialNumber, third.address))
                 .to.emit(managerContract, "ComponentTransferred")
                 .withArgs(serialNumber, tokenId, third.address);
         });
@@ -634,14 +647,13 @@ describe("BicycleComponentManager", function () {
             const {
                 managerContract,
                 componentsContract,
-                admin,
-                customer,
                 serialNumber,
-                third,
                 tokenId
             } = await loadFixture(registerComponent);
 
-            await expect(await componentsContract.ownerOf(tokenId)).to.equal(customer.address);
+            const {customer1, third, admin} = await getSigners();
+
+            await expect(await componentsContract.ownerOf(tokenId)).to.equal(customer1.address);
 
             const action = managerContract.connect(admin).transfer(serialNumber, third.address);
             await expect(action).to.emit(componentsContract, "Transfer");
@@ -650,7 +662,8 @@ describe("BicycleComponentManager", function () {
         });
 
         it("Should fail if the serial number does not map to an existing token", async function () {
-            const {managerContract, third, admin} = await loadFixture(registerComponent);
+            const {managerContract} = await loadFixture(registerComponent);
+            const {third, admin} = await getSigners();
 
             const invalidSerialNumber = "SN_INVALID_007";
 
@@ -660,7 +673,8 @@ describe("BicycleComponentManager", function () {
         });
 
         it("Should not allow a third party to transfer a token", async function () {
-            const {managerContract, serialNumber, third} = await loadFixture(registerComponent);
+            const {managerContract, serialNumber} = await loadFixture(registerComponent);
+            const {third} = await getSigners();
 
             const action = managerContract.connect(third).transfer(serialNumber, third.address)
 
@@ -672,9 +686,10 @@ describe("BicycleComponentManager", function () {
                 managerContract,
                 componentsContract,
                 serialNumber,
-                third,
                 tokenId
             } = await loadFixture(registerComponent);
+
+            const {third} = await getSigners();
 
             await managerContract.setComponentOperatorApproval(serialNumber, third.address, true);
             await managerContract.connect(third).transfer(serialNumber, third.address);
@@ -682,18 +697,12 @@ describe("BicycleComponentManager", function () {
         });
 
         it("Should leave operator approval with the minter after transfer", async function () {
-            const {
-                managerContract,
-                serialNumber,
-                shop,
-                customer,
-                third,
-                tokenId
-            } = await loadFixture(registerComponent);
+            const {managerContract, serialNumber} = await loadFixture(registerComponent);
+            const {shop1, customer1, third} = await getSigners();
 
-            await managerContract.connect(customer).transfer(serialNumber, third.address);
+            await managerContract.connect(customer1).transfer(serialNumber, third.address);
 
-            const isApproved = await managerContract.componentOperatorApproval(serialNumber, shop.address);
+            const isApproved = await managerContract.componentOperatorApproval(serialNumber, shop1.address);
             await expect(isApproved).to.equal(true);
         });
     });
@@ -705,10 +714,10 @@ describe("BicycleComponentManager", function () {
         });
 
         it("Should allow the owner to set the missing status of a component", async function () {
-            const {managerContract, serialNumber, customer} = await loadFixture(registerComponent);
+            const {managerContract, serialNumber, customer1} = await loadFixture(registerComponent);
             await expect(await managerContract.missingStatus(serialNumber)).to.be.false;
 
-            await managerContract.connect(customer).setMissingStatus(serialNumber, true);
+            await managerContract.connect(customer1).setMissingStatus(serialNumber, true);
             await expect(await managerContract.missingStatus(serialNumber)).to.be.true;
         });
 
@@ -721,49 +730,53 @@ describe("BicycleComponentManager", function () {
         });
 
         it("Should not allow the previous owner to set the missing status", async function () {
-            const {managerContract, serialNumber, customer, third} = await loadFixture(registerComponent);
+            const {managerContract, serialNumber} = await loadFixture(registerComponent);
+            const {customer1, third} = await getSigners();
 
             // Transfer to `third`
-            await managerContract.connect(customer).transfer(serialNumber, third.address);
+            await managerContract.connect(customer1).transfer(serialNumber, third.address);
 
             // Previous owner tries to set the missing status
-            const action = managerContract.connect(customer).setMissingStatus(serialNumber, true);
+            const action = managerContract.connect(customer1).setMissingStatus(serialNumber, true);
             await expect(action).to.be.revertedWith("Insufficient rights");
         });
 
         it("Should allow the minter to set the missing status even after transfer", async function () {
-            const {managerContract, serialNumber, shop, customer, third} = await loadFixture(registerComponent);
+            const {managerContract, serialNumber} = await loadFixture(registerComponent);
+            const {shop1, customer1, third} = await getSigners();
 
             // Transfer to `third`
-            await managerContract.connect(customer).transfer(serialNumber, third.address);
+            await managerContract.connect(customer1).transfer(serialNumber, third.address);
 
             // Minter tries to set the missing status
-            await managerContract.connect(shop).setMissingStatus(serialNumber, true);
+            await managerContract.connect(shop1).setMissingStatus(serialNumber, true);
             await expect(await managerContract.missingStatus(serialNumber)).to.be.true;
         });
 
         it("Should not allow another minter to set the missing status", async function () {
-            const {managerContract, serialNumber, admin, third: another_shop} = await loadFixture(registerComponent);
+            const {managerContract, serialNumber} = await loadFixture(registerComponent);
+            const {admin, shop2} = await getSigners();
 
             // Grant `another_shop` the minter role
-            await managerContract.connect(admin).grantRole(managerContract.REGISTRAR_ROLE(), another_shop.address);
+            await managerContract.connect(admin).grantRole(managerContract.REGISTRAR_ROLE(), shop2.address);
 
             // `another_shop` does not have operator approval for this component
-            const isApproved = await managerContract.componentOperatorApproval(serialNumber, another_shop.address);
+            const isApproved = await managerContract.componentOperatorApproval(serialNumber, shop2.address);
             await expect(isApproved).to.be.false;
 
-            const action = managerContract.connect(another_shop).setMissingStatus(serialNumber, true);
+            const action = managerContract.connect(shop2).setMissingStatus(serialNumber, true);
             await expect(action).to.be.revertedWith("Insufficient rights");
         });
 
         it("Should not allow the minter to set status if the customer has revoked approval", async function () {
-            const {managerContract, admin, shop, customer, serialNumber} = await loadFixture(registerComponent);
+            const {managerContract, serialNumber} = await loadFixture(registerComponent);
+            const {admin, shop1, customer1} = await getSigners();
 
             // Current owner revokes the minter's approval
-            await managerContract.connect(customer).setComponentOperatorApproval(serialNumber, shop.address, false);
+            await managerContract.connect(customer1).setComponentOperatorApproval(serialNumber, shop1.address, false);
 
             // Minter tries to set the missing status
-            await expect(managerContract.connect(shop).setMissingStatus(serialNumber, true))
+            await expect(managerContract.connect(shop1).setMissingStatus(serialNumber, true))
                 .to.be.revertedWith("Insufficient rights");
 
             // But an admin can still set the missing status
@@ -772,9 +785,9 @@ describe("BicycleComponentManager", function () {
         });
 
         it("Should emit a UpdatedMissingStatus after a successful update", async function () {
-            const {managerContract, serialNumber, tokenId, customer} = await loadFixture(registerComponent);
+            const {managerContract, serialNumber, tokenId, customer1} = await loadFixture(registerComponent);
 
-            await expect(managerContract.connect(customer).setMissingStatus(serialNumber, true))
+            await expect(managerContract.connect(customer1).setMissingStatus(serialNumber, true))
                 .to.emit(managerContract, "UpdatedMissingStatus")
                 .withArgs(serialNumber, tokenId, true);
         });
@@ -782,7 +795,8 @@ describe("BicycleComponentManager", function () {
 
     describe("Account info", async function () {
         it("Should allow to set own account info", async function () {
-            const {managerContract, third} = await loadFixture(registerComponent);
+            const {managerContract} = await loadFixture(registerComponent);
+            const {third} = await getSigners();
 
             const info = `My account (${third.address})`;
 
@@ -794,20 +808,22 @@ describe("BicycleComponentManager", function () {
         });
 
         it("Should not allow a generic user to set other's info", async function () {
-            const {managerContract, customer, third} = await loadFixture(registerComponent);
+            const {managerContract} = await loadFixture(registerComponent);
+            const {customer1, third} = await getSigners();
 
             const info = `My account (${third.address})`;
-            const action = managerContract.connect(customer).setAccountInfo(third.address, info);
+            const action = managerContract.connect(customer1).setAccountInfo(third.address, info);
 
             await expect(action).to.be.revertedWith("Insufficient rights");
         });
 
         it("Should allow an admin or minter to set other's info", async function () {
-            const {managerContract, deployer, admin, shop, third} = await loadFixture(registerComponent);
+            const {managerContract, deployer} = await loadFixture(registerComponent);
+            const {admin, shop1, third} = await getSigners();
 
             const info = `My account (${third.address})`;
 
-            for (const account of [deployer, admin, shop]) {
+            for (const account of [deployer, admin, shop1]) {
                 const action = managerContract.connect(account).setAccountInfo(third.address, info);
                 await expect(action).to.emit(managerContract, "AccountInfoSet");
             }
