@@ -44,7 +44,7 @@ async function main() {
         await report(componentsContract).catch(e => console.log("Error:", e));
     }
 
-    // Then deploy the manager contract
+    // Then get or deploy the manager contract
     let managerContract;
     {
         const deployedAddress = deployed[getNetworkName(chainId)]?.BicycleComponentManager;
