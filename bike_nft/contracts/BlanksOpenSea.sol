@@ -67,7 +67,7 @@ abstract contract BlanksBase is Initializable, ERC1155Upgradeable, AccessControl
     // The following functions are overrides required by Solidity.
 
     function _beforeTokenTransfer(address operator, address from, address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data)
-    internal
+    internal virtual
     whenNotPaused
     override(ERC1155Upgradeable, ERC1155SupplyUpgradeable)
     {
@@ -93,9 +93,14 @@ contract BlanksOpenSea is BlanksBase {
 
     address public bicycleComponentManager;
 
-    mapping (uint256 => string) public customTokenURI;
+    mapping(uint256 => string) public customTokenURI;
 
-    uint256 public constant MY_BLANK_NFT_TOKEN_ID = 0x0000000000000000000000000000000AFADEDFACEFACADE0FADEAFBA0BABB0B0;
+    // 0x0000000000000000000000000000000AFADEDFACEFACADE0FADEAFBA0BABB0B0
+
+    uint256 public constant BLANK_NFT_TOKEN_ID_A = 1;
+    uint256 public constant BLANK_NFT_TOKEN_ID_B = 2;
+    uint256 public constant BLANK_NFT_TOKEN_ID_C = 3;
+    uint256 public constant BLANK_NFT_TOKEN_ID_D = 4;
 
     event Registered(address indexed tokenOwner, string indexed serialNumber, string tokenURI);
 
@@ -103,7 +108,7 @@ contract BlanksOpenSea is BlanksBase {
         BlanksBase.initialize();
         owner = msg.sender;
 
-        _mint(msg.sender, MY_BLANK_NFT_TOKEN_ID, 10_000, "");
+        _mint(msg.sender, BLANK_NFT_TOKEN_ID_B, 1_000, "");
     }
 
     // https://support.opensea.io/hc/en-us/articles/4403934341907-How-do-I-import-my-contract-automatically-
@@ -134,23 +139,81 @@ contract BlanksOpenSea is BlanksBase {
         return super.uri(id);
     }
 
+    // Prevent transfers of privileged tokens, except by an admin
+
+    function _isPrivilegedToken(uint256 id) internal pure returns (bool) {
+        return (id == BLANK_NFT_TOKEN_ID_A) || (id == BLANK_NFT_TOKEN_ID_B) || (id == BLANK_NFT_TOKEN_ID_C);
+    }
+
+    function _beforeTokenTransfer(address operator, address from, address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data)
+    internal virtual override
+    {
+        if (hasRole(DEFAULT_ADMIN_ROLE, operator) || (to == address(0))) {
+            // This is ok
+        } else {
+            // Check for privileged token transfer
+            for (uint256 i = 0; i < ids.length; ++i) {
+                require(!_isPrivilegedToken(ids[i]), "Transfer of privileged token");
+            }
+        }
+
+        super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
+    }
+
+    function isApprovedForAll(address _owner, address operator) public view override returns (bool) {
+        if (hasRole(DEFAULT_ADMIN_ROLE, operator)) {
+            return true;
+        }
+
+        return super.isApprovedForAll(_owner, operator);
+    }
+
+    function _tokenAuthority(uint256 tokenId) internal pure returns (string memory) {
+        if (tokenId == BLANK_NFT_TOKEN_ID_A) {
+            return "A";
+        } else if (tokenId == BLANK_NFT_TOKEN_ID_B) {
+            return "B";
+        } else if (tokenId == BLANK_NFT_TOKEN_ID_C) {
+            return "C";
+        } else if (tokenId == BLANK_NFT_TOKEN_ID_D) {
+            return "D";
+        } else {
+            return "N/A";
+        }
+    }
+
     // Blank conversion to NFT
 
+    function _refund(uint256 got, uint256 expected, address to) internal {
+        if (got > expected) {
+            uint256 refundAmount = got - expected;
+
+            bool refundSuccess = payable(to).send(refundAmount);
+            // Alternative:
+            // (bool refundSuccess, ) = payable(msg.sender).call{value: refundAmount}("");
+
+            require(refundSuccess, "BlanksOpenSea: Failed to refund excess value");
+        }
+    }
+
     // Register a bicycle serial number with the BicycleComponentManager
-    function register(string memory serialNumber, string memory name, string memory description, string memory imageURL)
+    function register(uint256 tokenId, string memory serialNumber, string memory name, string memory description, string memory imageURL)
     public payable
     {
         require(bicycleComponentManager != address(0), "BicycleComponentManager not set");
 
         address tokenOwner = msg.sender;
 
-        uint256 balance = balanceOf(tokenOwner, MY_BLANK_NFT_TOKEN_ID);
-        require(balance > 0, "Insufficient blank token balance");
+        uint256 balance = balanceOf(tokenOwner, tokenId);
+        require(balance > 0, "Insufficient token balance");
 
-        // create an empty string array
-        string[] memory empty = new string[](0);
+        string[] memory attrT = new string[](1);
+        string[] memory attrV = new string[](1);
 
-        string memory tokenURI = string("").stringifyOnChainMetadata(name, description, imageURL, empty, empty).packJSON();
+        attrT[0] = "Authority";
+        attrV[0] = _tokenAuthority(tokenId);
+
+        string memory tokenURI = string("").stringifyOnChainMetadata(name, description, imageURL, attrT, attrV).packJSON();
 
         uint256 forwardAmount = msg.value;
         uint256 balanceBefore = address(this).balance; // includes the forwardAmount received
@@ -162,7 +225,7 @@ contract BlanksOpenSea is BlanksBase {
 
         // BicycleComponentManager should mint a token for the owner in its
         // managed BicycleComponent NFT contract, so we burn the token here
-        _burn(tokenOwner, MY_BLANK_NFT_TOKEN_ID, 1);
+        _burn(tokenOwner, tokenId, 1);
 
         // Event
         emit Registered(tokenOwner, serialNumber, tokenURI);
@@ -172,15 +235,7 @@ contract BlanksOpenSea is BlanksBase {
         uint256 balanceAfter = address(this).balance;
         uint256 expectedBalanceAfter = balanceBefore - forwardAmount;
 
-        if (balanceAfter > expectedBalanceAfter) {
-            uint256 refundAmount = balanceAfter - expectedBalanceAfter;
-
-            bool refundSuccess = payable(msg.sender).send(refundAmount);
-            // Alternative:
-            // (bool refundSuccess, ) = payable(msg.sender).call{value: refundAmount}("");
-
-            require(refundSuccess, "BlanksOpenSea: Failed to refund excess value");
-        }
+        _refund(balanceAfter, expectedBalanceAfter, tokenOwner);
     }
 
     // Fallback & withdraw
