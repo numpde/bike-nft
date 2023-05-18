@@ -97,8 +97,8 @@ describe("Blanks", function () {
             const privilegedTokenId = blanks.BLANK_NFT_TOKEN_ID_B();
             const amount = 10;
 
-            const action = blanks.connect(deployer).mint(shop1.address, privilegedTokenId, amount, "0x");
-            await expect(action).not.to.be.reverted;
+            const action1 = blanks.connect(deployer).mint(shop1.address, privilegedTokenId, amount, "0x");
+            await expect(action1).not.to.be.reverted;
 
             const action2 = blanks.connect(shop1).safeTransferFrom(shop1.address, third.address, privilegedTokenId, 1, "0x");
             await expect(action2).to.be.revertedWith("Transfer of privileged token");
