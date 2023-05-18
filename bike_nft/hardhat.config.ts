@@ -81,7 +81,7 @@ const deployed = {
     mumbai: {
         BicycleComponentManager: "0x5aec9a71fd38a6234ce6a2fade9b693dd8466c9b",
         BicycleComponents: "0x52b371e38cdcd877e347e45d7d231f384d68599c",
-        BlanksOpenSea: "0x3caA6445BCc33750791d587B0995c4063E80B326",
+        // BlanksOpenSea: "0x3caA6445BCc33750791d587B0995c4063E80B326",
     },
     ganache: {
         BicycleComponentManager: "0xa0cE34473EC9FC0F50AD11b00377dBd48F4BBdd6",

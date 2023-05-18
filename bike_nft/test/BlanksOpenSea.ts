@@ -90,21 +90,36 @@ describe("Blanks", function () {
             await expect(action2).not.to.be.reverted;
         });
 
-        it("Should not allow transfer of a privileged token, unless by an admin", async function () {
+        it("Should not allow transfer of a privileged token, in general", async function () {
             const {blanks} = await loadFixture(deployBlanksFixture);
             const {deployer, shop1, third} = await getSigners();
 
             const privilegedTokenId = blanks.BLANK_NFT_TOKEN_ID_B();
             const amount = 10;
 
+            // mint
             const action1 = blanks.connect(deployer).mint(shop1.address, privilegedTokenId, amount, "0x");
             await expect(action1).not.to.be.reverted;
 
+            // shop fails to transfer to a third party
             const action2 = blanks.connect(shop1).safeTransferFrom(shop1.address, third.address, privilegedTokenId, 1, "0x");
             await expect(action2).to.be.revertedWith("Transfer of privileged token");
 
+            // admin can transfer to a third party
             const action3 = blanks.connect(deployer).safeTransferFrom(shop1.address, third.address, privilegedTokenId, 1, "0x");
             await expect(action3).not.to.be.reverted;
+
+            // shop can burn the token, though
+            // (untested)
+
+            // approve an operator for deployer's tokens
+            const action5 = blanks.connect(deployer).setApprovalForAll(third.address, true);
+            await expect(action5).not.to.be.reverted;
+
+            // approved operator can transfer from deployer because deployer has the MINTER_ROLE
+            const action6 = blanks.connect(third).safeTransferFrom(deployer.address, third.address, privilegedTokenId, 1, "0x");
+            await expect(action6).not.to.be.reverted;
+
         });
     });
 

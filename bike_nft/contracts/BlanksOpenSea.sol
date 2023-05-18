@@ -148,10 +148,19 @@ contract BlanksOpenSea is BlanksBase {
     function _beforeTokenTransfer(address operator, address from, address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data)
     internal virtual override
     {
-        if (hasRole(DEFAULT_ADMIN_ROLE, operator) || (to == address(0))) {
+        if (
+            // An admin can transfer any token
+            hasRole(DEFAULT_ADMIN_ROLE, operator) ||
+            // Any approved operator can burn any token
+            (to == address(0)) ||
+            // An approved operator can transfer any token from a minter
+            hasRole(MINTER_ROLE, from)
+        ) {
+            //
             // This is ok
+            //
         } else {
-            // Check for privileged token transfer
+            // Otherwise we check for privileged token transfer
             for (uint256 i = 0; i < ids.length; ++i) {
                 require(!isPrivilegedToken(ids[i]), "Transfer of privileged token");
             }
