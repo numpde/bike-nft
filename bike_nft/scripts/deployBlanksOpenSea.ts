@@ -86,7 +86,8 @@ async function main() {
             const balance = await blanksContract.balanceOf(deployer.address, tokenId);
 
             if (balance == 0) {
-                await execute(await blanksContract.mint(deployer.address, tokenId, 10, "0x"));
+                const amount = isPrivileged ? 1000 : 10_000;
+                await execute(await blanksContract.mint(deployer.address, tokenId, amount, "0x"));
             }
         }
     }
