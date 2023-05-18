@@ -3,6 +3,7 @@ import {deployed, ipfsBasePath} from "../hardhat.config";
 
 import {execute, getNetworkName, getMostRecent, packJSON} from "../utils/utils";
 import {report} from "./deployBicycleComponentManager";
+import {getAddress} from "ethers/lib/utils";
 
 
 async function main() {
@@ -40,12 +41,12 @@ async function main() {
     {
         console.log("Linking contracts...");
 
-        if (await blanksContract.bicycleComponentManager() != managerContract.address) {
+        if (getAddress(await blanksContract.bicycleComponentManager()) != getAddress(managerContract.address)) {
             console.log("Linking BlanksOpenSea to BicycleComponentManager...");
             await execute(await blanksContract.setBicycleComponentManager(managerContract.address));
         }
 
-        if (!await managerContract.hasRole(managerContract.REGISTRAR_ROLE(), blanksContract.address)) {
+        if (!(await managerContract.hasRole(managerContract.REGISTRAR_ROLE(), blanksContract.address))) {
             console.log("Granting BlanksOpenSea registrar role...");
             await execute(await managerContract.grantRole(managerContract.REGISTRAR_ROLE(), blanksContract.address));
         }
