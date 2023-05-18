@@ -47,7 +47,7 @@ async function main() {
         }
 
         if (!(await managerContract.hasRole(managerContract.REGISTRAR_ROLE(), blanksContract.address))) {
-            console.log("Granting BlanksOpenSea registrar role...");
+            console.log("Granting BlanksOpenSea the registrar role...");
             await execute(await managerContract.grantRole(managerContract.REGISTRAR_ROLE(), blanksContract.address));
         }
     }
