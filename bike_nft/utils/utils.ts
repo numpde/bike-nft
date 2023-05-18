@@ -23,8 +23,15 @@ export async function execute(tx) {
     console.log(`Transaction status: ${receipt.status}`);
 }
 
-async function getMostRecent(path): Promise<any> {
+export async function getMostRecent(path): Promise<any> {
     const files = glob.sync(path).sort();
+    if (files.length == 0) {
+        throw new Error('No files found in ' + path)
+    }
     const file = files[files.length - 1];
     return JSON.parse(fs.readFileSync(file, 'utf-8'));
+}
+
+export async function packJSON(data) {
+    return "data:application/json;base64," + Buffer.from(JSON.stringify(data)).toString('base64');
 }

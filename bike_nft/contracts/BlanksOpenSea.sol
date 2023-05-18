@@ -89,6 +89,8 @@ contract BlanksOpenSea is BlanksBase {
     using Utils for string;
 
     address public owner;
+    string public contractURI;
+
     address public bicycleComponentManager;
 
     mapping (uint256 => string) public customTokenURI;
@@ -107,6 +109,11 @@ contract BlanksOpenSea is BlanksBase {
     // https://support.opensea.io/hc/en-us/articles/4403934341907-How-do-I-import-my-contract-automatically-
     function claimOwnership() public onlyRole(DEFAULT_ADMIN_ROLE) {
         owner = msg.sender;
+    }
+
+    // https://docs.opensea.io/docs/contract-level-metadata
+    function setContractURI(string memory newURI) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        contractURI = newURI;
     }
 
     function setBicycleComponentManager(address bcmAddress) public onlyRole(DEFAULT_ADMIN_ROLE) {

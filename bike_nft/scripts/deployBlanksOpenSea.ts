@@ -1,7 +1,7 @@
 import {ethers, upgrades} from "hardhat";
-import {deployed} from "../hardhat.config";
+import {deployed, ipfsBasePath} from "../hardhat.config";
 
-import {execute, getNetworkName} from "../utils/utils";
+import {execute, getNetworkName, getMostRecent, packJSON} from "../utils/utils";
 import {report} from "./deployBicycleComponentManager";
 
 
@@ -40,8 +40,33 @@ async function main() {
     {
         console.log("Linking contracts...");
 
-        await execute(await blanksContract.setBicycleComponentManager(managerContract.address));
-        await execute(await managerContract.grantRole(managerContract.REGISTRAR_ROLE(), blanksContract.address));
+        if (await blanksContract.bicycleComponentManager() != managerContract.address) {
+            console.log("Linking BlanksOpenSea to BicycleComponentManager...");
+            await execute(await blanksContract.setBicycleComponentManager(managerContract.address));
+        }
+
+        if (!await managerContract.hasRole(managerContract.REGISTRAR_ROLE(), blanksContract.address)) {
+            console.log("Granting BlanksOpenSea registrar role...");
+            await execute(await managerContract.grantRole(managerContract.REGISTRAR_ROLE(), blanksContract.address));
+        }
+    }
+
+    // URIs
+    {
+        console.log("Setting URIs...");
+
+        const image_manifest = await getMostRecent("data/*blanks_nft_image/manifest*.json");
+
+        const metadata = {
+            "name": "Blank NFT",
+            "description": "To register your bike, use the contract's `register` function.",
+            "image": `${ipfsBasePath}${image_manifest.files[0].Hash}`,
+        }
+
+        const uri = packJSON(metadata);
+
+        const TOKEN_ID = blanksContract.MY_BLANK_NFT_TOKEN_ID();
+        await execute(await blanksContract.setCustomTokenURI(TOKEN_ID, uri));
     }
 }
 
