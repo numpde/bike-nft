@@ -86,7 +86,7 @@ const deployed = {
     ganache: {
         BicycleComponentManager: "0xa0cE34473EC9FC0F50AD11b00377dBd48F4BBdd6",
         BicycleComponents: "0x9592eC44622Ff441561F388a6CCc6D3e67B5fBF2",
-        BlanksOpenSea: "0x50C2e59E4059aBeeEf98960C9c44a5f56Bf2d8f0",
+        BlanksOpenSea: "0x0A4B82eADd12759B30bDe96F992bD1153b5e8dEA",
     },
 };
 

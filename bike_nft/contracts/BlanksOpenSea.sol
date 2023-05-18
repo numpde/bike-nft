@@ -141,7 +141,7 @@ contract BlanksOpenSea is BlanksBase {
 
     // Prevent transfers of privileged tokens, except by an admin
 
-    function _isPrivilegedToken(uint256 id) internal pure returns (bool) {
+    function isPrivilegedToken(uint256 id) public pure returns (bool) {
         return (id == BLANK_NFT_TOKEN_ID_A) || (id == BLANK_NFT_TOKEN_ID_B) || (id == BLANK_NFT_TOKEN_ID_C);
     }
 
@@ -153,7 +153,7 @@ contract BlanksOpenSea is BlanksBase {
         } else {
             // Check for privileged token transfer
             for (uint256 i = 0; i < ids.length; ++i) {
-                require(!_isPrivilegedToken(ids[i]), "Transfer of privileged token");
+                require(!isPrivilegedToken(ids[i]), "Transfer of privileged token");
             }
         }
 

@@ -52,22 +52,43 @@ async function main() {
         }
     }
 
-    // URIs
+    // URIs and minting
     {
-        console.log("Setting URIs...");
+        console.log("Setting URIs and minting...");
 
-        const image_manifest = await getMostRecent("data/*blanks_nft_image/manifest*.json");
+        const imageManifest = await getMostRecent("data/*blanks_nft_image/manifest*.json");
 
-        const metadata = {
-            "name": "Blank NFT",
-            "description": "To register your bike, use the contract's `register` function.",
-            "image": `${ipfsBasePath}${image_manifest.files[0].Hash}`,
+        const authorities = ["A", "B", "C", "D"];
+
+        for (const authority of authorities) {
+            const tokenId = await blanksContract[`BLANK_NFT_TOKEN_ID_${authority}`]();
+            const isPrivileged = await blanksContract.isPrivilegedToken(tokenId);
+
+            const description = isPrivileged ?
+                "To register a bike, use the contract's `register` function. This NFT is generally non-transferable." :
+                "To register your bike, use the contract's `register` function.";
+
+            const ipfsImageHash = imageManifest.files.find(x => (authority == x.Name));
+
+            const metadata = {
+                "name": `Blank NFT (${authority})`,
+                "description": description,
+                "image": `${ipfsBasePath}${ipfsImageHash.Hash}`,
+            };
+
+            const uri = await packJSON(metadata);
+
+            if ((await blanksContract.uri(tokenId)) != uri) {
+                await execute(await blanksContract.setCustomTokenURI(tokenId, uri));
+            }
+
+            // deployer balance
+            const balance = await blanksContract.balanceOf(deployer.address, tokenId);
+
+            if (balance == 0) {
+                await execute(await blanksContract.mint(deployer.address, tokenId, 10, "0x"));
+            }
         }
-
-        const uri = packJSON(metadata);
-
-        const TOKEN_ID = blanksContract.MY_BLANK_NFT_TOKEN_ID();
-        await execute(await blanksContract.setCustomTokenURI(TOKEN_ID, uri));
     }
 }
 
