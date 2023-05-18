@@ -77,6 +77,7 @@ const deployed = {
     polygon: {
         BicycleComponentManager: "0xd7334783B80B31Cf039fE615169B1f513d8d84ED",
         BicycleComponents: "0x8DdF2e56DbBE7cF86e6cC2EA2c473Ca66654dCAA",
+        BlanksOpenSea: "0xa5a281d3EE4840c984d82e7B8fe4E28800D38655",
     },
     mumbai: {
         BicycleComponentManager: "0x5aec9a71fd38a6234ce6a2fade9b693dd8466c9b",
