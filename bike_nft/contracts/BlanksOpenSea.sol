@@ -269,6 +269,7 @@ contract BlanksOpenSea is BlanksBase {
 
         string memory tokenURI = string("").stringifyOnChainMetadata(name, description, imageURL, attrT, attrV).packJSON();
 
+        // todo: ditch refund
         uint256 forwardAmount = msg.value;
         uint256 balanceBefore = address(this).balance; // includes the forwardAmount received
 
