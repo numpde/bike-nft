@@ -26,7 +26,7 @@ abstract contract BlanksBase is Initializable, ERC1155Upgradeable, AccessControl
     function initialize() initializer public virtual {
         __ERC1155_init("");
         __AccessControl_init();
-        __Pausable_init();
+        __`Pausable_init();
         __ERC1155Burnable_init();
         __ERC1155Supply_init();
         __UUPSUpgradeable_init();
@@ -149,7 +149,7 @@ contract BlanksOpenSea is BlanksBase {
     internal virtual override
     {
         if (
-            // An admin can transfer any token
+        // An admin can transfer any token
             hasRole(DEFAULT_ADMIN_ROLE, operator) ||
             // Any approved operator can burn any token
             (to == address(0)) ||
@@ -162,7 +162,7 @@ contract BlanksOpenSea is BlanksBase {
         } else {
             // Otherwise we check for privileged token transfer
             for (uint256 i = 0; i < ids.length; ++i) {
-                require(!isPrivilegedToken(ids[i]), "Transfer of privileged token");
+                require(!isPrivilegedToken(ids[i]), "BlanksOpenSea: Transfer of privileged token");
             }
         }
 
@@ -191,7 +191,7 @@ contract BlanksOpenSea is BlanksBase {
         }
     }
 
-    // Blank conversion to NFT
+    // Conversion of a Blank to an NFT via the BicycleComponentManager
 
     function _refund(uint256 got, uint256 expected, address to) internal {
         if (got > expected) {
@@ -205,13 +205,49 @@ contract BlanksOpenSea is BlanksBase {
         }
     }
 
-    // Register a bicycle serial number with the BicycleComponentManager
+    // @notice Attempt to register a bicycle serial number with the BicycleComponentManager for `msg.sender`.
     function register(uint256 tokenId, string memory serialNumber, string memory name, string memory description, string memory imageURL)
     public payable
     {
-        require(bicycleComponentManager != address(0), "BicycleComponentManager not set");
-
+        // Note: we don't use _msgSender() here because we are not checking
+        // for a trusted forwarder in case of a meta-transaction.
         address tokenOwner = msg.sender;
+
+        _register(tokenOwner, tokenId, serialNumber, name, description, imageURL);
+    }
+
+    // @notice For registration by another contract (proxy), such as a BlanksUI.
+    // This proxy must be an approved `msg.sender`.
+    function registerFromProxy(
+        address tokenOwner,
+        uint256 blankTokenId,
+        string memory registerSerialNumber,
+        string memory registerName,
+        string memory registerDescription,
+        string memory registerImageURL
+    )
+    public payable
+    {
+        // First, check that the call is from a trusted source.
+        // ...
+        require(false, "Not a trusted caller");
+
+        _register(tokenOwner, blankTokenId, registerSerialNumber, registerName, registerDescription, registerImageURL);
+    }
+
+    // @notice Register a bicycle serial number with the BicycleComponentManager.
+    // The tokenOwner must be the owner of the Blank NFT (tokenId).
+    function _register(
+        address tokenOwner,
+        uint256 tokenId,
+        string memory serialNumber,
+        string memory name,
+        string memory description,
+        string memory imageURL
+    )
+    internal
+    {
+        require(bicycleComponentManager != address(0), "BlanksOpenSea: BicycleComponentManager not set");
 
         uint256 balance = balanceOf(tokenOwner, tokenId);
         require(balance > 0, "Insufficient token balance");
@@ -224,6 +260,7 @@ contract BlanksOpenSea is BlanksBase {
 
         string memory tokenURI = string("").stringifyOnChainMetadata(name, description, imageURL, attrT, attrV).packJSON();
 
+        _msgSender();
         uint256 forwardAmount = msg.value;
         uint256 balanceBefore = address(this).balance; // includes the forwardAmount received
 

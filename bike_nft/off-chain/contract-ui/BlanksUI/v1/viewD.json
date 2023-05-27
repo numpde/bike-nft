@@ -1,0 +1,40 @@
+{
+  "elements": [
+    {
+      "type": "input",
+      "label": "Token ID",
+      "id": "tokenId",
+      "placeholder": "Token ID",
+      "value": "4",
+      "readOnly": true
+    },
+    {
+      "type": "button",
+      "label": "Proceed",
+      "id": "proceedButton1",
+      "onClick": {
+        "default": {
+          "name": "viewTransfer",
+          "inputs": [
+            {
+              "name": "userAddress",
+              "type": "address"
+            },
+            {
+              "name": "tokenId",
+              "type": "uint256"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "string"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        }
+      }
+    }
+  ]
+}

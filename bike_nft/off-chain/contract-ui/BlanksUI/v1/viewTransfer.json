@@ -1,0 +1,13 @@
+{
+  "elements": [
+    {
+      "type": "input",
+      "label": "Token count",
+      "id": "tokenCount"
+    },
+    {
+      "type": "input",
+      "label": "Tranfer "
+    }
+  ]
+}
