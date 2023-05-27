@@ -31,25 +31,63 @@ contract BlanksUI is ERC2771Recipient {
         baseURI = newBaseURI;
     }
 
-    function viewD(address userAddress) public pure returns (string memory nextUI, uint256 tokenId, uint256 tokenCount) {
+    function _composeWithBaseURI(string memory path) internal view returns (string memory) {
+        return string(abi.encodePacked(baseURI, path));
+    }
+
+    // @notice
+    function register(
+        address userAddress,
+        address registerFor,
+        uint256 blankTokenId,
+        string memory registerSerialNumber,
+        string memory registerName,
+        string memory registerDescription,
+        string memory registerImageURL
+    ) public {
+        // Check that `userAddress` is indeed the original sender of the transaction
+        if (isTrustedForwarder(msg.sender)) {
+            require(
+                userAddress == _msgSender(),
+                "BlanksUI: supplied address and _msgSender don't match"
+            );
+        } else {
+            require(
+                userAddress == msg.sender,
+                "BlanksUI: supplied address and msg.sender don't match"
+            );
+        }
+
+        // The `BlanksOpenSea` contract will check that the caller has any tokens `blankTokenId`
+
+        BlanksOpenSea blanksContract = BlanksOpenSea(blanksContractAddress);
+        blanksContract.proxiedRegister(blankTokenOwner, registerFor, blankTokenId, registerSerialNumber, registerName, registerDescription, registerImageURL);
+    }
+
+    function viewEntryD(address userAddress) public view returns (string memory ui, uint256 blankTokenId, uint256 tokenCount) {
         BlanksOpenSea blanksContract = BlanksOpenSea(blanksContractAddress);
 
-        uint256 tokenId = blanksContract.BLANK_NFT_TOKEN_ID_D;
-        uint256 tokenCount = blanksContract.balanceOf(userAddress, tokenId);
+        blankTokenId = blanksContract.BLANK_NFT_TOKEN_ID_D;
+        tokenCount = blanksContract.balanceOf(userAddress, blankTokenId);
 
-        // todo: return "no tokens" view if user has no tokens
+        if (tokenCount == 0) {
+            ui = _composeWithBaseURI("viewEntryD.noToken.returns.json");
+        } else {
+            ui = _composeWithBaseURI("viewEntryD.hasToken.returns.json");
+        }
 
-        string memory nextUI = "http:";
-
-        return (nextUI, tokenId, tokenCount);
+        return (ui, blankTokenId, tokenCount);
     }
 
-    function viewTransfer(address userAddress, uint256 tokenId) public view returns (string memory) {
-        (userAddress, tokenId);
-        return "";
+    function viewRegister(address userAddress, uint256 blankTokenId) public view returns (string memory) {
+        return _composeWithBaseURI("viewRegister-returns.json");
     }
 
-    function initiateTransfer() public {
+    function viewRegisterOnSuccess() public pure returns (string memory) {
+        return "http:";
+    }
 
+    function viewRegisterOnFailure() public pure returns (string memory) {
+        return "http:";
     }
 }

@@ -1,0 +1,9 @@
+{
+  "elements": [
+    {
+      "type": "text",
+      "label": "Sorry, it appears you don't have a blank token for registration.",
+      "id": "textUserHasNoToken"
+    }
+  ]
+}
