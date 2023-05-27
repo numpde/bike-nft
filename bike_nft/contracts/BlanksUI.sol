@@ -7,17 +7,17 @@ import "./BlanksOpenSea.sol";
 
 
 contract BlanksUI is ERC2771Recipient {
-    address public blanksContractAddress;
+    address payable public blanksContractAddress;
     string public baseURI;
 
-    constructor(address myBlanksContract, address myTrustedForwarder, string memory myBaseURI) {
+    constructor(address payable myBlanksContract, address myTrustedForwarder, string memory myBaseURI) {
         _setTrustedForwarder(myTrustedForwarder);
         setBlanksContractAddress(myBlanksContract);
         setBaseURI(myBaseURI);
     }
 
     // @notice Set the "Blanks" contract to be managed
-    function setBlanksContractAddress(address newAddress) public {
+    function setBlanksContractAddress(address payable newAddress) public {
         blanksContractAddress = newAddress;
     }
 
@@ -37,7 +37,7 @@ contract BlanksUI is ERC2771Recipient {
 
     // @notice
     function register(
-        address userAddress,
+        address userAddress,  // variable provided by the front-end
         address registerFor,
         uint256 blankTokenId,
         string memory registerSerialNumber,
@@ -58,7 +58,9 @@ contract BlanksUI is ERC2771Recipient {
             );
         }
 
-        // The `BlanksOpenSea` contract will check that the caller has any tokens `blankTokenId`
+        // Having verified `userAddress`, we assume that's who is converting their own Blank.
+        // The `BlanksOpenSea` contract will check that they indeed have the Blank tokens.
+        address blankTokenOwner = userAddress;
 
         BlanksOpenSea blanksContract = BlanksOpenSea(blanksContractAddress);
         blanksContract.proxiedRegister(blankTokenOwner, registerFor, blankTokenId, registerSerialNumber, registerName, registerDescription, registerImageURL);
@@ -67,7 +69,7 @@ contract BlanksUI is ERC2771Recipient {
     function viewEntryD(address userAddress) public view returns (string memory ui, uint256 blankTokenId, uint256 tokenCount) {
         BlanksOpenSea blanksContract = BlanksOpenSea(blanksContractAddress);
 
-        blankTokenId = blanksContract.BLANK_NFT_TOKEN_ID_D;
+        blankTokenId = blanksContract.BLANK_NFT_TOKEN_ID_D();
         tokenCount = blanksContract.balanceOf(userAddress, blankTokenId);
 
         if (tokenCount == 0) {
@@ -76,7 +78,7 @@ contract BlanksUI is ERC2771Recipient {
             ui = _composeWithBaseURI("viewEntryD.hasToken.returns.json");
         }
 
-        return (ui, blankTokenId, tokenCount);
+        return /* named */;
     }
 
     function viewRegister(address userAddress, uint256 blankTokenId) public view returns (string memory) {

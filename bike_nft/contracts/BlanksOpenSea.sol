@@ -269,27 +269,16 @@ contract BlanksOpenSea is BlanksBase {
 
         string memory tokenURI = string("").stringifyOnChainMetadata(name, description, imageURL, attrT, attrV).packJSON();
 
-        // todo: ditch refund
-        uint256 forwardAmount = msg.value;
-        uint256 balanceBefore = address(this).balance; // includes the forwardAmount received
-
         BicycleComponentManager bcm = BicycleComponentManager(bicycleComponentManager);
 
-        // Forward any attached value to the BicycleComponentManager
-        bcm.register{value: forwardAmount}(registerFor, serialNumber, tokenURI);
+        // We don't send any `value`, since the idea is to convert an existing Blank to an NFT.
+        bcm.register{value: 0}(registerFor, serialNumber, tokenURI);
 
         // BicycleComponentManager should mint a token for the owner in its
         // managed BicycleComponent NFT contract, so we burn the token here
         _burn(blankTokenOwner, tokenId, 1);
 
         emit Registered(blankTokenOwner, registerFor, serialNumber, tokenURI);
-
-        // BicycleComponentManager may have returned some excess value, so we refund it
-
-        uint256 balanceAfter = address(this).balance;
-        uint256 expectedBalanceAfter = balanceBefore - forwardAmount;
-
-        _refund(balanceAfter, expectedBalanceAfter, tokenOwner);
     }
 
     // Fallback & withdraw
