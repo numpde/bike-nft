@@ -1,11 +1,11 @@
 import {loadFixture} from "@nomicfoundation/hardhat-network-helpers";
+import {Contract} from "ethers";
 import {ethers} from "hardhat";
 import {expect} from "chai";
 
 import {deploymentParams} from "../deploy.config";
 import {getSigners} from "./signers";
 import {deployAllAndLinkFixture} from "./fixtures";
-import {Contract} from "ethers";
 
 async function deployAllAndUI() {
     const {blanksContract, ...etc} = await loadFixture(deployAllAndLinkFixture);
@@ -15,7 +15,7 @@ async function deployAllAndUI() {
     const blanksUiContract = await BlanksUI.deploy(
         blanksContract.address,
         ethers.constants.AddressZero,
-        deploymentParams.hardhat.baseURI.BlanksUI,
+        deploymentParams.hardhat?.baseURI?.BlanksUI || "",
     );
 
     await blanksUiContract.deployed();
