@@ -16,14 +16,14 @@ export function getNetworkName(chainId: number): string {
     }
 }
 
-export async function execute(tx) {
+export async function execute(tx: any) {
     console.log(`Transaction hash: ${tx.hash}`);
 
     const receipt = await tx.wait();
     console.log(`Transaction status: ${receipt.status}`);
 }
 
-export async function getMostRecent(path): Promise<any> {
+export async function getMostRecent(path: string): Promise<any> {
     const files = glob.sync(path).sort();
     if (files.length == 0) {
         throw new Error('No files found in ' + path)
@@ -32,6 +32,6 @@ export async function getMostRecent(path): Promise<any> {
     return JSON.parse(fs.readFileSync(file, 'utf-8'));
 }
 
-export async function packJSON(data) {
+export async function packJSON(data: object) {
     return "data:application/json;base64," + Buffer.from(JSON.stringify(data)).toString('base64');
 }

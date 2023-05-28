@@ -3,56 +3,7 @@ import {expect} from "chai";
 import {ethers, upgrades} from "hardhat";
 
 import {getSigners} from "./signers";
-
-
-export async function deployBicycleComponentsFixture(): Promise<{ contract: ethers.Contract }> {
-    const {deployer, admin, manager, upgrader, pauser} = await getSigners();
-
-    const Contract = await ethers.getContractFactory("BicycleComponents");
-
-    /**
-     * When you deploy a UUPS proxy using `upgrades.deployProxy`, it deploys two contracts:
-     *
-     * 1. The implementation contract: This is an instance of the contract you provided (in this case, `BicycleComponents`). It contains the actual logic and storage layout of your contract.
-     * 2. The proxy contract: This is a separate contract that forwards all calls to the implementation contract while preserving its own storage, enabling upgradeability.
-     *
-     * In a UUPS (Universal Upgradeable Proxy Standard) deployment, there is no separate admin contract (unlike in a Transparent Proxy deployment). The upgrade authorization mechanism is directly built into the proxy contract, and the upgrade process is managed by the proxy using the functions provided by the `UUPSUpgradeable` contract.
-     */
-
-    // https://dev.to/abhikbanerjee99/testing-your-upgradeable-smart-contract-2fjd
-    const contract = await upgrades.deployProxy(
-            Contract.connect(deployer),
-            [],
-            {
-                initializer: 'initialize',
-                kind: 'uups',
-                value: 0,
-            }
-        );
-
-    // const proxyAddress = contract.address;
-    // console.log("Proxy Address:", proxyAddress);
-    //
-    // const implementationAddress = await upgrades.erc1967.getImplementationAddress(proxyAddress);
-    // console.log("Impln Address:", implementationAddress);
-    //
-    // const adminAddress = await upgrades.erc1967.getAdminAddress(proxyAddress);
-    // console.log("Admin Address:", adminAddress);
-
-    const DEFAULT_ADMIN_ROLE = await contract.DEFAULT_ADMIN_ROLE();
-    await contract.grantRole(DEFAULT_ADMIN_ROLE, admin.address);
-
-    const UPGRADER_ROLE = await contract.UPGRADER_ROLE();
-    await contract.grantRole(UPGRADER_ROLE, upgrader.address);
-
-    const NFT_MANAGER_ROLE = await contract.NFT_MANAGER_ROLE();
-    await contract.grantRole(NFT_MANAGER_ROLE, manager.address);
-
-    const PAUSER_ROLE = await contract.PAUSER_ROLE();
-    await contract.grantRole(PAUSER_ROLE, pauser.address);
-
-    return {contract};
-}
+import {deployBicycleComponentsFixture} from "./fixtures";
 
 async function mintTokenFixture() {
     const {manager, customer1} = await getSigners();
@@ -214,7 +165,7 @@ describe("BicycleComponents", function () {
 
     describe("Transferring", function () {
         it("Should allow the manager to transfer", async function () {
-            const {contract, customer, tokenId, manager} = await loadFixture(mintTokenFixture);
+            const {contract, tokenId, manager} = await loadFixture(mintTokenFixture);
             const {third} = await getSigners();
 
             const action = contract.connect(manager).transfer(tokenId, third.address);
@@ -405,7 +356,7 @@ describe("BicycleComponents", function () {
 
             // Extract the ABI fragment of function 'f'
             const fAbiFragment = artifact.abi.find(
-                (element) => ((element.type === "function") && (element.name === "isApprovedOrOwner"))
+                (element: any) => ((element.type === "function") && (element.name === "isApprovedOrOwner"))
             );
 
             // There is no way to check the visibility of a function in the ABI

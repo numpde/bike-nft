@@ -1,60 +1,14 @@
 import {loadFixture} from "@nomicfoundation/hardhat-network-helpers";
-import {ethers, upgrades} from "hardhat";
+import {ethers} from "hardhat";
 import {expect} from "chai";
 
 // noinspection TypeScriptCheckImport
 import {Buffer} from 'buffer';
 
 import {getSigners} from "./signers";
-import {deployBicycleComponentsFixture} from "./BicycleComponents";
+import {deployBicycleComponentManagerFixture} from "./fixtures";
 
-
-export async function deployBicycleComponentManagerFixture() {
-    const {deployer, admin, shop1, shop2} = await getSigners();
-
-    // // Deploy the Utils library
-    // const {library: utilsLibrary} = await deployUtilsFixture();
-
-    // First deploy the managed contract
-
-    const {contract: componentsContract} = await deployBicycleComponentsFixture();
-
-    // Then deploy the manager contract
-
-    const BicycleComponentManager = await ethers.getContractFactory(
-        "BicycleComponentManager",
-        {
-            libraries: {},
-        },
-    );
-
-    const managerContract = await upgrades.deployProxy(
-        BicycleComponentManager.connect(deployer),
-        [],
-        {
-            initializer: 'initialize',
-            kind: 'uups',
-            value: 0
-        }
-    );
-
-    // Link the manager contract to the managed contract
-    await managerContract.connect(deployer).setNftContractAddress(componentsContract.address);
-
-    // Register the manager contract with the managed contract
-    await componentsContract.connect(deployer).hireManager(managerContract.address);
-
-    // Grant the admin role to the admin
-    await managerContract.connect(deployer).grantRole(managerContract.DEFAULT_ADMIN_ROLE(), admin.address);
-
-    // Grant the minter/registrar role to the shops
-    await managerContract.connect(admin).grantRole(managerContract.REGISTRAR_ROLE(), shop1.address);
-    await managerContract.connect(admin).grantRole(managerContract.REGISTRAR_ROLE(), shop2.address);
-
-    return {componentsContract, managerContract, deployer, admin, shop1, shop2};
-}
-
-async function registerComponent(): Promise<{ managerContract, shop1, customer1, serialNumber, uri, tokenId }> {
+async function registerComponent(): Promise<any> {
     const {managerContract, shop1, ...etc} = await loadFixture(deployBicycleComponentManagerFixture);
     const {customer1} = await getSigners();
 
@@ -479,7 +433,7 @@ describe("BicycleComponentManager", function () {
             const {managerContract, serialNumber} = await loadFixture(registerComponent);
             const {shop1, customer1, third} = await getSigners();
 
-            function approve(address) {
+            function approve(address: string) {
                 return managerContract.connect(third).setComponentOperatorApproval(serialNumber, address, true);
             }
 

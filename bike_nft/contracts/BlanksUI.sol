@@ -45,18 +45,11 @@ contract BlanksUI is ERC2771Recipient {
         string memory registerDescription,
         string memory registerImageURL
     ) public {
-        // Check that `userAddress` is indeed the original sender of the transaction
-        if (isTrustedForwarder(msg.sender)) {
-            require(
-                userAddress == _msgSender(),
-                "BlanksUI: supplied address and _msgSender don't match"
-            );
-        } else {
-            require(
-                userAddress == msg.sender,
-                "BlanksUI: supplied address and msg.sender don't match"
-            );
-        }
+        require(
+            // Note: `_msgSender()` checks whether `msg.sender` is a trusted forwarder.
+            userAddress == _msgSender(),
+            "BlanksUI: userAddress and _msgSender don't match (or not a trusted forwarder)"
+        );
 
         // Having verified `userAddress`, we assume that's who is converting their own Blank.
         // The `BlanksOpenSea` contract will check that they indeed have the Blank tokens.
@@ -78,18 +71,18 @@ contract BlanksUI is ERC2771Recipient {
             ui = _composeWithBaseURI("viewEntryD.hasToken.returns.json");
         }
 
-        return /* named */;
+        return (ui, blankTokenId, tokenCount);
     }
 
-    function viewRegister(address userAddress, uint256 blankTokenId) public view returns (string memory) {
-        return _composeWithBaseURI("viewRegister-returns.json");
+    function viewRegister() public view returns (string memory) {
+        return _composeWithBaseURI("viewRegister.returns.json");
     }
 
-    function viewRegisterOnSuccess() public pure returns (string memory) {
-        return "http:";
+    function viewRegisterOnSuccess() public view returns (string memory) {
+        return _composeWithBaseURI("viewRegisterOnSuccess.returns.json");
     }
 
-    function viewRegisterOnFailure() public pure returns (string memory) {
-        return "http:";
+    function viewRegisterOnFailure() public view returns (string memory) {
+        return _composeWithBaseURI("viewRegisterOnFailure.returns.json");
     }
 }

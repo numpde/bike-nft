@@ -1,9 +1,12 @@
 import {ethers, upgrades} from "hardhat";
-import {deployed, ipfsBasePath} from "../hardhat.config";
+import {ipfsBasePath} from "../hardhat.config";
+
 
 import {execute, getNetworkName, getMostRecent, packJSON} from "../utils/utils";
 import {report} from "./deployBicycleComponentManager";
 import {getAddress} from "ethers/lib/utils";
+import {deployed, deploymentParams} from "../deploy.config";
+import {Contract} from "ethers";
 
 
 async function main() {
@@ -12,7 +15,7 @@ async function main() {
 
     const managerContract = await ethers.getContractAt("BicycleComponentManager", deployed[getNetworkName(chainId)].BicycleComponentManager);
 
-    let blanksContract;
+    let blanksContract: Contract;
     {
         const deployedAddress = deployed[getNetworkName(chainId)]?.BlanksOpenSea;
 
@@ -29,12 +32,34 @@ async function main() {
                 {
                     initializer: 'initialize',
                     kind: 'uups',
-                    value: 0,
                 }
             );
         }
 
         await report(blanksContract).catch(e => console.log("Error:", e));
+    }
+
+    let blanksUiContract;
+    {
+        const deployedAddress = deployed[getNetworkName(chainId)]?.BlanksUI;
+
+        if (deployedAddress) {
+            blanksUiContract = await ethers.getContractAt("BlanksUI", deployedAddress);
+        } else {
+            console.log("Deploying BlanksUI...");
+
+            const BlanksUI = await ethers.getContractFactory("BlanksUI");
+
+            blanksUiContract = await BlanksUI.deploy(
+                blanksContract.address,
+                ethers.constants.AddressZero,
+                deploymentParams[getNetworkName(chainId)]?.baseURI?.BlanksUI || "",
+            );
+
+            await blanksUiContract.deployed();
+        }
+
+        await report(blanksUiContract).catch(e => console.log("Error:", e));
     }
 
     // Link
@@ -49,6 +74,11 @@ async function main() {
         if (!(await managerContract.hasRole(managerContract.REGISTRAR_ROLE(), blanksContract.address))) {
             console.log("Granting BlanksOpenSea the registrar role...");
             await execute(await managerContract.grantRole(managerContract.REGISTRAR_ROLE(), blanksContract.address));
+        }
+
+        if (!(await blanksContract.hasRole(blanksContract.PROXY_ROLE(), blanksUiContract.address))) {
+            console.log("Registering BlanksUI as proxy for BlanksOpenSea...");
+            await execute(await blanksContract.grantRole(blanksContract.PROXY_ROLE(), blanksUiContract.address));
         }
     }
 
@@ -68,7 +98,7 @@ async function main() {
                 "To register a bike, use the contract's `register` function. This NFT is generally non-transferable." :
                 "To register your bike, use the contract's `register` function.";
 
-            const ipfsImageHash = imageManifest.files.find(x => (authority == x.Name));
+            const ipfsImageHash = imageManifest.files.find((x: any) => (authority == x.Name));
 
             const metadata = {
                 "name": `Blank NFT (${authority})`,

@@ -1,10 +1,11 @@
 import {ethers, upgrades} from "hardhat";
-import {deployed} from "../hardhat.config";
+import {Contract} from "ethers";
 
 import {execute, getNetworkName} from "../utils/utils";
+import {deployed} from "../deploy.config";
 
 
-export async function report(contract) {
+export async function report(contract: Contract) {
     console.log(`Contract here: ${contract.address} by ${contract.deployTransaction?.from}`);
 
     const proxyAddress = contract.address;
@@ -13,8 +14,8 @@ export async function report(contract) {
     const implementationAddress = await upgrades.erc1967.getImplementationAddress(proxyAddress);
     console.log("Impln Address:", implementationAddress);
 
-    const adminAddress = await upgrades.erc1967.getAdminAddress(proxyAddress);
-    console.log("Admin Address:", adminAddress);
+    // const adminAddress = await upgrades.erc1967.getAdminAddress(proxyAddress);
+    // console.log("Admin Address:", adminAddress);
 }
 
 async function main() {
@@ -38,7 +39,6 @@ async function main() {
                 {
                     initializer: 'initialize',
                     kind: 'uups',
-                    value: 0,
                 }
             );
         }
@@ -64,7 +64,6 @@ async function main() {
                 {
                     initializer: 'initialize',
                     kind: 'uups',
-                    value: 0,
                 }
             );
         }
