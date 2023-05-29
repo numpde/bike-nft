@@ -1,0 +1,84 @@
+{
+  "elements": [
+    {
+      "type": "input",
+      "label": "Blank token ID:",
+      "id": "blankTokenId",
+      "readOnly": true
+    },
+    {
+      "type": "input",
+      "label": "You have blank tokens:",
+      "id": "tokenCount",
+      "placeholder": "",
+      "value": "",
+      "readOnly": true
+    },
+    {
+      "type": "input",
+      "label": "Register for:",
+      "id": "registerFor",
+      "placeholder": "0x...",
+      "value": ""
+    },
+    {
+      "type": "input",
+      "label": "Serial number:",
+      "id": "registerSerialNumber",
+      "placeholder": "e.g., SN1234...",
+      "value": ""
+    },
+    {
+      "type": "input",
+      "label": "Name for the NFT:",
+      "id": "registerName",
+      "placeholder": "E.g., bike model",
+      "value": ""
+    },
+    {
+      "type": "input",
+      "label": "Description for the NFT:",
+      "id": "registerDescription",
+      "placeholder": "Detailed description",
+      "value": ""
+    },
+    {
+      "type": "input",
+      "label": "Image URL for the NFT:",
+      "id": "registerImageURL",
+      "placeholder": "https://...",
+      "value": "https://"
+    },
+    {
+      "type": "button",
+      "label": "Proceed",
+      "id": "proceedToPreregisterCheck",
+      "onClick": {
+        "default": {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "userAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "string",
+              "name": "registerSerialNumber",
+              "type": "string"
+            }
+          ],
+          "name": "viewPreregisterCheck",
+          "outputs": [
+            {
+              "internalType": "string",
+              "name": "",
+              "type": "string"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        }
+      }
+    }
+  ]
+}

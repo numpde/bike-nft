@@ -4,11 +4,14 @@ pragma solidity ^0.8.18;
 import "@opengsn/contracts/src/ERC2771Recipient.sol";
 
 import "./BlanksOpenSea.sol";
+import "./BicycleComponentManager.sol";
 
 
 contract BlanksUI is ERC2771Recipient {
     address payable public blanksContractAddress;
     string public baseURI;
+
+    mapping(address => uint256[]) public registeredNftTokens;
 
     constructor(address payable myBlanksContract, address myTrustedForwarder, string memory myBaseURI) {
         _setTrustedForwarder(myTrustedForwarder);
@@ -35,9 +38,70 @@ contract BlanksUI is ERC2771Recipient {
         return string(abi.encodePacked(baseURI, path));
     }
 
+    function _getTokenCount(address userAddress, uint256 blankTokenId)
+    internal view
+    returns (uint256) {
+        BlanksOpenSea blanksContract = BlanksOpenSea(blanksContractAddress);
+        return blanksContract.balanceOf(userAddress, blankTokenId);
+    }
+
+    function viewEntry(address userAddress)
+    public view
+    returns (string memory, uint256 tokenCountA, uint256 tokenCountB, uint256 tokenCountC, uint256 tokenCountD) {
+        BlanksOpenSea blanksContract = BlanksOpenSea(blanksContractAddress);
+
+        tokenCountA = blanksContract.balanceOf(userAddress, blanksContract.BLANK_NFT_TOKEN_ID_A());
+        tokenCountB = blanksContract.balanceOf(userAddress, blanksContract.BLANK_NFT_TOKEN_ID_B());
+        tokenCountC = blanksContract.balanceOf(userAddress, blanksContract.BLANK_NFT_TOKEN_ID_C());
+        tokenCountD = blanksContract.balanceOf(userAddress, blanksContract.BLANK_NFT_TOKEN_ID_D());
+
+        return (
+            _composeWithBaseURI("viewEntry.returns.json"),
+            tokenCountA, tokenCountB, tokenCountC, tokenCountD
+        );
+    }
+
+    function viewEntryA(address userAddress) public view returns (string memory) {
+        return viewRegisterForm(userAddress, BlanksOpenSea(blanksContractAddress).BLANK_NFT_TOKEN_ID_A());
+    }
+
+    function viewEntryB(address userAddress) public view returns (string memory) {
+        return viewRegisterForm(userAddress, BlanksOpenSea(blanksContractAddress).BLANK_NFT_TOKEN_ID_B());
+    }
+
+    function viewEntryC(address userAddress) public view returns (string memory) {
+        return viewRegisterForm(userAddress, BlanksOpenSea(blanksContractAddress).BLANK_NFT_TOKEN_ID_C());
+    }
+
+    function viewEntryD(address userAddress) public view returns (string memory) {
+        return viewRegisterForm(userAddress, BlanksOpenSea(blanksContractAddress).BLANK_NFT_TOKEN_ID_D());
+    }
+
+    function viewRegisterForm(address userAddress, uint256 blankTokenId)
+    public view
+    returns (string memory, uint256 blankTokenId)
+    {
+        if (_getTokenCount(userAddress, blankTokenId) == 0) {
+            return (_composeWithBaseURI("viewRegisterForm.noToken.returns.json"), blankTokenId);
+        } else {
+            return (_composeWithBaseURI("viewRegisterForm.hasTokens.returns.json"), blankTokenId);
+        }
+    }
+
+    function viewPreregisterCheck(address userAddress, string memory registerSerialNumber) public view returns (string memory) {
+        BlanksOpenSea blanksContract = BlanksOpenSea(blanksContractAddress);
+        BicycleComponentManager bcm = BicycleComponentManager(blanksContract.bicycleComponentManager());
+
+        try bcm.ownerOf(registerSerialNumber) returns (address) {
+            return _composeWithBaseURI("viewPreregisterCheck.alreadyRegistered.returns.json");
+        } catch {
+            return _composeWithBaseURI("viewPreregisterCheck.notYetRegistered.returns.json");
+        }
+    }
+
     // @notice
     function register(
-        address userAddress,  // connected address as provided by the front-end
+        address userAddress, // connected address as provided by the front-end
         address registerFor,
         uint256 blankTokenId,
         string memory registerSerialNumber,
@@ -46,10 +110,9 @@ contract BlanksUI is ERC2771Recipient {
         string memory registerImageURL
     )
     public
-    returns (uint256 nftTokenId)
     {
         require(
-            // Note: `_msgSender()` checks whether `msg.sender` is a trusted forwarder.
+        // Note: `_msgSender()` checks whether `msg.sender` is a trusted forwarder.
             userAddress == _msgSender(),
             "BlanksUI: userAddress and _msgSender don't match (or not a trusted forwarder)"
         );
@@ -59,35 +122,19 @@ contract BlanksUI is ERC2771Recipient {
         address blankTokenOwner = userAddress;
 
         BlanksOpenSea blanksContract = BlanksOpenSea(blanksContractAddress);
-        nftTokenId = blanksContract.proxiedRegister(blankTokenOwner, registerFor, blankTokenId, registerSerialNumber, registerName, registerDescription, registerImageURL);
+        uint256 nftTokenId = blanksContract.proxiedRegister(blankTokenOwner, registerFor, blankTokenId, registerSerialNumber, registerName, registerDescription, registerImageURL);
 
-        return nftTokenId;
+        registeredNftTokens[userAddress].push(nftTokenId);
     }
 
-    function viewEntryD(address userAddress) public view returns (string memory ui, uint256 blankTokenId, uint256 tokenCount) {
-        BlanksOpenSea blanksContract = BlanksOpenSea(blanksContractAddress);
-
-        blankTokenId = blanksContract.BLANK_NFT_TOKEN_ID_D();
-        tokenCount = blanksContract.balanceOf(userAddress, blankTokenId);
-
-        if (tokenCount == 0) {
-            ui = _composeWithBaseURI("viewEntryD.noToken.returns.json");
-        } else {
-            ui = _composeWithBaseURI("viewEntryD.hasToken.returns.json");
-        }
-
-        return (ui, blankTokenId, tokenCount);
+    function viewRegisterOnSuccess(address userAddress) public view returns (string memory, uint256[] memory nftTokens) {
+        return (
+            _composeWithBaseURI("viewRegisterOnSuccess.returns.json"),
+            registeredNftTokens[userAddress]
+        );
     }
 
-    function viewRegister() public view returns (string memory) {
-        return _composeWithBaseURI("viewRegister.returns.json");
-    }
-
-    function viewRegisterOnSuccess() public view returns (string memory) {
-        return _composeWithBaseURI("viewRegisterOnSuccess.returns.json");
-    }
-
-    function viewRegisterOnFailure() public view returns (string memory) {
+    function viewRegisterOnFailure(address userAddress) public view returns (string memory) {
         return _composeWithBaseURI("viewRegisterOnFailure.returns.json");
     }
 }

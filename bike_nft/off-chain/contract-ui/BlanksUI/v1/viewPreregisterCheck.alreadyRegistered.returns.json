@@ -1,17 +1,13 @@
 {
   "elements": [
     {
-      "type": "input",
-      "label": "Token ID",
-      "id": "blankTokenId",
-      "placeholder": "Token ID",
-      "value": "4",
-      "readOnly": true
+      "type": "text",
+      "label": "Serial number is already registered!"
     },
     {
       "type": "button",
-      "label": "Proceed",
-      "id": "proceedButton1",
+      "label": "Back",
+      "id": "backButton1",
       "onClick": {
         "default": {
           "name": "viewRegisterForm",

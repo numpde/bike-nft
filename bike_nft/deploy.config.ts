@@ -37,8 +37,8 @@ const deployed: {
     ganache: {
         BicycleComponentManager: "0x7ba471Ea78a94f180605165db6D11E38A831175B",
         BicycleComponents: "0xA7Dc946c20166416CA7a880cCa79157c55d8966C",
-        BlanksOpenSea: "0xBc84AFCdD7d891d3b5a5B0FE09f8C02753f4DfC7",
-        BlanksUI: "0x43c5d4970a26Bd87a48F0AC827A959AaD192Eb62",
+        BlanksOpenSea: "0xC612Aa2A6721a02f23Fe5d9e19613cc1B1C99B56",
+        BlanksUI: "",
     },
 };
 

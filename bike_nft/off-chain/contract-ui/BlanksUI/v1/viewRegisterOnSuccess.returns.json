@@ -7,8 +7,8 @@
     },
     {
       "type": "input",
-      "id": "nftTokenId",
-      "label": "NFT Token ID:",
+      "id": "nftTokens",
+      "label": "NFT tokens minted by you:",
       "value": "",
       "readOnly": true
     }

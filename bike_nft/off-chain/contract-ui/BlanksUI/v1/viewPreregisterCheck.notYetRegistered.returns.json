@@ -1,57 +1,36 @@
 {
   "elements": [
     {
-      "type": "input",
-      "label": "Blank token ID:",
-      "id": "blankTokenId",
-      "readOnly": true
-    },
-    {
-      "type": "input",
-      "label": "You have blank tokens:",
-      "id": "tokenCount",
-      "placeholder": "",
-      "value": "",
-      "readOnly": true
-    },
-    {
-      "type": "input",
-      "label": "Register for:",
-      "id": "registerFor",
-      "placeholder": "0x...",
-      "value": ""
-    },
-    {
-      "type": "input",
-      "label": "Serial number:",
-      "id": "registerSerialNumber",
-      "placeholder": "e.g., SN1234...",
-      "value": ""
-    },
-    {
-      "type": "input",
-      "label": "Name for the NFT:",
-      "id": "registerName",
-      "placeholder": "E.g., bike model",
-      "value": ""
-    },
-    {
-      "type": "input",
-      "label": "Description for the NFT:",
-      "id": "registerDescription",
-      "placeholder": "Detailed description",
-      "value": ""
-    },
-    {
-      "type": "input",
-      "label": "Image URL for the NFT:",
-      "id": "registerImageURL",
-      "placeholder": "https://...",
-      "value": "https://"
+      "type": "text",
+      "label": "Serial number not yet registered."
     },
     {
       "type": "button",
-      "label": "Register",
+      "label": "Back",
+      "id": "dontRegisterNowGoBack",
+      "onClick": {
+        "default": {
+          "name": "viewRegisterForm",
+          "inputs": [
+            {
+              "name": "userAddress",
+              "type": "address"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "string"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        }
+      }
+    },
+    {
+      "type": "button",
+      "label": "Register now!",
       "id": "registerButton",
       "onClick": {
         "default": {
@@ -98,20 +77,36 @@
           "type": "function"
         },
         "success": {
-          "inputs": [],
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "userAddress",
+              "type": "address"
+            }
+          ],
           "name": "viewRegisterOnSuccess",
           "outputs": [
             {
               "internalType": "string",
               "name": "",
               "type": "string"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "nftTokens",
+              "type": "uint256[]"
             }
           ],
           "stateMutability": "view",
           "type": "function"
         },
         "failure": {
-          "inputs": [],
+          "inputs": [
+            {
+              "name": "userAddress",
+              "type": "address"
+            }
+          ],
           "name": "viewRegisterOnFailure",
           "outputs": [
             {
