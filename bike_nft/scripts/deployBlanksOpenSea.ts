@@ -38,6 +38,8 @@ async function main() {
                     console.log("Upgrading BlanksOpenSea...");
 
                     const Factory = await ethers.getContractFactory(contractName);
+                    await upgrades.prepareUpgrade(deployedAddress, Factory);
+
                     blanksContract = await upgrades.upgradeProxy(deployedAddress, Factory);
 
                     console.log(`${contractName} upgraded to:`, blanksContract.address);

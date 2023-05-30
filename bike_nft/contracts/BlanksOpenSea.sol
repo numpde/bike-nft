@@ -105,12 +105,13 @@ contract BlanksOpenSea is BlanksBase {
     uint256 public constant BLANK_NFT_TOKEN_ID_D = 4;
 
     event Registered(address indexed blankTokenOwner, address indexed registerFor, string indexed serialNumber, string tokenURI);
+    event BalanceWithdrawn(address indexed);
 
     function initialize() initializer public override {
         BlanksBase.initialize();
         owner = msg.sender;
 
-        _mint(msg.sender, BLANK_NFT_TOKEN_ID_B, 1_000, "");
+        // _mint(msg.sender, BLANK_NFT_TOKEN_ID_B, 10, "");
     }
 
     // https://support.opensea.io/hc/en-us/articles/4403934341907-How-do-I-import-my-contract-automatically-
@@ -234,8 +235,8 @@ contract BlanksOpenSea is BlanksBase {
     external
     {
         require(
-            // We don't use `onlyRole` because it uses to `_msgSender()`.
-            // This function should be called by an approved proxy directly.
+        // We don't use `onlyRole` because it uses to `_msgSender()`.
+        // This function should be called by an approved proxy directly.
             hasRole(PROXY_ROLE, msg.sender),
             "BlanksOpenSea: msg.sender is not an approved proxy"
         );
@@ -289,6 +290,8 @@ contract BlanksOpenSea is BlanksBase {
     }
 
     function withdraw() public onlyRole(DEFAULT_ADMIN_ROLE) {
-        payable(msg.sender).transfer(address(this).balance);
+        // Use `_msgSender` because that's what `onlyRole` uses internally
+        payable(_msgSender()).transfer(address(this).balance);
+        emit BalanceWithdrawn(_msgSender());
     }
 }
