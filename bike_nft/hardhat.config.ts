@@ -51,7 +51,7 @@ const config: HardhatUserConfig = {
 
     networks: {
         ganache: {
-            url: "HTTP://127.0.0.1:8545",
+            url: "http://127.0.0.1:8545",
             accounts: [getEnvVariable("GANACHE_PRIVATE_KEY")],
         },
 

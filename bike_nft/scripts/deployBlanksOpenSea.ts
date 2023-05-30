@@ -112,7 +112,9 @@ async function main() {
         }
     }
 
-    // "Upload" the blanksUiContract ABI
+    // "Upload" the blanksUiContract ABI.
+    // TODO: replace by copy-from-artifacts
+    // git log --first-parent --max-count=1 --format=%H -- ./off-chain/
     {
         const abi = blanksUiContract.interface.fragments;
         const outputPath = path.join(__dirname, `../off-chain/contract-ui/BlanksUI/v1/abi.json`);

@@ -17,8 +17,16 @@ const deploymentParams: {
         };
     };
 } = {
-    polygon: {},
-    mumbai: {},
+    polygon: {
+        baseURI: {
+            BlanksUI: "https://raw.githubusercontent.com/numpde/bike-nft/main/bike_nft/off-chain/contract-ui/BlanksUI/v1/",
+        },
+    },
+    mumbai: {
+        baseURI: {
+            BlanksUI: "https://raw.githubusercontent.com/numpde/bike-nft/main/bike_nft/off-chain/contract-ui/BlanksUI/v1/",
+        },
+    },
     ganache: {
         baseURI: {
             BlanksUI: "http://0.0.0.0:6001/contract-ui/BlanksUI/v1/",
