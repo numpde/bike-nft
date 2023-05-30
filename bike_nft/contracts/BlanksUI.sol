@@ -141,8 +141,9 @@ contract BlanksUI is ERC2771Recipient {
         address blankTokenOwner = userAddress;
 
         BlanksOpenSea blanksContract = BlanksOpenSea(blanksContractAddress);
-        uint256 nftTokenId = blanksContract.proxiedRegister(blankTokenOwner, registerFor, blankTokenId, registerSerialNumber, registerName, registerDescription, registerImageURL);
+        blanksContract.proxiedRegister(blankTokenOwner, registerFor, blankTokenId, registerSerialNumber, registerName, registerDescription, registerImageURL);
 
+        uint256 nftTokenId = BicycleComponentManager(blanksContract.bicycleComponentManager()).generateTokenId(registerSerialNumber);
         registeredNftTokens[userAddress].push(nftTokenId);
     }
 

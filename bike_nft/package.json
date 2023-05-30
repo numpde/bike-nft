@@ -1,7 +1,8 @@
 {
   "dependencies": {
     "dotenv": "^16.0.3",
-    "hardhat": "^2.14.0"
+    "hardhat": "^2.14.0",
+    "readline-sync": "^1.4.10"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^1.0.2",
@@ -10,6 +11,7 @@
     "@opengsn/contracts": "^3.0.0-beta.6",
     "@openzeppelin/contracts-upgradeable": "^4.8.3",
     "@openzeppelin/hardhat-upgrades": "^1.23.1",
+    "@types/readline-sync": "^1.4.4",
     "chai": "^4.3.7",
     "ethereum-waffle": "^2.2.0",
     "ethers": "^5.7.2",

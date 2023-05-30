@@ -1,16 +1,21 @@
 import {ethers, upgrades} from "hardhat";
+import readlineSync from "readline-sync";
+import {Contract} from "ethers";
+
 import {ipfsBasePath} from "../hardhat.config";
-
-
 import {execute, getNetworkName, getMostRecent, packJSON} from "../utils/utils";
 import {report} from "./deployBicycleComponentManager";
 import {getAddress} from "ethers/lib/utils";
 import {deployed, deploymentParams} from "../deploy.config";
-import {Contract} from "ethers";
 
 import path from 'path';
 import fs from "fs";
 
+function saveAddress(chainId: number, contractName: string, address: string) {
+    const networkName = getNetworkName(chainId);
+    const outputPath = path.join(__dirname, `../../deployed/network/${networkName}/${contractName}.json`);
+    fs.writeFileSync(outputPath, JSON.stringify({address: address, network: chainId}, null, 4));
+}
 
 async function main() {
     const [deployer] = await ethers.getSigners();
@@ -18,42 +23,77 @@ async function main() {
 
     const managerContract = await ethers.getContractAt("BicycleComponentManager", deployed[getNetworkName(chainId)].BicycleComponentManager);
 
-    let blanksContract: Contract;
+    let blanksContract: Contract | undefined = undefined;
     {
-        const deployedAddress = deployed[getNetworkName(chainId)]?.BlanksOpenSea;
+        const contractName = "BlanksOpenSea";
+        const deployedAddress = deployed[getNetworkName(chainId)]?.[contractName];
 
         if (deployedAddress) {
-            blanksContract = await ethers.getContractAt("BlanksOpenSea", deployedAddress);
+            blanksContract = await ethers.getContractAt(contractName, deployedAddress);
+
+            const prompt = readlineSync.keyInSelect(['Yes', 'No'], 'The contract BlanksOpenSea has already been deployed. Would you like to upgrade it?');
+
+            switch (prompt) {
+                case 0:
+                    console.log("Upgrading BlanksOpenSea...");
+
+                    const Factory = await ethers.getContractFactory(contractName);
+                    blanksContract = await upgrades.upgradeProxy(deployedAddress, Factory);
+
+                    console.log(`${contractName} upgraded to:`, blanksContract.address);
+                    break;
+                case 1:
+                    console.log("Skipping...");
+                    break;
+                default:
+                    process.exit(1);
+            }
         } else {
-            console.log("Deploying BlanksOpenSea...")
+            const prompt = readlineSync.keyInSelect(['Yes'], 'No deployed contract BlanksOpenSea found. Would you like to deploy a new one?');
 
-            const BlanksOpenSea = await ethers.getContractFactory("BlanksOpenSea");
+            switch (prompt) {
+                case 0:
+                    console.log("Deploying BlanksOpenSea...");
 
-            blanksContract = await upgrades.deployProxy(
-                BlanksOpenSea,
-                [],
-                {
-                    initializer: 'initialize',
-                    kind: 'uups',
-                }
-            );
+                    const Factory = await ethers.getContractFactory(contractName);
+
+                    blanksContract = await upgrades.deployProxy(
+                        Factory,
+                        [],
+                        {
+                            initializer: 'initialize',
+                            kind: 'uups',
+                        }
+                    );
+
+                    console.log("BlanksOpenSea deployed to:", blanksContract.address);
+                    break;
+                default:
+                    process.exit(1);
+            }
         }
 
-        await report(blanksContract).catch(e => console.log("Error:", e));
+        if (blanksContract) {
+            await report(blanksContract).catch(e => console.log("Error:", e));
+            saveAddress(chainId, contractName, blanksContract.address);
+        } else {
+            throw new Error(`Instance of ${contractName} is undefined.`);
+        }
     }
 
-    let blanksUiContract;
+    let blanksUiContract: Contract;
     {
-        const deployedAddress = deployed[getNetworkName(chainId)]?.BlanksUI;
+        const contractName = "BlanksUI";
+        const deployedAddress = deployed[getNetworkName(chainId)]?.[contractName];
 
         if (deployedAddress) {
-            blanksUiContract = await ethers.getContractAt("BlanksUI", deployedAddress);
+            blanksUiContract = await ethers.getContractAt(contractName, deployedAddress);
         } else {
-            console.log("Deploying BlanksUI...");
+            console.log(`Deploying ${contractName}...`);
 
-            const BlanksUI = await ethers.getContractFactory("BlanksUI");
+            const Factory = await ethers.getContractFactory(contractName);
 
-            blanksUiContract = await BlanksUI.deploy(
+            blanksUiContract = await Factory.deploy(
                 blanksContract.address,
                 ethers.constants.AddressZero,
                 deploymentParams[getNetworkName(chainId)]?.baseURI?.BlanksUI || "",
@@ -62,10 +102,15 @@ async function main() {
             await blanksUiContract.deployed();
         }
 
-        await report(blanksUiContract).catch(e => console.log("Error:", e));
+        if (blanksUiContract) {
+            await report(blanksUiContract).catch(e => console.log("Error:", e));
+            saveAddress(chainId, contractName, blanksUiContract.address);
+        } else {
+            throw new Error(`Instance of ${contractName} is undefined.`);
+        }
     }
 
-    // Copy blanksUiContract ABI
+    // "Upload" the blanksUiContract ABI
     {
         const abi = blanksUiContract.interface.fragments;
         const outputPath = path.join(__dirname, `../off-chain/contract-ui/BlanksUI/v1/abi.json`);

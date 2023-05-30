@@ -211,14 +211,12 @@ contract BlanksOpenSea is BlanksBase {
     // @dev This function is non-payable because the idea is to convert an existing Blank to an NFT.
     function register(uint256 tokenId, string memory serialNumber, string memory name, string memory description, string memory imageURL)
     external
-    returns (uint256 nftTokenId)
     {
         // Note: we don't use _msgSender() here because we're not checking
         // for a trusted forwarder in case we're in a meta-transaction.
         address tokenOwner = msg.sender;
 
-        nftTokenId = _register(tokenOwner, tokenOwner, tokenId, serialNumber, name, description, imageURL);
-        return nftTokenId;
+        _register(tokenOwner, tokenOwner, tokenId, serialNumber, name, description, imageURL);
     }
 
     // @notice For registration by another contract (proxy), such as an UI contract.
@@ -234,7 +232,6 @@ contract BlanksOpenSea is BlanksBase {
         string memory registerImageURL
     )
     external
-    returns (uint256 nftTokenId)
     {
         require(
             // We don't use `onlyRole` because it uses to `_msgSender()`.
@@ -243,8 +240,7 @@ contract BlanksOpenSea is BlanksBase {
             "BlanksOpenSea: msg.sender is not an approved proxy"
         );
 
-        nftTokenId = _register(blankTokenOwner, registerFor, blankTokenId, registerSerialNumber, registerName, registerDescription, registerImageURL);
-        return nftTokenId;
+        _register(blankTokenOwner, registerFor, blankTokenId, registerSerialNumber, registerName, registerDescription, registerImageURL);
     }
 
     // @notice Register a bicycle serial number with the BicycleComponentManager.
@@ -259,7 +255,6 @@ contract BlanksOpenSea is BlanksBase {
         string memory imageURL
     )
     internal
-    returns (uint256 nftTokenId)
     {
         require(bicycleComponentManager != address(0), "BlanksOpenSea: BicycleComponentManager not set");
 
@@ -285,8 +280,7 @@ contract BlanksOpenSea is BlanksBase {
 
         emit Registered(blankTokenOwner, registerFor, serialNumber, tokenURI);
 
-        nftTokenId = bcm.generateTokenId(serialNumber);
-        return nftTokenId;
+        bcm.generateTokenId(serialNumber);
     }
 
     // Fallback & withdraw
