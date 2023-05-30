@@ -38,7 +38,7 @@ const deployed: {
         BicycleComponentManager: "0x7ba471Ea78a94f180605165db6D11E38A831175B",
         BicycleComponents: "0xA7Dc946c20166416CA7a880cCa79157c55d8966C",
         BlanksOpenSea: "0xC612Aa2A6721a02f23Fe5d9e19613cc1B1C99B56",
-        BlanksUI: "",
+        BlanksUI: "0xdcaEe40888D400E15b9B26e275AEdC14c9D1731a",
     },
 };
 

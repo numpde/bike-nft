@@ -5,27 +5,18 @@
       "label": "Serial number not yet registered."
     },
     {
+      "type": "input",
+      "label": "The corresponding NFT token ID will be:",
+      "id": "nftTokenId",
+      "value": "",
+      "readOnly": true
+    },
+    {
       "type": "button",
       "label": "Back",
       "id": "dontRegisterNowGoBack",
       "onClick": {
-        "default": {
-          "name": "viewRegisterForm",
-          "inputs": [
-            {
-              "name": "userAddress",
-              "type": "address"
-            }
-          ],
-          "outputs": [
-            {
-              "name": "",
-              "type": "string"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
-        }
+        "default": "viewRegisterForm"
       }
     },
     {
@@ -33,91 +24,9 @@
       "label": "Register now!",
       "id": "registerButton",
       "onClick": {
-        "default": {
-          "inputs": [
-            {
-              "internalType": "address",
-              "name": "userAddress",
-              "type": "address"
-            },
-            {
-              "internalType": "address",
-              "name": "registerFor",
-              "type": "address"
-            },
-            {
-              "internalType": "uint256",
-              "name": "blankTokenId",
-              "type": "uint256"
-            },
-            {
-              "internalType": "string",
-              "name": "registerSerialNumber",
-              "type": "string"
-            },
-            {
-              "internalType": "string",
-              "name": "registerName",
-              "type": "string"
-            },
-            {
-              "internalType": "string",
-              "name": "registerDescription",
-              "type": "string"
-            },
-            {
-              "internalType": "string",
-              "name": "registerImageURL",
-              "type": "string"
-            }
-          ],
-          "name": "register",
-          "outputs": [],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        "success": {
-          "inputs": [
-            {
-              "internalType": "address",
-              "name": "userAddress",
-              "type": "address"
-            }
-          ],
-          "name": "viewRegisterOnSuccess",
-          "outputs": [
-            {
-              "internalType": "string",
-              "name": "",
-              "type": "string"
-            },
-            {
-              "internalType": "uint256[]",
-              "name": "nftTokens",
-              "type": "uint256[]"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
-        },
-        "failure": {
-          "inputs": [
-            {
-              "name": "userAddress",
-              "type": "address"
-            }
-          ],
-          "name": "viewRegisterOnFailure",
-          "outputs": [
-            {
-              "internalType": "string",
-              "name": "",
-              "type": "string"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
-        }
+        "default": "register",
+        "success": "viewRegisterOnSuccess",
+        "failure": "viewRegisterOnFailure"
       }
     }
   ]

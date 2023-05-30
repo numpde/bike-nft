@@ -34,6 +34,10 @@ contract BlanksUI is ERC2771Recipient {
         baseURI = newBaseURI;
     }
 
+    function abiURI() public returns (string memory) {
+        return _composeWithBaseURI("abi.json");
+    }
+
     function _composeWithBaseURI(string memory path) internal view returns (string memory) {
         return string(abi.encodePacked(baseURI, path));
     }
@@ -61,41 +65,56 @@ contract BlanksUI is ERC2771Recipient {
         );
     }
 
-    function viewEntryA(address userAddress) public view returns (string memory) {
-        return viewRegisterForm(userAddress, BlanksOpenSea(blanksContractAddress).BLANK_NFT_TOKEN_ID_A());
+    function viewEntryA(address userAddress) public view returns (string memory, uint256 blankTokenId, uint256 blankTokenCount) {
+        return _viewRegisterForm(userAddress, BlanksOpenSea(blanksContractAddress).BLANK_NFT_TOKEN_ID_A());
     }
 
-    function viewEntryB(address userAddress) public view returns (string memory) {
-        return viewRegisterForm(userAddress, BlanksOpenSea(blanksContractAddress).BLANK_NFT_TOKEN_ID_B());
+    function viewEntryB(address userAddress) public view returns (string memory, uint256 blankTokenId, uint256 blankTokenCount) {
+        return _viewRegisterForm(userAddress, BlanksOpenSea(blanksContractAddress).BLANK_NFT_TOKEN_ID_B());
     }
 
-    function viewEntryC(address userAddress) public view returns (string memory) {
-        return viewRegisterForm(userAddress, BlanksOpenSea(blanksContractAddress).BLANK_NFT_TOKEN_ID_C());
+    function viewEntryC(address userAddress) public view returns (string memory, uint256 blankTokenId, uint256 blankTokenCount) {
+        return _viewRegisterForm(userAddress, BlanksOpenSea(blanksContractAddress).BLANK_NFT_TOKEN_ID_C());
     }
 
-    function viewEntryD(address userAddress) public view returns (string memory) {
-        return viewRegisterForm(userAddress, BlanksOpenSea(blanksContractAddress).BLANK_NFT_TOKEN_ID_D());
+    function viewEntryD(address userAddress) public view returns (string memory, uint256 blankTokenId, uint256 blankTokenCount) {
+        return _viewRegisterForm(userAddress, BlanksOpenSea(blanksContractAddress).BLANK_NFT_TOKEN_ID_D());
+    }
+
+    function _viewRegisterForm(address userAddress, uint256 blankTokenId)
+    internal view
+    returns (string memory ui, uint256, uint256 blankTokenCount)
+    {
+        (ui, blankTokenCount) = viewRegisterForm(userAddress, blankTokenId);
+        return (ui, blankTokenId, blankTokenCount);
     }
 
     function viewRegisterForm(address userAddress, uint256 blankTokenId)
     public view
-    returns (string memory, uint256 blankTokenId)
+    returns (string memory, uint256 blankTokenCount)
     {
-        if (_getTokenCount(userAddress, blankTokenId) == 0) {
-            return (_composeWithBaseURI("viewRegisterForm.noToken.returns.json"), blankTokenId);
+        blankTokenCount = _getTokenCount(userAddress, blankTokenId);
+
+        if (blankTokenCount == 0) {
+            return (_composeWithBaseURI("viewRegisterForm.noToken.returns.json"), blankTokenCount);
         } else {
-            return (_composeWithBaseURI("viewRegisterForm.hasTokens.returns.json"), blankTokenId);
+            return (_composeWithBaseURI("viewRegisterForm.hasTokens.returns.json"), blankTokenCount);
         }
     }
 
-    function viewPreregisterCheck(address userAddress, string memory registerSerialNumber) public view returns (string memory) {
+    function viewPreregisterCheck(address userAddress, string memory registerSerialNumber)
+    public view
+    returns (string memory, uint256 nftTokenId)
+    {
         BlanksOpenSea blanksContract = BlanksOpenSea(blanksContractAddress);
         BicycleComponentManager bcm = BicycleComponentManager(blanksContract.bicycleComponentManager());
 
+        nftTokenId = bcm.generateTokenId(registerSerialNumber);
+
         try bcm.ownerOf(registerSerialNumber) returns (address) {
-            return _composeWithBaseURI("viewPreregisterCheck.alreadyRegistered.returns.json");
+            return (_composeWithBaseURI("viewPreregisterCheck.alreadyRegistered.returns.json"), nftTokenId);
         } catch {
-            return _composeWithBaseURI("viewPreregisterCheck.notYetRegistered.returns.json");
+            return (_composeWithBaseURI("viewPreregisterCheck.notYetRegistered.returns.json"), nftTokenId);
         }
     }
 

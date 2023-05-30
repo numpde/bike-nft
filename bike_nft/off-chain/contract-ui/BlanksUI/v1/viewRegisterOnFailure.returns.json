@@ -10,35 +10,7 @@
       "id": "retryOnFailure",
       "label": "Retry",
       "onClick": {
-        "default": {
-          "inputs": [
-            {
-              "internalType": "address",
-              "name": "userAddress",
-              "type": "address"
-            }
-          ],
-          "name": "viewEntryD",
-          "outputs": [
-            {
-              "internalType": "string",
-              "name": "ui",
-              "type": "string"
-            },
-            {
-              "internalType": "uint256",
-              "name": "blankTokenId",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "tokenCount",
-              "type": "uint256"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
-        }
+        "default": "viewRegisterForm"
       }
     }
   ]

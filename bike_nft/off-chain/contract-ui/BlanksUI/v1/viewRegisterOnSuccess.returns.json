@@ -1,9 +1,10 @@
 {
   "elements": [
     {
-      "type": "text",
-      "id": "textOnRegisterSuccess",
-      "text": "You have successfully registered."
+      "type": "input",
+      "label": "You have successfully registered",
+      "id": "registerSerialNumber",
+      "readOnly": true
     },
     {
       "type": "input",
@@ -11,6 +12,14 @@
       "label": "NFT tokens minted by you:",
       "value": "",
       "readOnly": true
+    },
+    {
+      "type": "button",
+      "id": "restartButton",
+      "label": "Restart",
+      "onClick": {
+        "default": "viewEntry"
+      }
     }
   ]
 }

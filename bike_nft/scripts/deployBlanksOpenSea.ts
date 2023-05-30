@@ -8,6 +8,9 @@ import {getAddress} from "ethers/lib/utils";
 import {deployed, deploymentParams} from "../deploy.config";
 import {Contract} from "ethers";
 
+import path from 'path';
+import fs from "fs";
+
 
 async function main() {
     const [deployer] = await ethers.getSigners();
@@ -60,6 +63,13 @@ async function main() {
         }
 
         await report(blanksUiContract).catch(e => console.log("Error:", e));
+    }
+
+    // Copy blanksUiContract ABI
+    {
+        const abi = blanksUiContract.interface.fragments;
+        const outputPath = path.join(__dirname, `../off-chain/contract-ui/BlanksUI/v1/abi.json`);
+        fs.writeFileSync(outputPath, JSON.stringify(abi, null, 2));
     }
 
     // Link

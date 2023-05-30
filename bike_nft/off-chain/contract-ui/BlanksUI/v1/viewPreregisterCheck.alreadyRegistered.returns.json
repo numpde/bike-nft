@@ -7,25 +7,9 @@
     {
       "type": "button",
       "label": "Back",
-      "id": "backButton1",
+      "id": "backButton",
       "onClick": {
-        "default": {
-          "name": "viewRegisterForm",
-          "inputs": [
-            {
-              "name": "userAddress",
-              "type": "address"
-            }
-          ],
-          "outputs": [
-            {
-              "name": "",
-              "type": "string"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
-        }
+        "default": "viewRegisterForm"
       }
     }
   ]

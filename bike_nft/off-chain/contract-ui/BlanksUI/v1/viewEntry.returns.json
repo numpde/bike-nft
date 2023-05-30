@@ -1,0 +1,64 @@
+{
+  "elements": [
+    {
+      "type": "input",
+      "label": "Token Count A",
+      "id": "tokenCountA",
+      "value": "",
+      "readOnly": true
+    },
+    {
+      "type": "button",
+      "label": "Convert Blank A to NFT",
+      "id": "convertBlankA",
+      "onClick": {
+        "default": "viewEntryA"
+      }
+    },
+    {
+      "type": "input",
+      "label": "Token Count B",
+      "id": "tokenCountB",
+      "value": "",
+      "readOnly": true
+    },
+    {
+      "type": "button",
+      "label": "Convert Blank B to NFT",
+      "id": "convertBlankB",
+      "onClick": {
+        "default": "viewEntryB"
+      }
+    },
+    {
+      "type": "input",
+      "label": "Token Count C",
+      "id": "tokenCountC",
+      "value": "",
+      "readOnly": true
+    },
+    {
+      "type": "button",
+      "label": "Convert Blank C to NFT",
+      "id": "convertBlankC",
+      "onClick": {
+        "default": "viewEntryC"
+      }
+    },
+    {
+      "type": "input",
+      "label": "Token Count D",
+      "id": "tokenCountD",
+      "value": "",
+      "readOnly": true
+    },
+    {
+      "type": "button",
+      "label": "Convert Blank D to NFT",
+      "id": "convertBlankD",
+      "onClick": {
+        "default": "viewEntryD"
+      }
+    }
+  ]
+}
