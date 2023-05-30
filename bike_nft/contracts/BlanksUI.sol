@@ -2,39 +2,42 @@
 pragma solidity ^0.8.18;
 
 import "@opengsn/contracts/src/ERC2771Recipient.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
 import "./BlanksOpenSea.sol";
 import "./BicycleComponentManager.sol";
 
 
-contract BlanksUI is ERC2771Recipient {
+contract BlanksUI is ERC2771Recipient, AccessControl {
     address payable public blanksContractAddress;
     string public baseURI;
 
     mapping(address => uint256[]) public registeredNftTokens;
 
     constructor(address payable myBlanksContract, address myTrustedForwarder, string memory myBaseURI) {
+        _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
+
         _setTrustedForwarder(myTrustedForwarder);
         setBlanksContractAddress(myBlanksContract);
         setBaseURI(myBaseURI);
     }
 
     // @notice Set the "Blanks" contract to be managed
-    function setBlanksContractAddress(address payable newAddress) public {
+    function setBlanksContractAddress(address payable newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) {
         blanksContractAddress = newAddress;
     }
 
     // @notice Set OpenGSN trusted forwarder address
-    function setTrustedForwarder(address newAddress) public {
+    function setTrustedForwarder(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) {
         _setTrustedForwarder(newAddress);
     }
 
     // Set base URI for this contract
-    function setBaseURI(string memory newBaseURI) public {
+    function setBaseURI(string memory newBaseURI) public onlyRole(DEFAULT_ADMIN_ROLE) {
         baseURI = newBaseURI;
     }
 
-    function abiURI() public returns (string memory) {
+    function abiURI() public view returns (string memory) {
         return _composeWithBaseURI("abi.json");
     }
 
@@ -156,5 +159,21 @@ contract BlanksUI is ERC2771Recipient {
 
     function viewRegisterOnFailure(address userAddress) public view returns (string memory) {
         return _composeWithBaseURI("viewRegisterOnFailure.returns.json");
+    }
+
+    // Overrides resolution
+
+    function _msgSender()
+    internal virtual view override(ERC2771Recipient, Context)
+    returns (address)
+    {
+        return ERC2771Recipient._msgSender();
+    }
+
+    function _msgData()
+    internal virtual view override(ERC2771Recipient, Context)
+    returns (bytes calldata ret)
+    {
+        return ERC2771Recipient._msgData();
     }
 }

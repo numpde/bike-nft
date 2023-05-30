@@ -8,11 +8,12 @@ import {getSigners} from "./signers";
 import {deployAllAndLinkFixture} from "./fixtures";
 
 async function deployAllAndUI() {
+    const {deployer} = await getSigners();
     const {blanksContract, ...etc} = await loadFixture(deployAllAndLinkFixture);
 
     const BlanksUI = await ethers.getContractFactory("BlanksUI");
 
-    const blanksUiContract = await BlanksUI.deploy(
+    const blanksUiContract = await BlanksUI.connect(deployer).deploy(
         blanksContract.address,
         ethers.constants.AddressZero,
         deploymentParams.hardhat?.baseURI?.BlanksUI || "",
@@ -52,6 +53,24 @@ describe("BlanksUI", function () {
 
         it("Should...", async function () {
 
+        });
+    });
+
+    describe("Trusted forwarder", function () {
+        it("Allow the deployer to set the trusted forwarder", async function () {
+            const {deployer, third} = await getSigners();
+            const {blanksUiContract} = await loadFixture(deployAllAndUI);
+
+            const action = blanksUiContract.connect(deployer).setTrustedForwarder(third.address);
+            await expect(action).not.to.be.reverted;
+        });
+
+        it("Should not allow a non-deployer to set the trusted forwarder", async function () {
+            const {deployer, third} = await getSigners();
+            const {blanksUiContract} = await loadFixture(deployAllAndUI);
+
+            const action = blanksUiContract.connect(third).setTrustedForwarder(third.address);
+            await expect(action).to.be.reverted;
         });
     });
 
