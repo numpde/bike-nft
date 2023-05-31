@@ -1,48 +1,25 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
-import "@opengsn/contracts/src/ERC2771Recipient.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-
 import "./BlanksOpenSea.sol";
 import "./BicycleComponentManager.sol";
+import "./BaseUI.sol";
 
 
-contract BlanksUI is ERC2771Recipient, AccessControl {
+contract BlanksUI is BaseUI {
     address payable public blanksContractAddress;
-    string public baseURI;
 
     mapping(address => uint256[]) public registeredNftTokens;
 
-    constructor(address payable myBlanksContract, address myTrustedForwarder, string memory myBaseURI) {
-        _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
-
-        _setTrustedForwarder(myTrustedForwarder);
+    constructor(address payable myBlanksContract, address myTrustedForwarder, string memory myBaseURI)
+    BaseUI(myTrustedForwarder, myBaseURI)
+    {
         setBlanksContractAddress(myBlanksContract);
-        setBaseURI(myBaseURI);
     }
 
     // @notice Set the "Blanks" contract to be managed
     function setBlanksContractAddress(address payable newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) {
         blanksContractAddress = newAddress;
-    }
-
-    // @notice Set OpenGSN trusted forwarder address
-    function setTrustedForwarder(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        _setTrustedForwarder(newAddress);
-    }
-
-    // Set base URI for this contract
-    function setBaseURI(string memory newBaseURI) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        baseURI = newBaseURI;
-    }
-
-    function abiURI() public view returns (string memory) {
-        return _composeWithBaseURI("abi.json");
-    }
-
-    function _composeWithBaseURI(string memory path) internal view returns (string memory) {
-        return string(abi.encodePacked(baseURI, path));
     }
 
     function _getTokenCount(address userAddress, uint256 blankTokenId)
@@ -159,21 +136,5 @@ contract BlanksUI is ERC2771Recipient, AccessControl {
 
     function viewRegisterOnFailure(address userAddress) public view returns (string memory) {
         return _composeWithBaseURI("viewRegisterOnFailure.returns.json");
-    }
-
-    // Overrides resolution
-
-    function _msgSender()
-    internal virtual view override(ERC2771Recipient, Context)
-    returns (address)
-    {
-        return ERC2771Recipient._msgSender();
-    }
-
-    function _msgData()
-    internal virtual view override(ERC2771Recipient, Context)
-    returns (bytes calldata ret)
-    {
-        return ERC2771Recipient._msgData();
     }
 }

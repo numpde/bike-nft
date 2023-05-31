@@ -18,7 +18,6 @@ async function step01_deployContracts(deployer) {
         {
             initializer: 'initialize',
             kind: 'uups',
-            value: 0,
         }
     );
 
@@ -30,7 +29,6 @@ async function step01_deployContracts(deployer) {
         {
             initializer: 'initialize',
             kind: 'uups',
-            value: 0,
         }
     );
 

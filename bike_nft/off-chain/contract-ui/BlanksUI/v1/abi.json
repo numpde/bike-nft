@@ -40,9 +40,145 @@
     "_isFragment": true
   },
   {
+    "name": "RoleAdminChanged",
+    "anonymous": false,
+    "inputs": [
+      {
+        "name": "role",
+        "type": "bytes32",
+        "indexed": true,
+        "components": null,
+        "arrayLength": null,
+        "arrayChildren": null,
+        "baseType": "bytes32",
+        "_isParamType": true
+      },
+      {
+        "name": "previousAdminRole",
+        "type": "bytes32",
+        "indexed": true,
+        "components": null,
+        "arrayLength": null,
+        "arrayChildren": null,
+        "baseType": "bytes32",
+        "_isParamType": true
+      },
+      {
+        "name": "newAdminRole",
+        "type": "bytes32",
+        "indexed": true,
+        "components": null,
+        "arrayLength": null,
+        "arrayChildren": null,
+        "baseType": "bytes32",
+        "_isParamType": true
+      }
+    ],
+    "type": "event",
+    "_isFragment": true
+  },
+  {
+    "name": "RoleGranted",
+    "anonymous": false,
+    "inputs": [
+      {
+        "name": "role",
+        "type": "bytes32",
+        "indexed": true,
+        "components": null,
+        "arrayLength": null,
+        "arrayChildren": null,
+        "baseType": "bytes32",
+        "_isParamType": true
+      },
+      {
+        "name": "account",
+        "type": "address",
+        "indexed": true,
+        "components": null,
+        "arrayLength": null,
+        "arrayChildren": null,
+        "baseType": "address",
+        "_isParamType": true
+      },
+      {
+        "name": "sender",
+        "type": "address",
+        "indexed": true,
+        "components": null,
+        "arrayLength": null,
+        "arrayChildren": null,
+        "baseType": "address",
+        "_isParamType": true
+      }
+    ],
+    "type": "event",
+    "_isFragment": true
+  },
+  {
+    "name": "RoleRevoked",
+    "anonymous": false,
+    "inputs": [
+      {
+        "name": "role",
+        "type": "bytes32",
+        "indexed": true,
+        "components": null,
+        "arrayLength": null,
+        "arrayChildren": null,
+        "baseType": "bytes32",
+        "_isParamType": true
+      },
+      {
+        "name": "account",
+        "type": "address",
+        "indexed": true,
+        "components": null,
+        "arrayLength": null,
+        "arrayChildren": null,
+        "baseType": "address",
+        "_isParamType": true
+      },
+      {
+        "name": "sender",
+        "type": "address",
+        "indexed": true,
+        "components": null,
+        "arrayLength": null,
+        "arrayChildren": null,
+        "baseType": "address",
+        "_isParamType": true
+      }
+    ],
+    "type": "event",
+    "_isFragment": true
+  },
+  {
+    "type": "function",
+    "name": "DEFAULT_ADMIN_ROLE",
+    "constant": true,
+    "inputs": [],
+    "outputs": [
+      {
+        "name": null,
+        "type": "bytes32",
+        "indexed": null,
+        "components": null,
+        "arrayLength": null,
+        "arrayChildren": null,
+        "baseType": "bytes32",
+        "_isParamType": true
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "gas": null,
+    "_isFragment": true
+  },
+  {
     "type": "function",
     "name": "abiURI",
-    "constant": false,
+    "constant": true,
     "inputs": [],
     "outputs": [
       {
@@ -57,7 +193,7 @@
       }
     ],
     "payable": false,
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "gas": null,
     "_isFragment": true
   },
@@ -107,6 +243,39 @@
   },
   {
     "type": "function",
+    "name": "getRoleAdmin",
+    "constant": true,
+    "inputs": [
+      {
+        "name": "role",
+        "type": "bytes32",
+        "indexed": null,
+        "components": null,
+        "arrayLength": null,
+        "arrayChildren": null,
+        "baseType": "bytes32",
+        "_isParamType": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": null,
+        "type": "bytes32",
+        "indexed": null,
+        "components": null,
+        "arrayLength": null,
+        "arrayChildren": null,
+        "baseType": "bytes32",
+        "_isParamType": true
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "gas": null,
+    "_isFragment": true
+  },
+  {
+    "type": "function",
     "name": "getTrustedForwarder",
     "constant": true,
     "inputs": [],
@@ -119,6 +288,81 @@
         "arrayLength": null,
         "arrayChildren": null,
         "baseType": "address",
+        "_isParamType": true
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "gas": null,
+    "_isFragment": true
+  },
+  {
+    "type": "function",
+    "name": "grantRole",
+    "constant": false,
+    "inputs": [
+      {
+        "name": "role",
+        "type": "bytes32",
+        "indexed": null,
+        "components": null,
+        "arrayLength": null,
+        "arrayChildren": null,
+        "baseType": "bytes32",
+        "_isParamType": true
+      },
+      {
+        "name": "account",
+        "type": "address",
+        "indexed": null,
+        "components": null,
+        "arrayLength": null,
+        "arrayChildren": null,
+        "baseType": "address",
+        "_isParamType": true
+      }
+    ],
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "gas": null,
+    "_isFragment": true
+  },
+  {
+    "type": "function",
+    "name": "hasRole",
+    "constant": true,
+    "inputs": [
+      {
+        "name": "role",
+        "type": "bytes32",
+        "indexed": null,
+        "components": null,
+        "arrayLength": null,
+        "arrayChildren": null,
+        "baseType": "bytes32",
+        "_isParamType": true
+      },
+      {
+        "name": "account",
+        "type": "address",
+        "indexed": null,
+        "components": null,
+        "arrayLength": null,
+        "arrayChildren": null,
+        "baseType": "address",
+        "_isParamType": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": null,
+        "type": "bool",
+        "indexed": null,
+        "components": null,
+        "arrayLength": null,
+        "arrayChildren": null,
+        "baseType": "bool",
         "_isParamType": true
       }
     ],
@@ -287,6 +531,70 @@
   },
   {
     "type": "function",
+    "name": "renounceRole",
+    "constant": false,
+    "inputs": [
+      {
+        "name": "role",
+        "type": "bytes32",
+        "indexed": null,
+        "components": null,
+        "arrayLength": null,
+        "arrayChildren": null,
+        "baseType": "bytes32",
+        "_isParamType": true
+      },
+      {
+        "name": "account",
+        "type": "address",
+        "indexed": null,
+        "components": null,
+        "arrayLength": null,
+        "arrayChildren": null,
+        "baseType": "address",
+        "_isParamType": true
+      }
+    ],
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "gas": null,
+    "_isFragment": true
+  },
+  {
+    "type": "function",
+    "name": "revokeRole",
+    "constant": false,
+    "inputs": [
+      {
+        "name": "role",
+        "type": "bytes32",
+        "indexed": null,
+        "components": null,
+        "arrayLength": null,
+        "arrayChildren": null,
+        "baseType": "bytes32",
+        "_isParamType": true
+      },
+      {
+        "name": "account",
+        "type": "address",
+        "indexed": null,
+        "components": null,
+        "arrayLength": null,
+        "arrayChildren": null,
+        "baseType": "address",
+        "_isParamType": true
+      }
+    ],
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "gas": null,
+    "_isFragment": true
+  },
+  {
+    "type": "function",
     "name": "setBaseURI",
     "constant": false,
     "inputs": [
@@ -348,6 +656,39 @@
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
+    "gas": null,
+    "_isFragment": true
+  },
+  {
+    "type": "function",
+    "name": "supportsInterface",
+    "constant": true,
+    "inputs": [
+      {
+        "name": "interfaceId",
+        "type": "bytes4",
+        "indexed": null,
+        "components": null,
+        "arrayLength": null,
+        "arrayChildren": null,
+        "baseType": "bytes4",
+        "_isParamType": true
+      }
+    ],
+    "outputs": [
+      {
+        "name": null,
+        "type": "bool",
+        "indexed": null,
+        "components": null,
+        "arrayLength": null,
+        "arrayChildren": null,
+        "baseType": "bool",
+        "_isParamType": true
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
     "gas": null,
     "_isFragment": true
   },

@@ -1,21 +1,17 @@
 import {ethers, upgrades} from "hardhat";
 import readlineSync from "readline-sync";
 import {Contract} from "ethers";
-
-import {ipfsBasePath} from "../hardhat.config";
-import {execute, getNetworkName, getMostRecent, packJSON} from "../utils/utils";
-import {report} from "./deployBicycleComponentManager";
 import {getAddress} from "ethers/lib/utils";
-import {deployed, deploymentParams} from "../deploy.config";
 
 import path from 'path';
 import fs from "fs";
 
-function saveAddress(chainId: number, contractName: string, address: string) {
-    const networkName = getNetworkName(chainId);
-    const outputPath = path.join(__dirname, `../../deployed/network/${networkName}/${contractName}.json`);
-    fs.writeFileSync(outputPath, JSON.stringify({address: address, network: chainId}, null, 4));
-}
+import {execute, getNetworkName, getMostRecent, packJSON} from "../utils/utils";
+import {deployed, deploymentParams} from "../deploy.config";
+import {ipfsBasePath} from "../hardhat.config";
+import {report} from "./deployBicycleComponentManager";
+import {saveAddress} from "./utils";
+
 
 async function main() {
     const [deployer] = await ethers.getSigners();
@@ -83,49 +79,51 @@ async function main() {
         }
     }
 
-    let blanksUiContract: Contract;
+    let uiContract: Contract;
     {
         const contractName = "BlanksUI";
+
+        // Copy the ABI from the artifacts.
+        {
+            const artifactsPath = path.join(__dirname, `../artifacts/contracts/${contractName}.sol/${contractName}.json`);
+            const abi = require(artifactsPath).abi;
+
+            const outputPath = path.join(__dirname, `../off-chain/contract-ui/${contractName}/v1/abi.json`);
+            fs.writeFileSync(outputPath, JSON.stringify(abi, null, 2));
+
+            // Note: to get the most recent commit hash
+            // git log --first-parent --max-count=1 --format=%H -- ./off-chain/
+        }
+
         const deployedAddress = deployed[getNetworkName(chainId)]?.[contractName];
 
         if (deployedAddress) {
-            blanksUiContract = await ethers.getContractAt(contractName, deployedAddress);
+            uiContract = await ethers.getContractAt(contractName, deployedAddress);
         } else {
             console.log(`Deploying ${contractName}...`);
 
             const Factory = await ethers.getContractFactory(contractName);
 
-            blanksUiContract = await Factory.deploy(
+            uiContract = await Factory.deploy(
                 blanksContract.address,
                 ethers.constants.AddressZero,
-                deploymentParams[getNetworkName(chainId)]?.baseURI?.BlanksUI || "",
+                deploymentParams[getNetworkName(chainId)]?.baseURI?.[contractName] || "",
             );
 
-            await blanksUiContract.deployed();
+            await uiContract.deployed();
         }
 
-        if (blanksUiContract) {
-            await report(blanksUiContract).catch(e => console.log("Error:", e));
-            saveAddress(chainId, contractName, blanksUiContract.address);
+        if (uiContract) {
+            await report(uiContract).catch(e => console.log("Error:", e));
+            saveAddress(chainId, contractName, uiContract.address);
         } else {
             throw new Error(`Instance of ${contractName} is undefined.`);
         }
     }
 
-    // "Upload" the blanksUiContract ABI.
-    // TODO: replace by copy-from-artifacts
-    // git log --first-parent --max-count=1 --format=%H -- ./off-chain/
+    console.log("Linking contracts...");
     {
-        const abi = blanksUiContract.interface.fragments;
-        const outputPath = path.join(__dirname, `../off-chain/contract-ui/BlanksUI/v1/abi.json`);
-        fs.writeFileSync(outputPath, JSON.stringify(abi, null, 2));
-    }
-
-    // Link
-    {
-        console.log("Linking contracts...");
-
-        if (getAddress(await blanksContract.bicycleComponentManager()) != getAddress(managerContract.address)) {
+        if (!(getAddress(await blanksContract.bicycleComponentManager()) == getAddress(managerContract.address))) {
             console.log("Linking BlanksOpenSea to BicycleComponentManager...");
             await execute(await blanksContract.setBicycleComponentManager(managerContract.address));
         }
@@ -135,9 +133,9 @@ async function main() {
             await execute(await managerContract.grantRole(await managerContract.REGISTRAR_ROLE(), blanksContract.address));
         }
 
-        if (!(await blanksContract.hasRole(await blanksContract.PROXY_ROLE(), blanksUiContract.address))) {
+        if (!(await blanksContract.hasRole(await blanksContract.PROXY_ROLE(), uiContract.address))) {
             console.log("Registering BlanksUI as proxy for BlanksOpenSea...");
-            await execute(await blanksContract.grantRole(await blanksContract.PROXY_ROLE(), blanksUiContract.address));
+            await execute(await blanksContract.grantRole(await blanksContract.PROXY_ROLE(), uiContract.address));
         }
     }
 

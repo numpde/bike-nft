@@ -1,0 +1,16 @@
+{
+  "elements": [
+    {
+      "type": "text",
+      "label": "HEY!"
+    },
+    {
+      "type": "button",
+      "label": "Continue",
+      "id": "continueButton",
+      "onClick": {
+        "default": "viewEntryX"
+      }
+    }
+  ]
+}

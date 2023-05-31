@@ -1,8 +1,13 @@
 import {ethers, upgrades} from "hardhat";
+import {getAddress} from "ethers/lib/utils";
 import {Contract} from "ethers";
 
+import path from "path";
+import fs from "fs";
+
 import {execute, getNetworkName} from "../utils/utils";
-import {deployed} from "../deploy.config";
+import {deployed, deploymentParams} from "../deploy.config";
+import {saveAddress} from "./utils";
 
 
 export async function report(contract: Contract) {
@@ -71,15 +76,70 @@ async function main() {
         await report(managerContract).catch(e => console.log("Error:", e));
     }
 
-    // Connect the contracts
+    let uiContract: Contract;
     {
-        console.log("Connecting contracts...");
+        const contractName = "BicycleComponentManagerUI";
 
-        // Link the manager contract to the managed contract
-        await execute(await managerContract.setNftContractAddress(componentsContract.address));
+        // Copy the ABI from the artifacts.
+        {
+            const artifactsPath = path.join(__dirname, `../artifacts/contracts/${contractName}.sol/${contractName}.json`);
+            const abi = require(artifactsPath).abi;
 
-        // Register the manager contract with the managed contract
-        await execute(await componentsContract.hireManager(managerContract.address));
+            const outputPath = path.join(__dirname, `../off-chain/contract-ui/${contractName}/v1/abi.json`);
+            fs.writeFileSync(outputPath, JSON.stringify(abi, null, 2));
+
+            // Note: to get the most recent commit hash
+            // git log --first-parent --max-count=1 --format=%H -- ./off-chain/
+        }
+
+        const deployedAddress = deployed[getNetworkName(chainId)]?.[contractName];
+        const baseURI = deploymentParams[getNetworkName(chainId)]?.baseURI?.[contractName] || "";
+
+        if (deployedAddress) {
+            uiContract = await ethers.getContractAt(contractName, deployedAddress);
+        } else {
+            console.log(`Deploying ${contractName}...`);
+
+            const Factory = await ethers.getContractFactory(contractName);
+
+            uiContract = await Factory.deploy(
+                managerContract.address,
+                ethers.constants.AddressZero,
+                baseURI,
+            );
+
+            await uiContract.deployed();
+        }
+
+        if (uiContract) {
+            await report(uiContract).catch(e => console.log("Error:", e));
+            saveAddress(chainId, contractName, uiContract.address);
+        } else {
+            throw new Error(`Instance of ${contractName} is undefined.`);
+        }
+
+        if (!((await uiContract.baseURI()) == baseURI)) {
+            console.log("Setting base URI...");
+            await execute(await uiContract.setBaseURI(baseURI));
+        }
+    }
+
+    console.log("Linking contracts...");
+    {
+        if (!(getAddress(await managerContract.nftContractAddress()) == getAddress(componentsContract.address))) {
+            console.log("Setting NFT contract address...");
+            await execute(await managerContract.setNftContractAddress(componentsContract.address));
+        }
+
+        if (!(await componentsContract.hasRole(await componentsContract.NFT_MANAGER_ROLE(), managerContract.address))) {
+            console.log("Hiring manager...");
+            await execute(await componentsContract.hireManager(managerContract.address));
+        }
+
+        if (!(await managerContract.hasRole(await managerContract.REGISTRAR_ROLE(), uiContract.address))) {
+            console.log("Registering UI as proxy...");
+            await execute(await managerContract.grantRole(await managerContract.REGISTRAR_ROLE(), uiContract.address));
+        }
     }
 }
 

@@ -20,21 +20,25 @@ const deploymentParams: {
     polygon: {
         baseURI: {
             BlanksUI: "https://raw.githubusercontent.com/numpde/bike-nft/main/bike_nft/off-chain/contract-ui/BlanksUI/v1/",
+            BicycleComponentManagerUI: "https://raw.githubusercontent.com/numpde/bike-nft/main/bike_nft/off-chain/contract-ui/BicycleComponentManagerUI/v1/",
         },
     },
     mumbai: {
         baseURI: {
             BlanksUI: "https://raw.githubusercontent.com/numpde/bike-nft/main/bike_nft/off-chain/contract-ui/BlanksUI/v1/",
+            BicycleComponentManagerUI: "https://raw.githubusercontent.com/numpde/bike-nft/main/bike_nft/off-chain/contract-ui/BicycleComponentManagerUI/v1/",
         },
     },
     ganache: {
         baseURI: {
             BlanksUI: "http://0.0.0.0:6001/contract-ui/BlanksUI/v1/",
+            BicycleComponentManagerUI: "http://0.0.0.0:6001/contract-ui/BicycleComponentManagerUI/v1/",
         },
     },
     hardhat: {
         baseURI: {
             BlanksUI: "http://0.0.0.0:6001/contract-ui/BlanksUI/v1/",
+            BicycleComponentManagerUI: "http://0.0.0.0:6001/contract-ui/BicycleComponentManagerUI/v1/",
         },
     },
 }
@@ -48,16 +52,26 @@ const deployed: {
         BicycleComponentManager: "0xd7334783B80B31Cf039fE615169B1f513d8d84ED",
         BicycleComponents: "0x8DdF2e56DbBE7cF86e6cC2EA2c473Ca66654dCAA",
         BlanksOpenSea: safeRequire("../deployed/network/polygon/BlanksOpenSea.json")?.address || "0xa5a281d3EE4840c984d82e7B8fe4E28800D38655",
+
+        BicycleComponentManagerUI: safeRequire("../deployed/network/polygon/BicycleComponentManagerUI.json")?.address,
+        BlanksUI: safeRequire("../deployed/network/polygon/BlanksUI.json")?.address,
     },
+
     mumbai: {
         BicycleComponentManager: "0x5aec9a71fd38a6234ce6a2fade9b693dd8466c9b",
         BicycleComponents: "0x52b371e38cdcd877e347e45d7d231f384d68599c",
         BlanksOpenSea: safeRequire("../deployed/network/mumbai/BlanksOpenSea.json")?.address || "0x025b85a56c9b495785171c64c44a65f0abfe1e7c",
+
+        BicycleComponentManagerUI: safeRequire("../deployed/network/mumbai/BicycleComponentManagerUI.json")?.address,
+        BlanksUI: safeRequire("../deployed/network/mumbai/BlanksUI.json")?.address,
     },
+
     ganache: {
         BicycleComponentManager: "0x7ba471Ea78a94f180605165db6D11E38A831175B",
         BicycleComponents: "0xA7Dc946c20166416CA7a880cCa79157c55d8966C",
         BlanksOpenSea: safeRequire("../deployed/network/ganache/BlanksOpenSea.json")?.address,
+
+        BicycleComponentManagerUI: safeRequire("../deployed/network/ganache/BicycleComponentManagerUI.json")?.address,
         BlanksUI: safeRequire("../deployed/network/ganache/BlanksUI.json")?.address,
     },
 };
