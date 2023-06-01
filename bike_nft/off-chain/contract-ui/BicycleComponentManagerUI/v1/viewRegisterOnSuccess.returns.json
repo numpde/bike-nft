@@ -14,6 +14,13 @@
     },
     {
       "type": "button",
+      "label": "View it",
+      "onClick": {
+        "default": "viewIsNewSerialNumber"
+      }
+    },
+    {
+      "type": "button",
       "id": "restartButton",
       "label": "Restart",
       "onClick": {

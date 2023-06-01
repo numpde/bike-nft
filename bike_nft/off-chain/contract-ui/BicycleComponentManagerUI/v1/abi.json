@@ -419,6 +419,16 @@
         "internalType": "string",
         "name": "ownerInfo",
         "type": "string"
+      },
+      {
+        "internalType": "address",
+        "name": "nftContractAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "nftTokenId",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",

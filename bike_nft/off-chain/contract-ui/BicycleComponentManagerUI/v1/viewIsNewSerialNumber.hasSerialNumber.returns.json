@@ -24,6 +24,23 @@
       "onClick": {
         "default": "viewEntry"
       }
+    },
+    {
+      "type": "nft",
+      "label": "Registered NFT:",
+      "params": {
+        "chainId": "contractNetwork",
+        "contractAddress": "nftContractAddress",
+        "tokenId": "nftTokenId"
+      }
+    },
+    {
+      "type": "qrcode",
+      "label": "Link to this page",
+      "params": {
+        "basePath": "basePath",
+        "registerSerialNumber": "registerSerialNumber"
+      }
     }
   ]
 }

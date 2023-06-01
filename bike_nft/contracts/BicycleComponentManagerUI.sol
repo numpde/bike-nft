@@ -62,7 +62,7 @@ contract BicycleComponentManagerUI is BaseUI {
 
     function viewIsNewSerialNumber(string memory registerSerialNumber)
     external view
-    returns (string memory, address ownerAddress, string memory ownerInfo)
+    returns (string memory, address ownerAddress, string memory ownerInfo, address nftContractAddress, uint256 nftTokenId)
     {
         BicycleComponentManager bcm = _bcm();
 
@@ -73,9 +73,12 @@ contract BicycleComponentManagerUI is BaseUI {
                 ownerInfo = "N/A";
             }
 
-            return (_composeWithBaseURI("viewIsNewSerialNumber.hasSerialNumber.returns.json"), owner, ownerInfo);
+            nftContractAddress = bcm.nftContractAddress();
+            nftTokenId = bcm.generateTokenId(registerSerialNumber);
+
+            return (_composeWithBaseURI("viewIsNewSerialNumber.hasSerialNumber.returns.json"), owner, ownerInfo, nftContractAddress, nftTokenId);
         } catch (bytes memory) {
-            return (_composeWithBaseURI("viewIsNewSerialNumber.newSerialNumber.returns.json"), address(0), "");
+            return (_composeWithBaseURI("viewIsNewSerialNumber.newSerialNumber.returns.json"), address(0), "", address(0), 0);
         }
     }
 
@@ -124,6 +127,6 @@ contract BicycleComponentManagerUI is BaseUI {
     }
 
     function viewRegisterOnSuccess() public view returns (string memory) {
-        return (_composeWithBaseURI("viewRegisterOnSuccess.returns.json"));
+        return _composeWithBaseURI("viewRegisterOnSuccess.returns.json");
     }
 }
