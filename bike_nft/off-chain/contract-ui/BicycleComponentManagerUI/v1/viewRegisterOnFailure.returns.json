@@ -1,0 +1,17 @@
+{
+  "elements": [
+    {
+      "type": "text",
+      "id": "textRegisterOnFailure",
+      "label": "Sorry, we hit a snag..."
+    },
+    {
+      "type": "button",
+      "id": "retryOnFailure",
+      "label": "Retry",
+      "onClick": {
+        "default": "viewRegisterForm"
+      }
+    }
+  ]
+}

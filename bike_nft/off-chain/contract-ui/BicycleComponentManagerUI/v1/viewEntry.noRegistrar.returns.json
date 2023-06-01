@@ -1,0 +1,36 @@
+{
+  "elements": [
+    {
+      "type": "text",
+      "label": "Hi! What would you like to do?"
+    },
+    {
+      "type": "input",
+      "label": "Query a serial number:",
+      "id": "registerSerialNumber",
+      "placeholder": "Serial Number, e.g. SN-1234"
+    },
+    {
+      "type": "button",
+      "label": "Continue",
+      "onClick": {
+        "default": "viewIsNewSerialNumber"
+      }
+    },
+    {
+      "type": "input",
+      "label": "Change your public account info (requires a transaction):",
+      "id": "userAddressInfo",
+      "placeholder": "E.g., name or email"
+    },
+    {
+      "type": "button",
+      "label": "Save",
+      "onClick": {
+        "default": "updateUserAddressInfo",
+        "success": "viewUserAddressInfoUpdateSuccess",
+        "failure": "viewUserAddressInfoUpdateFailure"
+      }
+    }
+  ]
+}

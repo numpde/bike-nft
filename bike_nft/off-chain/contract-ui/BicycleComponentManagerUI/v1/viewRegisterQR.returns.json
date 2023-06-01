@@ -1,0 +1,23 @@
+{
+  "elements": [
+    {
+      "type": "qrcode",
+      "label": "Please show or forward this QR code:",
+      "params": {
+        "basePath": "basePath",
+        "registerFor": "registerFor",
+        "registerSerialNumber": "registerSerialNumber",
+        "registerName": "registerName",
+        "registerDescription": "registerDescription",
+        "registerImageURL": "registerImageURL"
+      }
+    },
+    {
+      "type": "button",
+      "label": "Back",
+      "onClick": {
+        "default": "viewEntry"
+      }
+    }
+  ]
+}

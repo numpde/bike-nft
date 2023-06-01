@@ -127,14 +127,14 @@ contract BlanksUI is BaseUI {
         registeredNftTokens[userAddress].push(nftTokenId);
     }
 
+    function viewRegisterOnFailure(address userAddress) public view returns (string memory) {
+        return _composeWithBaseURI("viewRegisterOnFailure.returns.json");
+    }
+
     function viewRegisterOnSuccess(address userAddress) public view returns (string memory, uint256[] memory nftTokens) {
         return (
             _composeWithBaseURI("viewRegisterOnSuccess.returns.json"),
             registeredNftTokens[userAddress]
         );
-    }
-
-    function viewRegisterOnFailure(address userAddress) public view returns (string memory) {
-        return _composeWithBaseURI("viewRegisterOnFailure.returns.json");
     }
 }

@@ -1,0 +1,59 @@
+{
+  "elements": [
+    {
+      "type": "text",
+      "label": "It appears you don't have the authority to do registration. However, you can enter your data here to save it in a QR code."
+    },
+
+
+    {
+      "type": "input",
+      "label": "Please note, all data are publicly visible on the blockchain. Do not save any sensitive information. Serial number (must be unique):",
+      "id": "registerSerialNumber",
+      "placeholder": "e.g., SN1234...",
+      "readOnly": true
+    },
+    {
+      "type": "input",
+      "label": "Register for (address required):",
+      "id": "registerFor",
+      "placeholder": "0x...",
+      "value": ""
+    },
+    {
+      "type": "input",
+      "label": "Name for the NFT. Should contain useful searchable info.",
+      "id": "registerName",
+      "placeholder": "E.g., bike model",
+      "value": ""
+    },
+    {
+      "type": "input",
+      "label": "Description for the NFT:",
+      "id": "registerDescription",
+      "placeholder": "Detailed description",
+      "value": ""
+    },
+    {
+      "type": "input",
+      "label": "Image URL for the NFT:",
+      "id": "registerImageURL",
+      "placeholder": "https://...",
+      "value": "https://"
+    },
+    {
+      "type": "button",
+      "label": "Proceed",
+      "onClick": {
+        "default": "viewRegisterQR"
+      }
+    },
+    {
+      "type": "button",
+      "label": "Back",
+      "onClick": {
+        "default": "viewEntry"
+      }
+    }
+  ]
+}

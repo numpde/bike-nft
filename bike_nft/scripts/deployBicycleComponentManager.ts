@@ -8,6 +8,7 @@ import fs from "fs";
 import {execute, getNetworkName} from "../utils/utils";
 import {deployed, deploymentParams} from "../deploy.config";
 import {saveAddress} from "./utils";
+import readlineSync from "readline-sync";
 
 
 export async function report(contract: Contract) {
@@ -92,8 +93,24 @@ async function main() {
             // git log --first-parent --max-count=1 --format=%H -- ./off-chain/
         }
 
-        const deployedAddress = deployed[getNetworkName(chainId)]?.[contractName];
+        let deployedAddress: string | undefined = deployed[getNetworkName(chainId)]?.[contractName];
         const baseURI = deploymentParams[getNetworkName(chainId)]?.baseURI?.[contractName] || "";
+
+        if (deployedAddress) {
+            console.log(`The contract ${contractName} is deployed already. `);
+
+            const prompt = readlineSync.keyInSelect(['Yes', 'No'], 'Redeploy?');
+
+            switch (prompt) {
+                case 0:
+                    deployedAddress = undefined;
+                    break;
+                case 1:
+                    break;
+                default:
+                    process.exit(1);
+            }
+        }
 
         if (deployedAddress) {
             uiContract = await ethers.getContractAt(contractName, deployedAddress);

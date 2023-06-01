@@ -1,0 +1,29 @@
+{
+  "elements": [
+    {
+      "type": "input",
+      "label": "This serial number",
+      "id": "registerSerialNumber",
+      "readOnly": true
+    },
+    {
+      "type": "input",
+      "label": "is registered to the address:",
+      "id": "ownerAddress",
+      "readOnly": true
+    },
+    {
+      "type": "input",
+      "label": "Info about this address:",
+      "id": "ownerInfo",
+      "readOnly": true
+    },
+    {
+      "type": "button",
+      "label": "Back",
+      "onClick": {
+        "default": "viewEntry"
+      }
+    }
+  ]
+}

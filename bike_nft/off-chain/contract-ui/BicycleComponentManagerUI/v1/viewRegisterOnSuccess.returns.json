@@ -1,0 +1,24 @@
+{
+  "elements": [
+    {
+      "type": "input",
+      "label": "You have successfully registered",
+      "id": "registerSerialNumber",
+      "readOnly": true
+    },
+    {
+      "type": "input",
+      "label": "for",
+      "id": "registerFor",
+      "readOnly": true
+    },
+    {
+      "type": "button",
+      "id": "restartButton",
+      "label": "Restart",
+      "onClick": {
+        "default": "viewEntry"
+      }
+    }
+  ]
+}
