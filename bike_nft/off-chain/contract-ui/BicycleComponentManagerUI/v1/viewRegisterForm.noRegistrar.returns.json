@@ -14,7 +14,7 @@
       "readOnly": true
     },
     {
-      "type": "input",
+      "type": "address",
       "label": "Register for (address required):",
       "id": "registerFor",
       "placeholder": "0x...",

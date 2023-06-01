@@ -8,7 +8,7 @@
       "readOnly": true
     },
     {
-      "type": "input",
+      "type": "address",
       "label": "Register for (address required):",
       "id": "registerFor",
       "placeholder": "0x...",
@@ -37,7 +37,14 @@
     },
     {
       "type": "button",
-      "label": "Proceed",
+      "label": "Make a QR code",
+      "onClick": {
+        "default": "viewRegisterQR"
+      }
+    },
+    {
+      "type": "button",
+      "label": "Register now",
       "onClick": {
         "default": "register",
         "failure": "viewRegisterOnFailure",

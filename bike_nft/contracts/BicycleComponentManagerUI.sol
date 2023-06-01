@@ -34,6 +34,21 @@ contract BicycleComponentManagerUI is BaseUI {
         return bcm.hasRole(bcm.REGISTRAR_ROLE(), userAddress);
     }
 
+    modifier _onlyRegistrar(address userAddress) {
+        // Note: `_msgSender()` checks whether `msg.sender` is a trusted forwarder.
+        require(
+            userAddress == _msgSender(),
+            "BicycleComponentManagerUI: userAddress and _msgSender don't match (or not a trusted forwarder)"
+        );
+
+        require(
+            _isRegistrar(userAddress),
+            "BicycleComponentManagerUI: userAddress is not a registrar"
+        );
+
+        _;
+    }
+
     function viewEntry(address userAddress)
     external view
     returns (string memory)
@@ -64,7 +79,7 @@ contract BicycleComponentManagerUI is BaseUI {
         }
     }
 
-    function viewRegisterForm(address userAddress, address registerFor)
+    function viewRegisterForm(address userAddress)
     external view
     returns (string memory)
     {
@@ -89,19 +104,18 @@ contract BicycleComponentManagerUI is BaseUI {
         string memory registerImageURL
     )
     public
+    _onlyRegistrar(userAddress)
     {
-        // Note: `_msgSender()` checks whether `msg.sender` is a trusted forwarder.
-        require(
-            userAddress == _msgSender(),
-            "BicycleComponentManagerUI: userAddress and _msgSender don't match (or not a trusted forwarder)"
-        );
+        // At this point, we know that `userAddress` is a registrar on BicycleComponentManager
+        // and could have called its `register` function directly.
+        // When this contract invokes `register` on BicycleComponentManager,
+        // its `REGISTRAR_ROLE` will be checked there.
 
         BicycleComponentManager bcm = _bcm();
 
         string[] memory emptyArray;
         string memory uri = string("").stringifyOnChainMetadata(registerName, registerDescription, registerImageURL, emptyArray, emptyArray).packJSON();
 
-        // Checks that this contract has the `REGISTRAR_ROLE`:
         bcm.register(registerFor, registerSerialNumber, uri);
     }
 

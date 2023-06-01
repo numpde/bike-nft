@@ -6,6 +6,7 @@
       "params": {
         "basePath": "basePath",
         "registerFor": "registerFor",
+        "registerForGiven": "registerFor",
         "registerSerialNumber": "registerSerialNumber",
         "registerName": "registerName",
         "registerDescription": "registerDescription",

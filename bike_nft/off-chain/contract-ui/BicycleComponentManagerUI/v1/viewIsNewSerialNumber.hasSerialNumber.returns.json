@@ -7,7 +7,7 @@
       "readOnly": true
     },
     {
-      "type": "input",
+      "type": "address",
       "label": "is registered to the address:",
       "id": "ownerAddress",
       "readOnly": true

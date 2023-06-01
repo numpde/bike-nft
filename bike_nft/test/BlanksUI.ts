@@ -11,12 +11,14 @@ async function deployAllAndUI() {
     const {deployer} = await getSigners();
     const {blanksContract, ...etc} = await loadFixture(deployAllAndLinkFixture);
 
-    const BlanksUI = await ethers.getContractFactory("BlanksUI");
+    const contractName = "BlanksUI"
+
+    const BlanksUI = await ethers.getContractFactory(contractName);
 
     const blanksUiContract = await BlanksUI.connect(deployer).deploy(
         blanksContract.address,
         ethers.constants.AddressZero,
-        deploymentParams.hardhat?.baseURI?.BlanksUI || "",
+        deploymentParams.hardhat?.baseURI?.[contractName] || "",
     );
 
     await blanksUiContract.deployed();
