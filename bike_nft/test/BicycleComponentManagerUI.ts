@@ -1,5 +1,4 @@
 import {loadFixture} from "@nomicfoundation/hardhat-network-helpers";
-import {Contract} from "ethers";
 import {ethers} from "hardhat";
 import {expect} from "chai";
 
@@ -29,7 +28,6 @@ async function deployAllAndUI() {
 
     return {managerContract, managerUI: contractUI, ...etc};
 }
-
 
 describe("BicycleComponentManagerUI", function () {
     describe("Deployment", function () {
