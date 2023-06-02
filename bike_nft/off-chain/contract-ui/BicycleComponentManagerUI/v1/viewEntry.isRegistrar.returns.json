@@ -6,7 +6,7 @@
     },
     {
       "type": "input",
-      "label": "Query or register a serial number:",
+      "label": "Query or register a serial number (leave blank to see an example):",
       "id": "registerSerialNumber",
       "placeholder": "Serial Number, e.g. SN-1234"
     },
