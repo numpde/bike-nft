@@ -39,6 +39,7 @@
       "label": "Link to this page",
       "params": {
         "basePath": "basePath",
+        "relPath": "../viewIsNewSerialNumber",
         "registerSerialNumber": "registerSerialNumber"
       }
     }
