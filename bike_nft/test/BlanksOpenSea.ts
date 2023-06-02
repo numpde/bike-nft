@@ -15,12 +15,21 @@ describe("Blanks", function () {
             await expect(blanksContract).to.exist;
         });
 
-        it("Should initialize with minted tokens", async function () {
+        it("Should initialize without minted tokens", async function () {
             const {blanksContract} = await loadFixture(deployBlanksFixture);
             const {deployer} = await getSigners();
 
-            const balance = await blanksContract.balanceOf(deployer.address, await blanksContract.BLANK_NFT_TOKEN_ID_B());
-            await expect(balance).to.be.gt(0);
+            const balanceA = await blanksContract.balanceOf(deployer.address, await blanksContract.BLANK_NFT_TOKEN_ID_A());
+            await expect(balanceA).to.equal(0);
+
+            const balanceB = await blanksContract.balanceOf(deployer.address, await blanksContract.BLANK_NFT_TOKEN_ID_B());
+            await expect(balanceB).to.equal(0);
+
+            const balanceC = await blanksContract.balanceOf(deployer.address, await blanksContract.BLANK_NFT_TOKEN_ID_C());
+            await expect(balanceC).to.equal(0);
+
+            const balanceD = await blanksContract.balanceOf(deployer.address, await blanksContract.BLANK_NFT_TOKEN_ID_D());
+            await expect(balanceD).to.equal(0);
         });
     });
 
@@ -60,8 +69,11 @@ describe("Blanks", function () {
             const amount = 10;
 
             // mint
-            const action1 = blanksContract.connect(deployer).mint(shop1.address, privilegedTokenId, amount, "0x");
-            await expect(action1).not.to.be.reverted;
+            const action1a = blanksContract.connect(deployer).mint(shop1.address, privilegedTokenId, amount, "0x");
+            await expect(action1a).not.to.be.reverted;
+
+            const action1b = blanksContract.connect(deployer).mint(deployer.address, privilegedTokenId, amount, "0x");
+            await expect(action1b).not.to.be.reverted;
 
             // shop fails to transfer to a third party
             const action2 = blanksContract.connect(shop1).safeTransferFrom(shop1.address, third.address, privilegedTokenId, 1, "0x");

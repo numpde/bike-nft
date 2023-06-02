@@ -1,0 +1,23 @@
+{
+  "elements": [
+    {
+      "type": "address",
+      "label": "The info of the address",
+      "id": "ownerAddress",
+      "readOnly": true
+    },
+    {
+      "type": "text",
+      "label": "has beed updated to:",
+      "id": "addressInfo",
+      "readOnly": true
+    },
+    {
+      "type": "button",
+      "label": "Back",
+      "onClick": {
+        "default": "viewEntry"
+      }
+    }
+  ]
+}

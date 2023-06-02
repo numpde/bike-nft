@@ -20,6 +20,13 @@
     },
     {
       "type": "button",
+      "label": "Update address info",
+      "onClick": {
+        "default": "viewUpdateAddressInfo"
+      }
+    },
+    {
+      "type": "button",
       "label": "Back",
       "onClick": {
         "default": "viewEntry"
@@ -35,8 +42,19 @@
       }
     },
     {
+      "type": "text",
+      "label": "If you're the owner or an administrator you can update the NFT metadata:"
+    },
+    {
+      "type": "button",
+      "label": "Update data (name, description, image)",
+      "onClick": {
+        "default": "viewUpdateNFT"
+      }
+    },
+    {
       "type": "qrcode",
-      "label": "Link to this page",
+      "label": "Share the link to this page:",
       "params": {
         "basePath": "basePath",
         "relPath": "../viewIsNewSerialNumber",

@@ -1,0 +1,27 @@
+{
+  "elements": [
+    {
+      "type": "text",
+      "label": "Updating the address/account info requires a transaction to be sent to the blockchain."
+    },
+    {
+      "type": "address",
+      "label": "Address:",
+      "id": "ownerAddress"
+    },
+    {
+      "type": "input",
+      "label": "Address info:",
+      "id": "ownerInfo"
+    },
+    {
+      "type": "button",
+      "label": "Save",
+      "onClick": {
+        "default": "updateAddressInfo",
+        "failure": "updateAddressInfoFailure",
+        "success": "updateAddressInfoSuccess"
+      }
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "elements": [
+    {
+      "type": "text",
+      "label": "Sorry, we hit a snag..."
+    },
+    {
+      "type": "button",
+      "label": "Retry",
+      "onClick": {
+        "default": "viewUpdateAddressInfo"
+      }
+    }
+  ]
+}

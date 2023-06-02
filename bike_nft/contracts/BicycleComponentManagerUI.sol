@@ -129,4 +129,34 @@ contract BicycleComponentManagerUI is BaseUI {
     function viewRegisterOnSuccess() public view returns (string memory) {
         return _composeWithBaseURI("viewRegisterOnSuccess.returns.json");
     }
+
+    function viewUpdateAddressInfo() public view returns (string memory) {
+        return _composeWithBaseURI("viewUpdateAddressInfo.returns.json");
+    }
+
+    function updateAddressInfo(
+        address ownerAddress,
+        string memory addressInfo
+    )
+    public
+    {
+        BicycleComponentManager bcm = _bcm();
+
+        // Who's asking? Could they have called `setAccountInfo` on BicycleComponentManager directly?
+        require(
+            bcm.hasRole(bcm.REGISTRAR_ROLE(), _msgSender()) ||
+            ownerAddress == _msgSender(),
+            "BicycleComponentManagerUI: Insufficient rights"
+        );
+
+        bcm.setAccountInfo(ownerAddress, addressInfo);
+    }
+
+    function viewUpdateAddressInfoOnFailure() public view returns (string memory) {
+        return _composeWithBaseURI("viewUpdateAddressInfoOnFailure.returns.json");
+    }
+
+    function viewUpdateAddressInfoOnSuccess() public view returns (string memory) {
+        return _composeWithBaseURI("viewUpdateAddressInfoOnSuccess.returns.json");
+    }
 }
