@@ -31,11 +31,6 @@
         "success": "viewUserAddressInfoUpdateSuccess",
         "failure": "viewUserAddressInfoUpdateFailure"
       }
-    },
-    {
-      "type": "qrcode",
-      "label": "This is your address:",
-      "id": "userAddress"
     }
   ]
 }
