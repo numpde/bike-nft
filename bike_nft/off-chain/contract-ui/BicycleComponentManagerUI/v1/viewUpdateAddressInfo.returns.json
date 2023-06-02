@@ -19,8 +19,15 @@
       "label": "Save",
       "onClick": {
         "default": "updateAddressInfo",
-        "failure": "updateAddressInfoFailure",
-        "success": "updateAddressInfoSuccess"
+        "failure": "viewUpdateAddressInfoOnFailure",
+        "success": "viewUpdateAddressInfoOnSuccess"
+      }
+    },
+    {
+      "type": "button",
+      "label": "Back",
+      "onClick": {
+        "default": "viewEntry"
       }
     }
   ]

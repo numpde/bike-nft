@@ -136,7 +136,7 @@ contract BicycleComponentManagerUI is BaseUI {
 
     function updateAddressInfo(
         address ownerAddress,
-        string memory addressInfo
+        string memory ownerInfo
     )
     public
     {
@@ -149,7 +149,7 @@ contract BicycleComponentManagerUI is BaseUI {
             "BicycleComponentManagerUI: Insufficient rights"
         );
 
-        bcm.setAccountInfo(ownerAddress, addressInfo);
+        bcm.setAccountInfo(ownerAddress, ownerInfo);
     }
 
     function viewUpdateAddressInfoOnFailure() public view returns (string memory) {
