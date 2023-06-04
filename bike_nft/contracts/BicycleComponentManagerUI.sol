@@ -67,11 +67,7 @@ contract BicycleComponentManagerUI is BaseUI {
         BicycleComponentManager bcm = _bcm();
 
         try bcm.ownerOf(registerSerialNumber) returns (address owner) {
-            ownerInfo = bcm.accountInfo(owner);
-
-            if (bytes(ownerInfo).length == 0) {
-                ownerInfo = "N/A";
-            }
+            ownerInfo = bcm.accountInfo(owner);  // possibly the empty string
 
             nftContractAddress = bcm.nftContractAddress();
             nftTokenId = bcm.generateTokenId(registerSerialNumber);
@@ -134,21 +130,21 @@ contract BicycleComponentManagerUI is BaseUI {
         return _composeWithBaseURI("viewUpdateAddressInfo.returns.json");
     }
 
-    function updateAddressInfo(
-        address ownerAddress,
-        string memory ownerInfo
-    )
-    public
-    {
+    function _canUpdateAddressInfo(address ownerAddress) internal view returns (bool) {
         BicycleComponentManager bcm = _bcm();
 
         // Who's asking? Could they have called `setAccountInfo` on BicycleComponentManager directly?
-        require(
+        return (
             bcm.hasRole(bcm.REGISTRAR_ROLE(), _msgSender()) ||
-            ownerAddress == _msgSender(),
-            "BicycleComponentManagerUI: Insufficient rights"
+            ownerAddress == _msgSender()
         );
+    }
 
+    function updateAddressInfo(address ownerAddress, string memory ownerInfo) public
+    {
+        require(_canUpdateAddressInfo(ownerAddress), "BicycleComponentManagerUI: Insufficient rights");
+
+        BicycleComponentManager bcm = _bcm();
         bcm.setAccountInfo(ownerAddress, ownerInfo);
     }
 
@@ -156,7 +152,10 @@ contract BicycleComponentManagerUI is BaseUI {
         return _composeWithBaseURI("viewUpdateAddressInfoOnFailure.returns.json");
     }
 
-    function viewUpdateAddressInfoOnSuccess() public view returns (string memory) {
-        return _composeWithBaseURI("viewUpdateAddressInfoOnSuccess.returns.json");
+    function viewUpdateAddressInfoOnSuccess(address ownerAddress) public view returns (string memory, string memory addressInfo) {
+        return (
+            _composeWithBaseURI("viewUpdateAddressInfoOnSuccess.returns.json"),
+            _bcm().accountInfo(ownerAddress)
+        );
     }
 }

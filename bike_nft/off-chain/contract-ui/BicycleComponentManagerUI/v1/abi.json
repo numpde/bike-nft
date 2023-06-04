@@ -537,12 +537,23 @@
     "type": "function"
   },
   {
-    "inputs": [],
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "ownerAddress",
+        "type": "address"
+      }
+    ],
     "name": "viewUpdateAddressInfoOnSuccess",
     "outputs": [
       {
         "internalType": "string",
         "name": "",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "addressInfo",
         "type": "string"
       }
     ],
