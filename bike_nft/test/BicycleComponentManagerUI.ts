@@ -42,7 +42,7 @@ describe("BicycleComponentManagerUI", function () {
     });
 
     describe("Trusted forwarder", function () {
-        it("Allow the deployer to set the trusted forwarder", async function () {
+        it("Allows the deployer to set the trusted forwarder", async function () {
             const {deployer, third} = await getSigners();
             const {managerUI} = await loadFixture(deployAllAndUI);
 
@@ -56,6 +56,36 @@ describe("BicycleComponentManagerUI", function () {
 
             const action = managerUI.connect(third).setTrustedForwarder(third.address);
             await expect(action).to.be.reverted;
+        });
+    });
+
+    describe("Address info", function () {
+        it("Allows to update own address info", async function () {
+            const {third} = await getSigners();
+            const {managerUI} = await loadFixture(deployAllAndUI);
+
+            const action = managerUI.connect(third).updateAddressInfo(third.address, "New address info");
+            await expect(action).not.to.be.reverted;
+        });
+
+        it("Allows a registrar to update anyone's address info", async function () {
+            const {deployer, shop1, third} = await getSigners();
+            const {managerContract, managerUI} = await loadFixture(deployAllAndUI);
+
+            // grant registrar role to `shop1`
+            const action1 = managerContract.connect(deployer).grantRole(managerContract.REGISTRAR_ROLE(), shop1.address);
+            await expect(action1).not.to.be.reverted;
+
+            const action2 = managerUI.connect(shop1).updateAddressInfo(third.address, "New address info");
+            await expect(action2).not.to.be.reverted;
+        });
+
+        it("Doesn't allow a non-registrar to update anyone's address info", async function () {
+            const {shop1, third} = await getSigners();
+            const {managerUI} = await loadFixture(deployAllAndUI);
+
+            const action = managerUI.connect(third).updateAddressInfo(shop1.address, "New address info");
+            await expect(action).to.be.revertedWith("BicycleComponentManagerUI: Insufficient rights");
         });
     });
 

@@ -3,18 +3,18 @@
     {
       "type": "address",
       "label": "The info of the address",
-      "id": "ownerAddress",
+      "id": "infoAddress",
       "readOnly": true
     },
     {
       "type": "input",
-      "label": "has beed updated to:",
+      "label": "has been updated to:",
       "id": "addressInfo",
       "readOnly": true
     },
     {
       "type": "button",
-      "label": "Back",
+      "label": "Start over",
       "onClick": {
         "default": "viewEntry"
       }

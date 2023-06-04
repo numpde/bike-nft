@@ -22,7 +22,7 @@
       "type": "button",
       "label": "Update address info",
       "onClick": {
-        "default": "viewUpdateAddressInfo"
+        "default": "viewUpdateOwnerAddressInfo"
       }
     },
     {

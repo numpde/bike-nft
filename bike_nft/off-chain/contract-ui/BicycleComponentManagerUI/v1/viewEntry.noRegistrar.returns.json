@@ -19,17 +19,15 @@
     },
     {
       "type": "input",
-      "label": "Change your public account info (requires a transaction):",
+      "label": "Your public account info:",
       "id": "userAddressInfo",
-      "placeholder": "E.g., name or email"
+      "readonly": true
     },
     {
       "type": "button",
-      "label": "Save",
+      "label": "Update it...",
       "onClick": {
-        "default": "updateUserAddressInfo",
-        "success": "viewUserAddressInfoUpdateSuccess",
-        "failure": "viewUserAddressInfoUpdateFailure"
+        "default": "viewUpdateUserAddressInfo"
       }
     }
   ]

@@ -7,12 +7,12 @@
     {
       "type": "address",
       "label": "Address:",
-      "id": "ownerAddress"
+      "id": "infoAddress"
     },
     {
       "type": "input",
       "label": "Address info:",
-      "id": "ownerInfo"
+      "id": "addressInfo"
     },
     {
       "type": "button",
@@ -25,7 +25,7 @@
     },
     {
       "type": "button",
-      "label": "Back",
+      "label": "Start over",
       "onClick": {
         "default": "viewEntry"
       }

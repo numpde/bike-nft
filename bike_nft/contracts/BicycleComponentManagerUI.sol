@@ -67,7 +67,7 @@ contract BicycleComponentManagerUI is BaseUI {
         BicycleComponentManager bcm = _bcm();
 
         try bcm.ownerOf(registerSerialNumber) returns (address owner) {
-            ownerInfo = bcm.accountInfo(owner);  // possibly the empty string
+            ownerInfo = bcm.accountInfo(owner); // possibly the empty string
 
             nftContractAddress = bcm.nftContractAddress();
             nftTokenId = bcm.generateTokenId(registerSerialNumber);
@@ -126,10 +126,6 @@ contract BicycleComponentManagerUI is BaseUI {
         return _composeWithBaseURI("viewRegisterOnSuccess.returns.json");
     }
 
-    function viewUpdateAddressInfo() public view returns (string memory) {
-        return _composeWithBaseURI("viewUpdateAddressInfo.returns.json");
-    }
-
     function _canUpdateAddressInfo(address ownerAddress) internal view returns (bool) {
         BicycleComponentManager bcm = _bcm();
 
@@ -140,22 +136,45 @@ contract BicycleComponentManagerUI is BaseUI {
         );
     }
 
-    function updateAddressInfo(address ownerAddress, string memory ownerInfo) public
-    {
-        require(_canUpdateAddressInfo(ownerAddress), "BicycleComponentManagerUI: Insufficient rights");
+    function updateAddressInfo(address infoAddress, string memory addressInfo) public {
+        require(_canUpdateAddressInfo(infoAddress), "BicycleComponentManagerUI: Insufficient rights");
 
         BicycleComponentManager bcm = _bcm();
-        bcm.setAccountInfo(ownerAddress, ownerInfo);
+        bcm.setAccountInfo(infoAddress, addressInfo);
+    }
+
+    // userAddress: connected address as provided by the front-end
+    function viewUpdateUserAddressInfo(address userAddress)
+    public view
+    returns (string memory, address infoAddress, string memory addressInfo)
+    {
+        return (
+            _composeWithBaseURI("viewUpdateAddressInfo.returns.json"),
+            userAddress,
+            _bcm().accountInfo(userAddress)
+        );
+    }
+
+    // ownerAddress: address of the owner of the serial number
+    function viewUpdateOwnerAddressInfo(address ownerAddress)
+    public view
+    returns (string memory, address infoAddress, string memory addressInfo)
+    {
+        return (
+            _composeWithBaseURI("viewUpdateAddressInfo.returns.json"),
+            ownerAddress,
+            _bcm().accountInfo(ownerAddress)
+        );
     }
 
     function viewUpdateAddressInfoOnFailure() public view returns (string memory) {
         return _composeWithBaseURI("viewUpdateAddressInfoOnFailure.returns.json");
     }
 
-    function viewUpdateAddressInfoOnSuccess(address ownerAddress) public view returns (string memory, string memory addressInfo) {
+    function viewUpdateAddressInfoOnSuccess(address infoAddress) public view returns (string memory, string memory addressInfo) {
         return (
             _composeWithBaseURI("viewUpdateAddressInfoOnSuccess.returns.json"),
-            _bcm().accountInfo(ownerAddress)
+            _bcm().accountInfo(infoAddress)
         );
     }
 }
