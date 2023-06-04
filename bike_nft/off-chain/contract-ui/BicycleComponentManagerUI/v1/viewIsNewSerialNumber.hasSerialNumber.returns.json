@@ -43,7 +43,7 @@
     },
     {
       "type": "text",
-      "label": "If you're the owner or an administrator you can update the NFT metadata:"
+      "label": "If you're the owner or an administrator you can update the NFT metadata or transfer it to a new owner:"
     },
     {
       "type": "button",
@@ -53,8 +53,15 @@
       }
     },
     {
+      "type": "button",
+      "label": "Transfer to a new owner",
+      "onClick": {
+        "default": "viewTransferNFT"
+      }
+    },
+    {
       "type": "qrcode",
-      "label": "Share the link to this page:",
+      "label": "Use the following QR code / link to refer to this page:",
       "params": {
         "basePath": "basePath",
         "relPath": "../viewIsNewSerialNumber",

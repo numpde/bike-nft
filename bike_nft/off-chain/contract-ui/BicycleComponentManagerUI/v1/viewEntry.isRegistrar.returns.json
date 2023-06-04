@@ -19,7 +19,7 @@
     },
     {
       "type": "input",
-      "label": "Your public account info:",
+      "label": "Update your public account info:",
       "id": "userAddressInfo",
       "readOnly": true
     },
