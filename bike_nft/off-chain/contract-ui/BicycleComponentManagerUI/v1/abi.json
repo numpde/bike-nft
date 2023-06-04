@@ -380,12 +380,12 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "ownerAddress",
+        "name": "infoAddress",
         "type": "address"
       },
       {
         "internalType": "string",
-        "name": "ownerInfo",
+        "name": "addressInfo",
         "type": "string"
       }
     ],
@@ -407,6 +407,11 @@
       {
         "internalType": "string",
         "name": "",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "userAddressInfo",
         "type": "string"
       }
     ],
@@ -512,19 +517,6 @@
   },
   {
     "inputs": [],
-    "name": "viewUpdateAddressInfo",
-    "outputs": [
-      {
-        "internalType": "string",
-        "name": "",
-        "type": "string"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "viewUpdateAddressInfoOnFailure",
     "outputs": [
       {
@@ -540,7 +532,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "ownerAddress",
+        "name": "infoAddress",
         "type": "address"
       }
     ],
@@ -550,6 +542,64 @@
         "internalType": "string",
         "name": "",
         "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "addressInfo",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "ownerAddress",
+        "type": "address"
+      }
+    ],
+    "name": "viewUpdateOwnerAddressInfo",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      },
+      {
+        "internalType": "address",
+        "name": "infoAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "addressInfo",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "userAddress",
+        "type": "address"
+      }
+    ],
+    "name": "viewUpdateUserAddressInfo",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      },
+      {
+        "internalType": "address",
+        "name": "infoAddress",
+        "type": "address"
       },
       {
         "internalType": "string",

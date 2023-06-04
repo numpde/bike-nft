@@ -51,12 +51,12 @@ contract BicycleComponentManagerUI is BaseUI {
 
     function viewEntry(address userAddress)
     external view
-    returns (string memory)
+    returns (string memory, string memory userAddressInfo)
     {
         if (_isRegistrar(userAddress)) {
-            return _composeWithBaseURI("viewEntry.isRegistrar.returns.json");
+            return (_composeWithBaseURI("viewEntry.isRegistrar.returns.json"), _bcm().accountInfo(userAddress));
         } else {
-            return _composeWithBaseURI("viewEntry.noRegistrar.returns.json");
+            return (_composeWithBaseURI("viewEntry.noRegistrar.returns.json"), _bcm().accountInfo(userAddress));
         }
     }
 

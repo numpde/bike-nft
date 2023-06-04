@@ -4,8 +4,6 @@
       "type": "text",
       "label": "It appears you don't have the authority to do registration. However, you can enter your data here to save it in a QR code."
     },
-
-
     {
       "type": "input",
       "label": "Please note, all data are publicly visible on the blockchain. Do not save any sensitive information. Serial number (must be unique):",

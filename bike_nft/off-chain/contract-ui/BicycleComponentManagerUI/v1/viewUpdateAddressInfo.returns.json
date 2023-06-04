@@ -19,7 +19,6 @@
       "label": "Save",
       "onClick": {
         "default": "updateAddressInfo",
-        "failure": "viewUpdateAddressInfoOnFailure",
         "success": "viewUpdateAddressInfoOnSuccess"
       }
     },

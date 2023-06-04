@@ -37,7 +37,7 @@
     },
     {
       "type": "button",
-      "label": "Make a QR code",
+      "label": "Save into a QR code",
       "onClick": {
         "default": "viewRegisterQR"
       }
@@ -47,7 +47,6 @@
       "label": "Register now",
       "onClick": {
         "default": "register",
-        "failure": "viewRegisterOnFailure",
         "success": "viewRegisterOnSuccess"
       }
     },

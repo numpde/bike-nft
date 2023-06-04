@@ -5,6 +5,7 @@
       "label": "Please show or forward this QR code:",
       "params": {
         "basePath": "basePath",
+        "relPath": "../viewRegisterForm",
         "registerFor": "registerFor",
         "registerForGiven": "registerFor",
         "registerSerialNumber": "registerSerialNumber",
