@@ -16,7 +16,7 @@
     },
     {
       "type": "button",
-      "label": "Save",
+      "label": "Update info",
       "onClick": {
         "default": "updateAddressInfo",
         "success": "viewUpdateAddressInfoOnSuccess"

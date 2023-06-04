@@ -110,20 +110,22 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
     function transfer(string memory serialNumber, address to)
     public
     {
-        uint256 tokenId = generateTokenId(serialNumber);
+        _requireSenderCanHandle(serialNumber);
 
-        _requireSenderCanHandle(tokenId);
+        uint256 tokenId = generateTokenId(serialNumber);
 
         BicycleComponents(nftContractAddress).transfer(tokenId, to);
         emit ComponentTransferred(serialNumber, tokenId, to);
     }
 
-    function _canHandle(address spender, uint256 tokenId) internal view virtual returns (bool) {
-        return (BicycleComponents(nftContractAddress).ownerOf(tokenId) == spender) || _componentOperatorApproval[tokenId][spender] || hasRole(DEFAULT_ADMIN_ROLE, spender);
+    function canHandle(address spender, string memory serialNumber) public view virtual returns (bool) {
+        uint256 tokenId = generateTokenId(serialNumber);
+        return (ownerOf(serialNumber) == spender) || _componentOperatorApproval[tokenId][spender] || hasRole(DEFAULT_ADMIN_ROLE, spender);
     }
 
-    function _requireSenderCanHandle(uint256 tokenId) internal view {
-        require(_canHandle(msg.sender, tokenId), "Insufficient rights");
+    function _requireSenderCanHandle(string memory serialNumber) internal view {
+        require(ownerOf(serialNumber) != address(0), "Serial number not registered");
+        require(canHandle(msg.sender, serialNumber), "Insufficient rights");
     }
 
     // Withdrawal
@@ -159,9 +161,9 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
     function setComponentURI(string memory serialNumber, string memory uri)
     public
     {
-        uint256 tokenId = generateTokenId(serialNumber);
+        _requireSenderCanHandle(serialNumber);
 
-        _requireSenderCanHandle(tokenId);
+        uint256 tokenId = generateTokenId(serialNumber);
 
         BicycleComponents(nftContractAddress).setTokenURI(tokenId, uri);
 
@@ -187,9 +189,9 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
     function setMissingStatus(string memory serialNumber, bool isMissing)
     public
     {
-        uint256 tokenId = generateTokenId(serialNumber);
+        _requireSenderCanHandle(serialNumber);
 
-        _requireSenderCanHandle(tokenId);
+        uint256 tokenId = generateTokenId(serialNumber);
 
         _missingStatus[tokenId] = isMissing;
         emit UpdatedMissingStatus(serialNumber, tokenId, isMissing);
@@ -220,9 +222,9 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
     }
 
     function setComponentOperatorApproval(string memory serialNumber, address operator, bool approved) public {
-        uint256 tokenId = generateTokenId(serialNumber);
+        _requireSenderCanHandle(serialNumber);
 
-        _requireSenderCanHandle(tokenId);
+        uint256 tokenId = generateTokenId(serialNumber);
 
         _componentOperatorApproval[tokenId][operator] = approved;
         emit UpdatedComponentOperatorApproval(operator, serialNumber, tokenId, approved);
@@ -231,6 +233,10 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
     // Convenience functions
 
     function ownerOf(string memory serialNumber) public view returns (address) {
-        return BicycleComponents(nftContractAddress).ownerOf(generateTokenId(serialNumber));
+        try BicycleComponents(nftContractAddress).ownerOf(generateTokenId(serialNumber)) returns (address owner) {
+            return owner;
+        } catch {
+            return address(0);
+        }
     }
 }

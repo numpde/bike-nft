@@ -420,13 +420,13 @@ describe("BicycleComponentManager", function () {
                 .withArgs(third.address, serialNumber, tokenId, false);
         });
 
-        it("Should allow setting approval for a non-existing component", async function () {
+        it("Should not allow setting approval for a non-existing component", async function () {
             const {managerContract} = await loadFixture(registerComponent);
             const {deployer, third} = await getSigners();
 
             const action = managerContract.connect(deployer).setComponentOperatorApproval("SNX", third.address, true);
 
-            await expect(action).to.be.revertedWith("ERC721: invalid token ID");
+            await expect(action).to.be.revertedWith("Serial number not registered");
         });
 
         it("Should not allow setting approval for a component not managed by the sender", async function () {
@@ -623,7 +623,7 @@ describe("BicycleComponentManager", function () {
 
             const action = managerContract.connect(admin).transfer(invalidSerialNumber, third.address);
 
-            await expect(action).to.be.revertedWith("ERC721: invalid token ID");
+            await expect(action).to.be.revertedWith("Serial number not registered");
         });
 
         it("Should not allow a third party to transfer a token", async function () {

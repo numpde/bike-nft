@@ -49,6 +49,16 @@ contract BicycleComponentManagerUI is BaseUI {
         _;
     }
 
+    function _ownerOf(string memory registerSerialNumber) internal view returns (address) {
+        BicycleComponentManager bcm = _bcm();
+
+        try bcm.ownerOf(registerSerialNumber) returns (address owner) {
+            return owner;
+        } catch (bytes memory) {
+            return address(0);
+        }
+    }
+
     function viewEntry(address userAddress)
     external view
     returns (string memory, string memory userAddressInfo)
@@ -64,16 +74,18 @@ contract BicycleComponentManagerUI is BaseUI {
     external view
     returns (string memory, address ownerAddress, string memory ownerInfo, address nftContractAddress, uint256 nftTokenId)
     {
-        BicycleComponentManager bcm = _bcm();
+        ownerAddress = _ownerOf(registerSerialNumber);
 
-        try bcm.ownerOf(registerSerialNumber) returns (address owner) {
-            ownerInfo = bcm.accountInfo(owner); // possibly the empty string
+        if (ownerAddress != address(0)) {
+            BicycleComponentManager bcm = _bcm();
+
+            ownerInfo = bcm.accountInfo(ownerAddress); // possibly the empty string
 
             nftContractAddress = bcm.nftContractAddress();
             nftTokenId = bcm.generateTokenId(registerSerialNumber);
 
-            return (_composeWithBaseURI("viewIsNewSerialNumber.hasSerialNumber.returns.json"), owner, ownerInfo, nftContractAddress, nftTokenId);
-        } catch (bytes memory) {
+            return (_composeWithBaseURI("viewIsNewSerialNumber.hasSerialNumber.returns.json"), ownerAddress, ownerInfo, nftContractAddress, nftTokenId);
+        } else {
             return (_composeWithBaseURI("viewIsNewSerialNumber.newSerialNumber.returns.json"), address(0), "", address(0), 0);
         }
     }
@@ -124,6 +136,36 @@ contract BicycleComponentManagerUI is BaseUI {
 
     function viewRegisterOnSuccess() public view returns (string memory) {
         return _composeWithBaseURI("viewRegisterOnSuccess.returns.json");
+    }
+
+    function _canHandle(address operator, string memory serialNumber) internal view returns (bool) {
+        BicycleComponentManager bcm = _bcm();
+
+        try bcm.canHandle(operator, serialNumber) returns (bool canHandle) {
+            return canHandle;
+        } catch (bytes memory) {
+            // legacy:
+            // `canHandle` may not be implemented on the deployed contract
+        }
+
+        try bcm.ownerOf(serialNumber) returns (address owner) {
+            return (owner == operator) || bcm.componentOperatorApproval(serialNumber, operator) || bcm.hasRole(bcm.DEFAULT_ADMIN_ROLE(), operator);
+        } catch (bytes memory) {
+            return false;
+        }
+    }
+
+    function viewTransferNFT(address userAddress, string memory registerSerialNumber)
+    external view
+    returns (string memory, address ownerAddress)
+    {
+        ownerAddress = _ownerOf(registerSerialNumber);
+
+        if (ownerAddress != address(0)) {
+            return (_composeWithBaseURI("viewTransferNFT.hasSerialNumber.returns.json"), ownerAddress);
+        } else {
+            return (_composeWithBaseURI("viewTransferNFT.newSerialNumber.returns.json"), ownerAddress);
+        }
     }
 
     function _canUpdateAddressInfo(address ownerAddress) internal view returns (bool) {

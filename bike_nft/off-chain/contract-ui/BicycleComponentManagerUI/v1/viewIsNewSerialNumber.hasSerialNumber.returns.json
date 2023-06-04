@@ -19,20 +19,6 @@
       "readOnly": true
     },
     {
-      "type": "button",
-      "label": "Update address info",
-      "onClick": {
-        "default": "viewUpdateOwnerAddressInfo"
-      }
-    },
-    {
-      "type": "button",
-      "label": "Back",
-      "onClick": {
-        "default": "viewEntry"
-      }
-    },
-    {
       "type": "nft",
       "label": "Registered NFT:",
       "params": {
@@ -43,11 +29,11 @@
     },
     {
       "type": "text",
-      "label": "If you're the owner or an administrator you can update the NFT metadata or transfer it to a new owner:"
+      "label": "What would you like to do?"
     },
     {
       "type": "button",
-      "label": "Update data (name, description, image)",
+      "label": "Update NFT data (name, description, image)",
       "onClick": {
         "default": "viewUpdateNFT"
       }
@@ -57,6 +43,20 @@
       "label": "Transfer to a new owner",
       "onClick": {
         "default": "viewTransferNFT"
+      }
+    },
+    {
+      "type": "button",
+      "label": "Update address info",
+      "onClick": {
+        "default": "viewUpdateOwnerAddressInfo"
+      }
+    },
+    {
+      "type": "button",
+      "label": "Start over",
+      "onClick": {
+        "default": "viewEntry"
       }
     },
     {
