@@ -1,0 +1,37 @@
+{
+  "elements": [
+    {
+      "type": "input",
+      "label": "Transfer digital ownership of serial number",
+      "id": "registerSerialNumber",
+      "readOnly": true
+    },
+    {
+      "type": "input",
+      "label": "from account",
+      "id": "transferFromAddress",
+      "readOnly": true
+    },
+    {
+      "type": "address",
+      "label": "to account",
+      "id": "transferToAddress",
+      "readOnly": false
+    },
+    {
+      "type": "button",
+      "label": "Transfer",
+      "onClick": {
+        "default": "transfer",
+        "success": "viewIsNewSerialNumber"
+      }
+    },
+    {
+      "type": "button",
+      "label": "Back",
+      "onClick": {
+        "default": "viewEntry"
+      }
+    }
+  ]
+}

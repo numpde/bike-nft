@@ -1,144 +1,48 @@
-import {ethers, upgrades} from "hardhat";
+import {ethers} from "hardhat";
 import {getAddress} from "ethers/lib/utils";
-import {Contract} from "ethers";
-
-import path from "path";
-import fs from "fs";
 
 import {execute, getNetworkName} from "../utils/utils";
-import {deployed, deploymentParams} from "../deploy.config";
-import {saveAddress} from "./utils";
-import readlineSync from "readline-sync";
+import {deploymentParams} from "../deploy.config";
+import {deploy} from "./deployment";
 
-
-export async function report(contract: Contract) {
-    console.log(`Contract here: ${contract.address} by ${contract.deployTransaction?.from}`);
-
-    const proxyAddress = contract.address;
-    console.log("Proxy Address:", proxyAddress);
-
-    const implementationAddress = await upgrades.erc1967.getImplementationAddress(proxyAddress);
-    console.log("Impln Address:", implementationAddress);
-
-    // const adminAddress = await upgrades.erc1967.getAdminAddress(proxyAddress);
-    // console.log("Admin Address:", adminAddress);
-}
 
 async function main() {
     const chainId = await ethers.provider.getNetwork().then(network => network.chainId);
+    const [deployer] = await ethers.getSigners();
 
     // Get or deploy the managed components contract
-    let componentsContract;
-    {
-        const deployedAddress = deployed[getNetworkName(chainId)]?.BicycleComponents;
-
-        if (deployedAddress) {
-            componentsContract = await ethers.getContractAt("BicycleComponents", deployedAddress);
-        } else {
-            console.log("Deploying BicycleComponents...")
-
-            const BicycleComponents = await ethers.getContractFactory("BicycleComponents");
-
-            componentsContract = await upgrades.deployProxy(
-                BicycleComponents,
-                [],
-                {
-                    initializer: 'initialize',
-                    kind: 'uups',
-                }
-            );
-        }
-
-        await report(componentsContract).catch(e => console.log("Error:", e));
-    }
+    const {contract: componentsContract} = await deploy({
+        contractName: "BicycleComponents",
+        args: [],
+        deployer,
+        chainId
+    });
 
     // Then get or deploy the manager contract
-    let managerContract;
-    {
-        const deployedAddress = deployed[getNetworkName(chainId)]?.BicycleComponentManager;
+    const {contract: managerContract} = await deploy({
+        contractName: "BicycleComponentManager",
+        args: [],
+        deployer,
+        chainId
+    });
 
-        if (deployedAddress) {
-            managerContract = await ethers.getContractAt("BicycleComponentManager", deployedAddress);
-        } else {
-            console.log("Deploying BicycleComponentManager...");
+    const uiBaseURI = deploymentParams[getNetworkName(chainId)]?.baseURI?.["BicycleComponentManagerUI"] || "";
 
-            const BicycleComponentManager = await ethers.getContractFactory("BicycleComponentManager");
+    const {contract: uiContract} = await deploy({
+        contractName: "BicycleComponentManagerUI",
+        args: [
+            managerContract.address,
+            ethers.constants.AddressZero,
+            uiBaseURI
+        ],
+        chainId,
+        deployer,
+    });
 
-            managerContract = await upgrades.deployProxy(
-                BicycleComponentManager,
-                [],
-                {
-                    initializer: 'initialize',
-                    kind: 'uups',
-                }
-            );
-        }
-
-        await report(managerContract).catch(e => console.log("Error:", e));
-    }
-
-    let uiContract: Contract;
-    {
-        const contractName = "BicycleComponentManagerUI";
-
-        // Copy the ABI from the artifacts.
-        {
-            const artifactsPath = path.join(__dirname, `../artifacts/contracts/${contractName}.sol/${contractName}.json`);
-            const abi = require(artifactsPath).abi;
-
-            const outputPath = path.join(__dirname, `../off-chain/contract-ui/${contractName}/v1/abi.json`);
-            fs.writeFileSync(outputPath, JSON.stringify(abi, null, 2));
-
-            // Note: to get the most recent commit hash
-            // git log --first-parent --max-count=1 --format=%H -- ./off-chain/
-        }
-
-        let deployedAddress: string | undefined = deployed[getNetworkName(chainId)]?.[contractName];
-        const baseURI = deploymentParams[getNetworkName(chainId)]?.baseURI?.[contractName] || "";
-
-        if (deployedAddress) {
-            console.log(`The contract ${contractName} is deployed already. `);
-
-            const prompt = readlineSync.keyInSelect(['Yes', 'No'], 'Redeploy?');
-
-            switch (prompt) {
-                case 0:
-                    deployedAddress = undefined;
-                    break;
-                case 1:
-                    break;
-                default:
-                    process.exit(1);
-            }
-        }
-
-        if (deployedAddress) {
-            uiContract = await ethers.getContractAt(contractName, deployedAddress);
-        } else {
-            console.log(`Deploying ${contractName}...`);
-
-            const Factory = await ethers.getContractFactory(contractName);
-
-            uiContract = await Factory.deploy(
-                managerContract.address,
-                ethers.constants.AddressZero,
-                baseURI,
-            );
-
-            await uiContract.deployed();
-        }
-
-        if (uiContract) {
-            await report(uiContract).catch(e => console.log("Error:", e));
-            saveAddress(chainId, contractName, uiContract.address);
-        } else {
-            throw new Error(`Instance of ${contractName} is undefined.`);
-        }
-
-        if (!((await uiContract.baseURI()) == baseURI)) {
-            console.log("Setting base URI...");
-            await execute(await uiContract.setBaseURI(baseURI));
-        }
+    // Set the base URI if necessary
+    if (!((await uiContract.baseURI()) == uiBaseURI)) {
+        console.log("Setting base URI...");
+        await execute(await uiContract.setBaseURI(uiBaseURI));
     }
 
     console.log("Linking contracts...");
@@ -153,9 +57,9 @@ async function main() {
             await execute(await componentsContract.hireManager(managerContract.address));
         }
 
-        if (!(await managerContract.hasRole(await managerContract.REGISTRAR_ROLE(), uiContract.address))) {
-            console.log("Registering UI as proxy...");
-            await execute(await managerContract.grantRole(await managerContract.REGISTRAR_ROLE(), uiContract.address));
+        if (!(await managerContract.hasRole(await managerContract.UI_ROLE(), uiContract.address))) {
+            console.log("Registering UI...");
+            await execute(await managerContract.grantRole(await managerContract.UI_ROLE(), uiContract.address));
         }
     }
 }

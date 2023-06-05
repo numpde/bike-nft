@@ -114,6 +114,19 @@
   },
   {
     "inputs": [],
+    "name": "INSUFFICIENT_RIGHTS",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "abiURI",
     "outputs": [
       {
@@ -140,10 +153,10 @@
   },
   {
     "inputs": [],
-    "name": "bicycleComponentManagerAddress",
+    "name": "bicycleComponentManager",
     "outputs": [
       {
-        "internalType": "address",
+        "internalType": "contract BicycleComponentManager",
         "name": "",
         "type": "address"
       }
@@ -248,11 +261,6 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "userAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
         "name": "registerFor",
         "type": "address"
       },
@@ -339,19 +347,6 @@
         "type": "address"
       }
     ],
-    "name": "setBicycleComponentManagerAddress",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "newAddress",
-        "type": "address"
-      }
-    ],
     "name": "setTrustedForwarder",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -374,6 +369,24 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "registerSerialNumber",
+        "type": "string"
+      },
+      {
+        "internalType": "address",
+        "name": "transferToAddress",
+        "type": "address"
+      }
+    ],
+    "name": "transfer",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -510,6 +523,30 @@
         "internalType": "string",
         "name": "",
         "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "registerSerialNumber",
+        "type": "string"
+      }
+    ],
+    "name": "viewTransfer",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      },
+      {
+        "internalType": "address",
+        "name": "transferFromAddress",
+        "type": "address"
       }
     ],
     "stateMutability": "view",

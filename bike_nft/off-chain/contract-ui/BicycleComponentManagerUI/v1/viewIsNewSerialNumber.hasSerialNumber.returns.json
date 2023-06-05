@@ -42,7 +42,7 @@
       "type": "button",
       "label": "Transfer to a new owner",
       "onClick": {
-        "default": "viewTransferNFT"
+        "default": "viewTransfer"
       }
     },
     {

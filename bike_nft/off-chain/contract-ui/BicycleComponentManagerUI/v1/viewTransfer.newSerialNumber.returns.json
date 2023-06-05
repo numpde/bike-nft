@@ -1,0 +1,21 @@
+ {
+  "elements": [
+    {
+      "type": "input",
+      "label": "The serial number",
+      "id": "registerSerialNumber",
+      "readOnly": true
+    },
+    {
+      "type": "text",
+      "label": "has not been registered."
+    },
+    {
+      "type": "button",
+      "label": "Back",
+      "onClick": {
+        "default": "viewEntry"
+      }
+    }
+  ]
+}

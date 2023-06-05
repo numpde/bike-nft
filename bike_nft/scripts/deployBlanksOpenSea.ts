@@ -1,6 +1,4 @@
-import {ethers, upgrades} from "hardhat";
-import readlineSync from "readline-sync";
-import {Contract} from "ethers";
+import {ethers} from "hardhat";
 import {getAddress} from "ethers/lib/utils";
 
 import path from 'path';
@@ -9,8 +7,7 @@ import fs from "fs";
 import {execute, getNetworkName, getMostRecent, packJSON} from "../utils/utils";
 import {deployed, deploymentParams} from "../deploy.config";
 import {ipfsBasePath} from "../hardhat.config";
-import {report} from "./deployBicycleComponentManager";
-import {saveAddress} from "./utils";
+import {deploy} from "./deployment";
 
 
 async function main() {
@@ -19,106 +16,30 @@ async function main() {
 
     const managerContract = await ethers.getContractAt("BicycleComponentManager", deployed[getNetworkName(chainId)].BicycleComponentManager);
 
-    let blanksContract: Contract | undefined = undefined;
-    {
-        const contractName = "BlanksOpenSea";
-        const deployedAddress = deployed[getNetworkName(chainId)]?.[contractName];
+    const {contract: blanksContract} = await deploy({
+        contractName: "BlanksOpenSea",
+        args: [],
+        deployer,
+        chainId
+    });
 
-        if (deployedAddress) {
-            blanksContract = await ethers.getContractAt(contractName, deployedAddress);
+    const uiBaseURI = deploymentParams[getNetworkName(chainId)]?.baseURI?.["BlanksOpenSea"] || "";
 
-            const prompt = readlineSync.keyInSelect(['Yes', 'No'], 'The contract BlanksOpenSea has already been deployed. Would you like to upgrade it?');
+    const {contract: uiContract} = await deploy({
+        contractName: "BlanksUI",
+        args: [
+            blanksContract.address,
+            ethers.constants.AddressZero,
+            uiBaseURI,
+        ],
+        chainId,
+        deployer,
+    });
 
-            switch (prompt) {
-                case 0:
-                    console.log("Upgrading BlanksOpenSea...");
-
-                    const Factory = await ethers.getContractFactory(contractName);
-                    await upgrades.prepareUpgrade(deployedAddress, Factory);
-
-                    blanksContract = await upgrades.upgradeProxy(deployedAddress, Factory);
-
-                    console.log(`${contractName} upgraded to:`, blanksContract.address);
-                    break;
-                case 1:
-                    console.log("Skipping...");
-                    break;
-                default:
-                    process.exit(1);
-            }
-        } else {
-            const prompt = readlineSync.keyInSelect(['Yes'], 'No deployed contract BlanksOpenSea found. Would you like to deploy a new one?');
-
-            switch (prompt) {
-                case 0:
-                    console.log("Deploying BlanksOpenSea...");
-
-                    const Factory = await ethers.getContractFactory(contractName);
-
-                    blanksContract = await upgrades.deployProxy(
-                        Factory,
-                        [],
-                        {
-                            initializer: 'initialize',
-                            kind: 'uups',
-                        }
-                    );
-
-                    console.log("BlanksOpenSea deployed to:", blanksContract.address);
-                    break;
-                default:
-                    process.exit(1);
-            }
-        }
-
-        if (blanksContract) {
-            await report(blanksContract).catch(e => console.log("Error:", e));
-            saveAddress(chainId, contractName, blanksContract.address);
-        } else {
-            throw new Error(`Instance of ${contractName} is undefined.`);
-        }
-    }
-
-    let uiContract: Contract;
-    {
-        const contractName = "BlanksUI";
-
-        // Copy the ABI from the artifacts.
-        {
-            const artifactsPath = path.join(__dirname, `../artifacts/contracts/${contractName}.sol/${contractName}.json`);
-            const abi = require(artifactsPath).abi;
-
-            const outputPath = path.join(__dirname, `../off-chain/contract-ui/${contractName}/v1/abi.json`);
-            fs.writeFileSync(outputPath, JSON.stringify(abi, null, 2));
-
-            // Note: to get the most recent commit hash
-            // git log --first-parent --max-count=1 --format=%H -- ./off-chain/
-        }
-
-        const deployedAddress = deployed[getNetworkName(chainId)]?.[contractName];
-
-        if (deployedAddress) {
-            uiContract = await ethers.getContractAt(contractName, deployedAddress);
-        } else {
-            console.log(`Deploying ${contractName}...`);
-
-            const Factory = await ethers.getContractFactory(contractName);
-
-            uiContract = await Factory.deploy(
-                blanksContract.address,
-                ethers.constants.AddressZero,
-                deploymentParams[getNetworkName(chainId)]?.baseURI?.[contractName] || "",
-            );
-
-            await uiContract.deployed();
-        }
-
-        if (uiContract) {
-            await report(uiContract).catch(e => console.log("Error:", e));
-            saveAddress(chainId, contractName, uiContract.address);
-        } else {
-            throw new Error(`Instance of ${contractName} is undefined.`);
-        }
+    // Set the base URI if necessary
+    if (!((await uiContract.baseURI()) == uiBaseURI)) {
+        console.log("Setting base URI...");
+        await execute(await uiContract.setBaseURI(uiBaseURI));
     }
 
     console.log("Linking contracts...");

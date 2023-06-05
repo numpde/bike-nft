@@ -260,7 +260,7 @@ describe("BicycleComponentManager", function () {
             const serialNumber = "SN_ILLICIT";
 
             const action = managerContract.connect(third).register(third.address, serialNumber, "URI");
-            const reason = "AccessControl: account " + third.address.toLowerCase() + " is missing role " + await managerContract.REGISTRAR_ROLE();
+            const reason = "Insufficient rights";
 
             await expect(action).to.be.revertedWith(reason);
         });

@@ -12,61 +12,61 @@ import "./Utils.sol";
 contract BicycleComponentManagerUI is BaseUI {
     using Utils for string;
 
-    address public bicycleComponentManagerAddress;
+    string public INSUFFICIENT_RIGHTS = "BicycleComponentManagerUI: Insufficient rights";
+
+    BicycleComponentManager public bicycleComponentManager;
 
     constructor(address payable bcmAddress, address myTrustedForwarder, string memory myBaseURI)
     BaseUI(myTrustedForwarder, myBaseURI)
     {
-        setBicycleComponentManagerAddress(bcmAddress);
+        bicycleComponentManager = BicycleComponentManager(bcmAddress);
     }
 
-    function setBicycleComponentManagerAddress(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        bicycleComponentManagerAddress = newAddress;
+    // "Write" functions
+
+    function updateAddressInfo(
+        address infoAddress,
+        string memory addressInfo
+    )
+    public
+    {
+        bicycleComponentManager.setAccountInfoByUI(infoAddress, addressInfo, _msgSender());
     }
 
-    function _bcm() internal view returns (BicycleComponentManager) {
-        BicycleComponentManager bcm = BicycleComponentManager(bicycleComponentManagerAddress);
-        return bcm;
+    function register(
+        address registerFor,
+        string memory registerSerialNumber,
+        string memory registerName,
+        string memory registerDescription,
+        string memory registerImageURL
+    )
+    public
+    {
+        string[] memory emptyArray;
+        string memory uri = string("").stringifyOnChainMetadata(registerName, registerDescription, registerImageURL, emptyArray, emptyArray).packJSON();
+
+        bicycleComponentManager.registerByUI(registerFor, registerSerialNumber, uri, _msgSender());
     }
 
-    function _isRegistrar(address userAddress) internal view returns (bool) {
-        BicycleComponentManager bcm = _bcm();
-        return bcm.hasRole(bcm.REGISTRAR_ROLE(), userAddress);
+    function transfer(
+        string memory registerSerialNumber,
+        address transferToAddress
+    )
+    public
+    {
+        bicycleComponentManager.transferByUI(registerSerialNumber, transferToAddress, _msgSender());
     }
 
-    modifier _onlyRegistrar(address userAddress) {
-        // Note: `_msgSender()` checks whether `msg.sender` is a trusted forwarder.
-        require(
-            userAddress == _msgSender(),
-            "BicycleComponentManagerUI: userAddress and _msgSender don't match (or not a trusted forwarder)"
-        );
-
-        require(
-            _isRegistrar(userAddress),
-            "BicycleComponentManagerUI: userAddress is not a registrar"
-        );
-
-        _;
-    }
-
-    function _ownerOf(string memory registerSerialNumber) internal view returns (address) {
-        BicycleComponentManager bcm = _bcm();
-
-        try bcm.ownerOf(registerSerialNumber) returns (address owner) {
-            return owner;
-        } catch (bytes memory) {
-            return address(0);
-        }
-    }
+    // Views
 
     function viewEntry(address userAddress)
     external view
     returns (string memory, string memory userAddressInfo)
     {
-        if (_isRegistrar(userAddress)) {
-            return (_composeWithBaseURI("viewEntry.isRegistrar.returns.json"), _bcm().accountInfo(userAddress));
+        if (bicycleComponentManager.canRegister(userAddress)) {
+            return (_composeWithBaseURI("viewEntry.isRegistrar.returns.json"), bicycleComponentManager.accountInfo(userAddress));
         } else {
-            return (_composeWithBaseURI("viewEntry.noRegistrar.returns.json"), _bcm().accountInfo(userAddress));
+            return (_composeWithBaseURI("viewEntry.noRegistrar.returns.json"), bicycleComponentManager.accountInfo(userAddress));
         }
     }
 
@@ -74,15 +74,13 @@ contract BicycleComponentManagerUI is BaseUI {
     external view
     returns (string memory, address ownerAddress, string memory ownerInfo, address nftContractAddress, uint256 nftTokenId)
     {
-        ownerAddress = _ownerOf(registerSerialNumber);
+        ownerAddress = bicycleComponentManager.ownerOf(registerSerialNumber);
 
         if (ownerAddress != address(0)) {
-            BicycleComponentManager bcm = _bcm();
+            ownerInfo = bicycleComponentManager.accountInfo(ownerAddress); // possibly the empty string
 
-            ownerInfo = bcm.accountInfo(ownerAddress); // possibly the empty string
-
-            nftContractAddress = bcm.nftContractAddress();
-            nftTokenId = bcm.generateTokenId(registerSerialNumber);
+            nftContractAddress = bicycleComponentManager.nftContractAddress();
+            nftTokenId = bicycleComponentManager.generateTokenId(registerSerialNumber);
 
             return (_composeWithBaseURI("viewIsNewSerialNumber.hasSerialNumber.returns.json"), ownerAddress, ownerInfo, nftContractAddress, nftTokenId);
         } else {
@@ -94,7 +92,7 @@ contract BicycleComponentManagerUI is BaseUI {
     external view
     returns (string memory)
     {
-        if (_isRegistrar(userAddress)) {
+        if (bicycleComponentManager.canRegister(userAddress)) {
             return _composeWithBaseURI("viewRegisterForm.isRegistrar.returns.json");
         } else {
             return _composeWithBaseURI("viewRegisterForm.noRegistrar.returns.json");
@@ -106,30 +104,6 @@ contract BicycleComponentManagerUI is BaseUI {
         return _composeWithBaseURI("viewRegisterQR.returns.json");
     }
 
-    function register(
-        address userAddress, // connected address as provided by the front-end
-        address registerFor,
-        string memory registerSerialNumber,
-        string memory registerName,
-        string memory registerDescription,
-        string memory registerImageURL
-    )
-    public
-    _onlyRegistrar(userAddress)
-    {
-        // At this point, we know that `userAddress` is a registrar on BicycleComponentManager
-        // and could have called its `register` function directly.
-        // When this contract invokes `register` on BicycleComponentManager,
-        // its `REGISTRAR_ROLE` will be checked there.
-
-        BicycleComponentManager bcm = _bcm();
-
-        string[] memory emptyArray;
-        string memory uri = string("").stringifyOnChainMetadata(registerName, registerDescription, registerImageURL, emptyArray, emptyArray).packJSON();
-
-        bcm.register(registerFor, registerSerialNumber, uri);
-    }
-
     function viewRegisterOnFailure() public view returns (string memory) {
         return _composeWithBaseURI("viewRegisterOnFailure.returns.json");
     }
@@ -138,51 +112,17 @@ contract BicycleComponentManagerUI is BaseUI {
         return _composeWithBaseURI("viewRegisterOnSuccess.returns.json");
     }
 
-    function _canHandle(address operator, string memory serialNumber) internal view returns (bool) {
-        BicycleComponentManager bcm = _bcm();
-
-        try bcm.canHandle(operator, serialNumber) returns (bool canHandle) {
-            return canHandle;
-        } catch (bytes memory) {
-            // legacy:
-            // `canHandle` may not be implemented on the deployed contract
-        }
-
-        try bcm.ownerOf(serialNumber) returns (address owner) {
-            return (owner == operator) || bcm.componentOperatorApproval(serialNumber, operator) || bcm.hasRole(bcm.DEFAULT_ADMIN_ROLE(), operator);
-        } catch (bytes memory) {
-            return false;
-        }
-    }
-
-    function viewTransferNFT(address userAddress, string memory registerSerialNumber)
+    function viewTransfer(string memory registerSerialNumber)
     external view
-    returns (string memory, address ownerAddress)
+    returns (string memory, address transferFromAddress)
     {
-        ownerAddress = _ownerOf(registerSerialNumber);
+        transferFromAddress = bicycleComponentManager.ownerOf(registerSerialNumber);
 
-        if (ownerAddress != address(0)) {
-            return (_composeWithBaseURI("viewTransferNFT.hasSerialNumber.returns.json"), ownerAddress);
+        if (transferFromAddress != address(0)) {
+            return (_composeWithBaseURI("viewTransfer.hasSerialNumber.returns.json"), transferFromAddress);
         } else {
-            return (_composeWithBaseURI("viewTransferNFT.newSerialNumber.returns.json"), ownerAddress);
+            return (_composeWithBaseURI("viewTransfer.newSerialNumber.returns.json"), transferFromAddress);
         }
-    }
-
-    function _canUpdateAddressInfo(address ownerAddress) internal view returns (bool) {
-        BicycleComponentManager bcm = _bcm();
-
-        // Who's asking? Could they have called `setAccountInfo` on BicycleComponentManager directly?
-        return (
-            bcm.hasRole(bcm.REGISTRAR_ROLE(), _msgSender()) ||
-            ownerAddress == _msgSender()
-        );
-    }
-
-    function updateAddressInfo(address infoAddress, string memory addressInfo) public {
-        require(_canUpdateAddressInfo(infoAddress), "BicycleComponentManagerUI: Insufficient rights");
-
-        BicycleComponentManager bcm = _bcm();
-        bcm.setAccountInfo(infoAddress, addressInfo);
     }
 
     // userAddress: connected address as provided by the front-end
@@ -193,7 +133,7 @@ contract BicycleComponentManagerUI is BaseUI {
         return (
             _composeWithBaseURI("viewUpdateAddressInfo.returns.json"),
             userAddress,
-            _bcm().accountInfo(userAddress)
+            bicycleComponentManager.accountInfo(userAddress)
         );
     }
 
@@ -205,7 +145,7 @@ contract BicycleComponentManagerUI is BaseUI {
         return (
             _composeWithBaseURI("viewUpdateAddressInfo.returns.json"),
             ownerAddress,
-            _bcm().accountInfo(ownerAddress)
+            bicycleComponentManager.accountInfo(ownerAddress)
         );
     }
 
@@ -216,7 +156,7 @@ contract BicycleComponentManagerUI is BaseUI {
     function viewUpdateAddressInfoOnSuccess(address infoAddress) public view returns (string memory, string memory addressInfo) {
         return (
             _composeWithBaseURI("viewUpdateAddressInfoOnSuccess.returns.json"),
-            _bcm().accountInfo(infoAddress)
+            bicycleComponentManager.accountInfo(infoAddress)
         );
     }
 }

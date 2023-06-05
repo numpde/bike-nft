@@ -23,7 +23,7 @@ async function deployAllAndUI() {
     await contractUI.deployed();
 
     // Link
-    const tx = await managerContract.grantRole(managerContract.REGISTRAR_ROLE(), contractUI.address);
+    const tx = await managerContract.grantRole(managerContract.UI_ROLE(), contractUI.address);
     const receipt = await tx.wait();
 
     return {managerContract, managerUI: contractUI, ...etc};
@@ -85,20 +85,26 @@ describe("BicycleComponentManagerUI", function () {
             const {managerUI} = await loadFixture(deployAllAndUI);
 
             const action = managerUI.connect(third).updateAddressInfo(shop1.address, "New address info");
-            await expect(action).to.be.revertedWith("BicycleComponentManagerUI: Insufficient rights");
+            await expect(action).to.be.revertedWith("Insufficient rights");
         });
     });
 
     describe("Registration", function () {
-        it("Should allow the deployer to register for another", async function () {
-            const {deployer, third} = await getSigners();
+        it("Should not allow a UI admin to register for another", async function () {
+            const {customer1: uiAdmin, third} = await getSigners();
             const {managerUI, managerContract} = await loadFixture(deployAllAndUI);
 
             const serialNumber = "SN-123";
 
-            // `third` interacts with the UI contract directly
-            const action1 = managerUI.connect(deployer).register(
-                deployer.address,  // userAddress
+            const action0 = managerUI.grantRole(managerUI.DEFAULT_ADMIN_ROLE(), uiAdmin.address);
+            await expect(action0).not.to.be.reverted;
+
+            // `admin` is admin on the UI but has no registrar role on the manager contract
+            await expect(managerContract.hasRole(managerContract.REGISTRAR_ROLE(), uiAdmin.address)).to.eventually.equal(false);
+            await expect(managerContract.hasRole(managerContract.DEFAULT_ADMIN_ROLE(), uiAdmin.address)).to.eventually.equal(false);
+
+            // `admin` interacts with the UI contract directly
+            const action1 = managerUI.connect(uiAdmin).register(
                 third.address,  // registerFor
                 serialNumber,
                 "My bike",
@@ -106,11 +112,7 @@ describe("BicycleComponentManagerUI", function () {
                 "https://ids.si.edu/ids/deliveryService?max=170&id=NPM-1993_2070_19",
             );
 
-            await expect(action1).not.to.be.reverted;
-
-            // check that `third` got a token
-            const action2 = managerContract.ownerOf(serialNumber);
-            await expect(action2).to.eventually.equal(third.address);
+            await expect(action1).to.be.reverted;
         });
 
         it("Should not allow a generic account to register", async function () {
@@ -118,7 +120,6 @@ describe("BicycleComponentManagerUI", function () {
             const {managerUI} = await loadFixture(deployAllAndUI);
 
             const action = managerUI.connect(third).register(
-                deployer.address,  // userAddress (masquerading as `deployer`)
                 third.address,  // registerFor
                 "SN-123",
                 "My bike",
@@ -137,7 +138,6 @@ describe("BicycleComponentManagerUI", function () {
             await expect(action1).not.to.be.reverted;
 
             const action = managerUI.connect(shop1).register(
-                shop1.address,  // userAddress (masquerading as `deployer`)
                 third.address,  // registerFor
                 "SN-123",
                 "My bike",
@@ -146,26 +146,6 @@ describe("BicycleComponentManagerUI", function () {
             );
 
             await expect(action).not.to.be.reverted;
-        });
-
-        it("Should not allow even a registrar to impersonate", async function () {
-            const {deployer, shop1, third} = await getSigners();
-            const {managerUI, managerContract} = await loadFixture(deployAllAndUI);
-
-            const action1 = managerContract.connect(deployer).grantRole(managerContract.REGISTRAR_ROLE(), shop1.address);
-            await expect(action1).not.to.be.reverted;
-
-            const action = managerUI.connect(shop1).register(
-                deployer.address,  // userAddress (masquerading as `deployer`)
-                third.address,  // registerFor
-                "SN-123",
-                "My bike",
-                "It's a decent bike",
-                "https://ids.si.edu/ids/deliveryService?max=170&id=NPM-1993_2070_19",
-            );
-
-            const reason = "BicycleComponentManagerUI: userAddress and _msgSender don't match (or not a trusted forwarder)";
-            await expect(action).to.be.revertedWith(reason);
         });
     });
 });
