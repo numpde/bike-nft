@@ -21,7 +21,7 @@
       "type": "input",
       "label": "Update your public account info:",
       "id": "userAddressInfo",
-      "readonly": true
+      "readOnly": true
     },
     {
       "type": "button",

@@ -28,6 +28,7 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
     mapping(uint256 => bool) private _missingStatus;
     mapping(uint256 => mapping(address => bool)) private _componentOperatorApproval;
 
+    // Upgraded
     bytes32 public constant UI_ROLE = keccak256("UI_ROLE");
 
     event AccountInfoSet(address indexed account, string info);

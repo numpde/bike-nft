@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
-import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@opengsn/contracts/src/ERC2771Recipient.sol";
 
 import "./BicycleComponentManager.sol";
@@ -12,13 +11,17 @@ import "./Utils.sol";
 contract BicycleComponentManagerUI is BaseUI {
     using Utils for string;
 
-    string public INSUFFICIENT_RIGHTS = "BicycleComponentManagerUI: Insufficient rights";
+    string public constant INSUFFICIENT_RIGHTS = "BicycleComponentManagerUI: Insufficient rights";
 
     BicycleComponentManager public bicycleComponentManager;
 
-    constructor(address payable bcmAddress, address myTrustedForwarder, string memory myBaseURI)
-    BaseUI(myTrustedForwarder, myBaseURI)
-    {
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(address payable bcmAddress, address myTrustedForwarder, string memory myBaseURI) public initializer {
+        __BaseUI_init(myTrustedForwarder, myBaseURI);
         bicycleComponentManager = BicycleComponentManager(bcmAddress);
     }
 
@@ -54,6 +57,11 @@ contract BicycleComponentManagerUI is BaseUI {
     )
     public
     {
+        require(
+            bicycleComponentManager.ownerOf(registerSerialNumber) != transferToAddress,
+            "Let's not waste gas"
+        );
+
         bicycleComponentManager.transferByUI(registerSerialNumber, transferToAddress, _msgSender());
     }
 
@@ -158,5 +166,40 @@ contract BicycleComponentManagerUI is BaseUI {
             _composeWithBaseURI("viewUpdateAddressInfoOnSuccess.returns.json"),
             bicycleComponentManager.accountInfo(infoAddress)
         );
+    }
+
+    function viewUpdateNFT(string memory registerSerialNumber)
+    public view
+    returns (
+        string memory,
+        address registerFor,
+        address nftContractAddress, uint256 nftTokenId,
+        string memory registerName, string memory registerDescription, string memory registerImageURL
+    )
+    {
+        registerFor = bicycleComponentManager.ownerOf(registerSerialNumber);
+        nftContractAddress = bicycleComponentManager.nftContractAddress();
+        nftTokenId = bicycleComponentManager.generateTokenId(registerSerialNumber);
+
+        return (
+            _composeWithBaseURI("viewUpdateNFT.returns.json"),
+            registerFor,
+            nftContractAddress, nftTokenId,
+            "", "", ""
+        );
+    }
+
+    function updateNFT(
+        string memory registerSerialNumber,
+        string memory registerName,
+        string memory registerDescription,
+        string memory registerImageURL
+    )
+    public
+    {
+        string[] memory emptyArray;
+        string memory uri = string("").stringifyOnChainMetadata(registerName, registerDescription, registerImageURL, emptyArray, emptyArray).packJSON();
+
+        bicycleComponentManager.setComponentURIByUI(registerSerialNumber, uri, _msgSender());
     }
 }

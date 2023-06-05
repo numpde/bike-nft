@@ -1,0 +1,65 @@
+{
+  "elements": [
+    {
+      "type": "input",
+      "label": "Please note, all data are publicly visible on the blockchain. Do not save any sensitive information. Serial number (must be unique):",
+      "id": "registerSerialNumber",
+      "readOnly": true
+    },
+    {
+      "type": "address",
+      "label": "Owner address:",
+      "id": "registerFor",
+      "readOnly": true
+    },
+    {
+      "type": "nft",
+      "label": "Registered NFT:",
+      "params": {
+        "chainId": "contractNetwork",
+        "contractAddress": "nftContractAddress",
+        "tokenId": "nftTokenId"
+      }
+    },
+    {
+      "type": "text",
+      "label": "Update NFT data:"
+    },
+    {
+      "type": "input",
+      "label": "Name for the NFT. Should contain useful searchable info.",
+      "id": "registerName",
+      "placeholder": "E.g., bike model",
+      "value": ""
+    },
+    {
+      "type": "input",
+      "label": "Description for the NFT:",
+      "id": "registerDescription",
+      "placeholder": "Detailed description",
+      "value": ""
+    },
+    {
+      "type": "input",
+      "label": "Image URL for the NFT:",
+      "id": "registerImageURL",
+      "placeholder": "https://...",
+      "value": "https://"
+    },
+    {
+      "type": "button",
+      "label": "Update",
+      "onClick": {
+        "default": "updateNFT",
+        "success": "viewRegisterOnSuccess"
+      }
+    },
+    {
+      "type": "button",
+      "label": "Start over",
+      "onClick": {
+        "default": "viewEntry"
+      }
+    }
+  ]
+}

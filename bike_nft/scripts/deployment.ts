@@ -102,7 +102,12 @@ export async function deploy({contractName, args, deployer, chainId}: DeployPara
         const abi = require(artifactsPath).abi;
 
         const outputPath = path.join(__dirname, `../off-chain/contract-ui/${contractName}/v1/abi.json`);
-        fs.writeFileSync(outputPath, JSON.stringify(abi, null, 2));
+
+        try {
+            fs.writeFileSync(outputPath, JSON.stringify(abi, null, 2));
+        } catch (e) {
+            console.log("Error writing ABI to", outputPath);
+        }
 
         // Note: to get the most recent commit hash
         // git log --first-parent --max-count=1 --format=%H -- ./off-chain/

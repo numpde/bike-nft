@@ -11,9 +11,14 @@ contract BlanksUI is BaseUI {
 
     mapping(address => uint256[]) public registeredNftTokens;
 
-    constructor(address payable myBlanksContract, address myTrustedForwarder, string memory myBaseURI)
-    BaseUI(myTrustedForwarder, myBaseURI)
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(address payable myBlanksContract, address myTrustedForwarder, string memory myBaseURI) public initializer
     {
+        __BaseUI_init(myTrustedForwarder, myBaseURI);
         setBlanksContractAddress(myBlanksContract);
     }
 
@@ -86,6 +91,8 @@ contract BlanksUI is BaseUI {
     public view
     returns (string memory, uint256 nftTokenId)
     {
+        (userAddress, registerSerialNumber); // silence warnings
+
         BlanksOpenSea blanksContract = BlanksOpenSea(blanksContractAddress);
         BicycleComponentManager bcm = BicycleComponentManager(blanksContract.bicycleComponentManager());
 
@@ -128,6 +135,7 @@ contract BlanksUI is BaseUI {
     }
 
     function viewRegisterOnFailure(address userAddress) public view returns (string memory) {
+        userAddress; // silence warnings
         return _composeWithBaseURI("viewRegisterOnFailure.returns.json");
     }
 
