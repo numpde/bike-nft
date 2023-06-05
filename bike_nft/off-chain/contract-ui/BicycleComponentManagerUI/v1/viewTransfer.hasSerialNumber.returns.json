@@ -7,7 +7,7 @@
       "readOnly": true
     },
     {
-      "type": "input",
+      "type": "address",
       "label": "from account",
       "id": "transferFromAddress",
       "readOnly": true
