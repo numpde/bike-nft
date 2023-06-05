@@ -1,6 +1,6 @@
 import {loadFixture} from "@nomicfoundation/hardhat-network-helpers";
 import {Contract} from "ethers";
-import {ethers} from "hardhat";
+import {ethers, upgrades} from "hardhat";
 import {expect} from "chai";
 
 import {deploymentParams} from "../deploy.config";
@@ -13,15 +13,22 @@ async function deployAllAndUI() {
 
     const contractName = "BlanksUI"
 
-    const BlanksUI = await ethers.getContractFactory(contractName);
+    const Contract = await ethers.getContractFactory(contractName);
 
-    const blanksUiContract = await BlanksUI.connect(deployer).deploy(
+    const args = [
         blanksContract.address,
         ethers.constants.AddressZero,
         deploymentParams.hardhat?.baseURI?.[contractName] || "",
-    );
+    ];
 
-    await blanksUiContract.deployed();
+    const blanksUiContract = await upgrades.deployProxy(
+        Contract.connect(deployer),
+        args,
+        {
+            initializer: 'initialize',
+            kind: 'uups',
+        }
+    );
 
     // Link
     const tx = await blanksContract.grantRole(blanksContract.PROXY_ROLE(), blanksUiContract.address);

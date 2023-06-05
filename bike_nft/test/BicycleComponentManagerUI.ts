@@ -1,5 +1,5 @@
 import {loadFixture} from "@nomicfoundation/hardhat-network-helpers";
-import {ethers} from "hardhat";
+import {ethers, upgrades} from "hardhat";
 import {expect} from "chai";
 
 import {deploymentParams} from "../deploy.config";
@@ -14,13 +14,20 @@ async function deployAllAndUI() {
 
     const ContractUI = await ethers.getContractFactory(contractName);
 
-    const contractUI = await ContractUI.connect(deployer).deploy(
+    const args = [
         managerContract.address,
         ethers.constants.AddressZero,  // Trusted forwarder
         deploymentParams.hardhat?.baseURI?.[contractName] || "",
-    );
+    ];
 
-    await contractUI.deployed();
+    const contractUI = await upgrades.deployProxy(
+        ContractUI.connect(deployer),
+        args,
+        {
+            initializer: 'initialize',
+            kind: 'uups',
+        }
+    );
 
     // Link
     const tx = await managerContract.grantRole(managerContract.UI_ROLE(), contractUI.address);
@@ -131,21 +138,72 @@ describe("BicycleComponentManagerUI", function () {
         });
 
         it("Should allow a new registrar to register", async function () {
-            const {deployer, shop1, third} = await getSigners();
+            const {deployer, third} = await getSigners();
             const {managerUI, managerContract} = await loadFixture(deployAllAndUI);
 
-            const action1 = managerContract.connect(deployer).grantRole(managerContract.REGISTRAR_ROLE(), shop1.address);
+            const action1 = managerContract.connect(deployer).grantRole(managerContract.REGISTRAR_ROLE(), third.address);
             await expect(action1).not.to.be.reverted;
 
-            const action = managerUI.connect(shop1).register(
-                third.address,  // registerFor
-                "SN-123",
-                "My bike",
-                "It's a decent bike",
-                "https://ids.si.edu/ids/deliveryService?max=170&id=NPM-1993_2070_19",
-            );
-
+            const action = managerUI.connect(third).register(third.address, "SN-123", "", "", "");
             await expect(action).not.to.be.reverted;
+        });
+    });
+
+    describe("Transfer", function () {
+        it("Allows a component owner to transfer their component", async function () {
+            const {shop1, customer1, customer2} = await getSigners();
+            const {managerUI} = await loadFixture(deployAllAndUI);
+
+            const serialNumber = "SN-123";
+
+            // Register a component for `customer1`
+            const action1 = managerUI.connect(shop1).register(customer1.address, serialNumber, "", "", "");
+            await expect(action1).not.to.be.reverted;
+
+            // customer2 -> customer1 fails
+            const action2a = managerUI.connect(customer2).transfer(serialNumber, customer1.address);
+            await expect(action2a).to.be.reverted;
+
+            // customer1 -> customer2 succeeds
+            const action1a = managerUI.connect(customer1).transfer(serialNumber, customer2.address);
+            await expect(action1a).not.to.be.reverted;
+
+            // customer2 -> customer1 succeeds now
+            const action2b = managerUI.connect(customer2).transfer(serialNumber, customer1.address);
+            await expect(action2b).not.to.be.reverted;
+        });
+
+        it("Allows the shop to transfer their 'minted' component", async function () {
+            const {shop1, customer1, customer2} = await getSigners();
+            const {managerUI} = await loadFixture(deployAllAndUI);
+
+            const serialNumber = "SN-123";
+
+            // Register a component for `customer1`
+            const action1 = managerUI.connect(shop1).register(customer1.address, serialNumber, "", "", "");
+            await expect(action1).not.to.be.reverted;
+
+            // shop transfers customer1 -> customer2
+            const action2 = managerUI.connect(shop1).transfer(serialNumber, customer2.address);
+            await expect(action2).not.to.be.reverted;
+        });
+
+        it("Disallows other shop to transfer", async function () {
+            const {shop1, shop2, customer1, customer2} = await getSigners();
+            const {managerUI, managerContract} = await loadFixture(deployAllAndUI);
+
+            const serialNumber = "SN-123";
+
+            // Register a component for `customer1`
+            const action1 = managerUI.connect(shop1).register(customer1.address, serialNumber, "", "", "");
+            await expect(action1).not.to.be.reverted;
+
+            // check that shop2 has the registrar role
+            await expect(managerContract.hasRole(managerContract.REGISTRAR_ROLE(), shop2.address)).to.eventually.equal(true);
+
+            // shop2 attempts to transfer customer1 -> customer2
+            const action2 = managerUI.connect(shop2).transfer(serialNumber, customer2.address);
+            await expect(action2).to.be.revertedWith("Insufficient rights");
         });
     });
 });
