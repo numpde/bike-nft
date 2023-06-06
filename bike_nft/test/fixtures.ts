@@ -3,6 +3,7 @@ import {getSigners} from "./signers";
 import {expect} from "chai";
 import {loadFixture} from "@nomicfoundation/hardhat-network-helpers";
 import {Contract} from "ethers";
+import {deploymentParams} from "../deploy.config";
 
 
 export async function deployBicycleComponentsFixture(): Promise<{ contract: Contract }> {
@@ -136,4 +137,57 @@ export async function deployAllAndLinkFixture() {
     await managerContract.connect(deployer).grantRole(managerContract.REGISTRAR_ROLE(), blanksContract.address);
 
     return {blanksContract, componentsContract, managerContract};
+}
+
+export async function deployAllAndUI() {
+    const {deployer} = await getSigners();
+    const {managerContract, ...etc} = await loadFixture(deployAllAndLinkFixture);
+
+    const contractName = "BicycleComponentManagerUI";
+
+    const ContractUI = await ethers.getContractFactory(contractName);
+
+    const args = [
+        managerContract.address,
+        ethers.constants.AddressZero,  // Trusted forwarder
+        deploymentParams.hardhat?.baseURI?.[contractName] || "",
+    ];
+
+    const contractUI = await upgrades.deployProxy(
+        ContractUI.connect(deployer),
+        args,
+        {
+            initializer: 'initialize',
+            kind: 'uups',
+        }
+    );
+
+    // Link
+    const tx = await managerContract.grantRole(managerContract.UI_ROLE(), contractUI.address);
+    const receipt = await tx.wait();
+
+    return {managerContract, managerUI: contractUI, ...etc};
+}
+
+export async function deployOpsFundFixture() {
+    const {deployer, admin, paymaster, manager, shop1} = await getSigners();
+
+    const Contract = await ethers.getContractFactory("BicycleComponentOpsFund");
+
+    const contract = await Contract.connect(deployer).deploy();
+    await contract.deployed();
+
+    const DEFAULT_ADMIN_ROLE = await contract.DEFAULT_ADMIN_ROLE();
+    await contract.grantRole(DEFAULT_ADMIN_ROLE, admin.address);
+
+    const OPS_MANAGER_ROLE = await contract.OPS_MANAGER_ROLE();
+    await contract.grantRole(OPS_MANAGER_ROLE, manager.address);
+
+    const PAYMASTER_ROLE = await contract.PAYMASTER_ROLE();
+    await contract.grantRole(PAYMASTER_ROLE, paymaster.address);
+
+    const CARTE_BLANCHE_ROLE = await contract.CARTE_BLANCHE_ROLE();
+    await contract.grantRole(CARTE_BLANCHE_ROLE, shop1.address);
+
+    return {opsFundContract: contract};
 }

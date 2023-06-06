@@ -41,7 +41,6 @@ const config: HardhatUserConfig = {
         sources: "./contracts",
     },
 
-
     etherscan: {
         apiKey: {
             polygonMumbai: getEnvVariable("POLYGONSCAN_API_KEY"),
@@ -50,6 +49,10 @@ const config: HardhatUserConfig = {
     },
 
     networks: {
+        localhost: {
+            url: "http://localhost:8484",
+        },
+
         ganache: {
             url: "http://127.0.0.1:8545",
             accounts: [getEnvVariable("GANACHE_PRIVATE_KEY")],

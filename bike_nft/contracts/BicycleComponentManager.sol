@@ -5,6 +5,7 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 
 import "./BicycleComponents.sol";
 import "./Utils.sol";
@@ -14,6 +15,7 @@ import "./Utils.sol";
 /// @notice This contract manages the BicycleComponents NFT contract.
 contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable {
     using Utils for string;
+    using AddressUpgradeable for address;
 
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
@@ -30,6 +32,7 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
 
     // Upgraded
     bytes32 public constant UI_ROLE = keccak256("UI_ROLE");
+    string public constant INSUFFICIENT_RIGHTS = "BCM: Insufficient rights";
 
     event AccountInfoSet(address indexed account, string info);
     event ComponentRegistered(address indexed owner, string indexed serialNumber, uint256 indexed tokenId, string uri);
@@ -112,7 +115,7 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
     internal
     whenNotPaused
     {
-        require(canRegister(registrar), "Insufficient rights");
+        require(canRegister(registrar), INSUFFICIENT_RIGHTS);
 
         require(msg.value >= minAmountOnRegister, "Insufficient payment");
 
@@ -130,7 +133,7 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
         emit ComponentRegistered(owner, serialNumber, tokenId, uri);
 
         // Grant the "bike shop" the right to handle the NFT on behalf of the "customer".
-        // Can't use `setComponentOperatorApproval` here due to "Insufficient rights".
+        // Can't use `setComponentOperatorApproval` here due to INSUFFICIENT_RIGHTS.
         _componentOperatorApproval[tokenId][registrar] = true;
         emit UpdatedComponentOperatorApproval(registrar, serialNumber, tokenId, true);
 
@@ -145,7 +148,7 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
     internal
     whenNotPaused
     {
-        require(canHandle(operator, serialNumber), "Insufficient rights");
+        require(canHandle(operator, serialNumber), INSUFFICIENT_RIGHTS);
 
         uint256 tokenId = generateTokenId(serialNumber);
 
@@ -198,7 +201,7 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
     function _setComponentURI(string memory serialNumber, string memory uri, address operator)
     internal whenNotPaused
     {
-        require(canHandle(operator, serialNumber), "Insufficient rights");
+        require(canHandle(operator, serialNumber), INSUFFICIENT_RIGHTS);
 
         uint256 tokenId = generateTokenId(serialNumber);
 
@@ -210,7 +213,7 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
     function _setMissingStatus(string memory serialNumber, bool isMissing, address operator)
     internal whenNotPaused
     {
-        require(canHandle(operator, serialNumber), "Insufficient rights");
+        require(canHandle(operator, serialNumber), INSUFFICIENT_RIGHTS);
 
         uint256 tokenId = generateTokenId(serialNumber);
 
@@ -221,7 +224,7 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
     function _setAccountInfo(address account, string memory info, address operator)
     internal whenNotPaused
     {
-        require(canSetAccountInfo(operator, account), "Insufficient rights");
+        require(canSetAccountInfo(operator, account), INSUFFICIENT_RIGHTS);
 
         require(bytes(info).length > 0, "Info string is empty");
 
@@ -232,7 +235,7 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
     function _setComponentOperatorApproval(string memory serialNumber, address newOperator, bool approved, address operator)
     internal whenNotPaused
     {
-        require(canHandle(operator, serialNumber), "Insufficient rights");
+        require(canHandle(operator, serialNumber), INSUFFICIENT_RIGHTS);
 
         require(newOperator != address(0), "Zero address");
 

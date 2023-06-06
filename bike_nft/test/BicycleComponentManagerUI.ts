@@ -1,40 +1,9 @@
 import {loadFixture} from "@nomicfoundation/hardhat-network-helpers";
-import {ethers, upgrades} from "hardhat";
 import {expect} from "chai";
 
-import {deploymentParams} from "../deploy.config";
 import {getSigners} from "./signers";
-import {deployAllAndLinkFixture} from "./fixtures";
+import {deployAllAndUI} from "./fixtures";
 
-async function deployAllAndUI() {
-    const {deployer} = await getSigners();
-    const {managerContract, ...etc} = await loadFixture(deployAllAndLinkFixture);
-
-    const contractName = "BicycleComponentManagerUI";
-
-    const ContractUI = await ethers.getContractFactory(contractName);
-
-    const args = [
-        managerContract.address,
-        ethers.constants.AddressZero,  // Trusted forwarder
-        deploymentParams.hardhat?.baseURI?.[contractName] || "",
-    ];
-
-    const contractUI = await upgrades.deployProxy(
-        ContractUI.connect(deployer),
-        args,
-        {
-            initializer: 'initialize',
-            kind: 'uups',
-        }
-    );
-
-    // Link
-    const tx = await managerContract.grantRole(managerContract.UI_ROLE(), contractUI.address);
-    const receipt = await tx.wait();
-
-    return {managerContract, managerUI: contractUI, ...etc};
-}
 
 describe("BicycleComponentManagerUI", function () {
     describe("Deployment", function () {
