@@ -37,6 +37,14 @@ contract BicycleComponentPaymaster is BasePaymaster {
         emit MethodWhitelisted(target, method, isAllowed);
     }
 
+    function getGasAndDataLimits()
+    public override virtual view
+    returns (
+        IPaymaster.GasAndDataLimits memory limits
+    ) {
+        return super.getGasAndDataLimits();
+    }
+
     function _preRelayedCall(
         GsnTypes.RelayRequest calldata relayRequest,
         bytes calldata signature,

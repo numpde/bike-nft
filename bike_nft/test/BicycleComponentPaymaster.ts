@@ -5,9 +5,20 @@ import {loadFixture} from "@nomicfoundation/hardhat-network-helpers";
 import {getSigners} from "./signers";
 import {deployAllAndUI, deployOpsFundFixture} from "./fixtures";
 
-import {GsnTestEnvironment} from '@opengsn/cli/dist/GsnTestEnvironment'
+import {GsnTestEnvironment, TestEnvironment} from '@opengsn/cli/dist/GsnTestEnvironment'
 import {JsonRpcProvider, parseEther, ZeroAddress} from "ethers-v6";
-import {RelayProvider} from "@opengsn/provider";
+import {GSNConfig, RelayProvider} from "@opengsn/provider";
+import {GSNDependencies} from "@opengsn/provider/dist/GSNConfigurator";
+import {getAddress} from "ethers/lib/utils";
+
+const silentLogger = {
+    debug: () => {},
+    info: () => {},
+    warn: () => {},
+    error: () => {},
+};
+
+const localRelayUrl = "http://localhost:12345";
 
 async function deployPaymasterFixture(): Promise<any> {
     const {deployer} = await getSigners();
@@ -32,10 +43,10 @@ async function deployPaymasterFixture(): Promise<any> {
     const url = hre.network.config['url'];
 
     const provider = new JsonRpcProvider(url);
-    const gsnSettings = await GsnTestEnvironment.startGsn(url);
+    const gsnSettings: TestEnvironment = await GsnTestEnvironment.startGsn(url, "http://localhost", 12345, silentLogger);
 
-    await paymasterContract.connect(deployer).setRelayHub(gsnSettings.contractsDeployment?.relayHubAddress);
-    await paymasterContract.connect(deployer).setTrustedForwarder(gsnSettings.contractsDeployment?.forwarderAddress);
+    await paymasterContract.connect(deployer).setRelayHub(gsnSettings.contractsDeployment?.relayHubAddress || "");
+    await paymasterContract.connect(deployer).setTrustedForwarder(gsnSettings.contractsDeployment?.forwarderAddress || "");
 
     await managerUI.connect(deployer).setTrustedForwarder(gsnSettings.contractsDeployment?.forwarderAddress);
 
@@ -69,33 +80,70 @@ describe("Fixture", function () {
 });
 
 describe("BicycleComponentPaymaster", function () {
-    it("...", async function () {
+    it("Perform a gasless call to the UI", async function () {
         const {_, deployer, third} = await getSigners();
-        const {paymasterContract, managerUI, provider} = await loadFixture(deployPaymasterFixture);
+        const {paymasterContract, managerUI, provider, gsnSettings} = await loadFixture(deployPaymasterFixture);
 
-        const config = {
+        const config: Partial<GSNConfig> = {
             paymasterAddress: paymasterContract.address,
             performDryRunViewRelayCall: false,
-            loggerConfiguration: {logLevel: 'error',},
+            // loggerConfiguration: {logLevel: 'silent', loglevel: 'silent'},
         }
 
-        const {gsnProvider, gsnSigner} =
-            await RelayProvider.newEthersV5Provider({provider: deployer, config} as any);
+        const overrideDependencies: Partial<GSNDependencies> = {
+            logger: silentLogger,
+        };
 
-        await expect(await gsnSigner.getAddress()).to.equal(await deployer.getAddress());
+        const {gsnSigner: gsnDeployer, gsnProvider} = await RelayProvider.newEthersV5Provider({provider: deployer, config, overrideDependencies} as any);
 
-        const balanceBefore = await deployer.getBalance();
+        await expect(await gsnDeployer.getAddress()).to.equal(await deployer.getAddress());
 
-        await managerUI.connect(gsnSigner).register(
+        const relayHub = await ethers.getContractAt("IRelayHub", gsnSettings.contractsDeployment?.relayHubAddress, gsnDeployer);
+
+        const addressBalances = {
+            deployer: {address: getAddress(deployer.address)},
+            worker: {address: getAddress((gsnSettings as TestEnvironment).workerAddress || "")},
+            manager: {address: getAddress((gsnSettings as TestEnvironment).managerAddress || "")},
+            // relayhub: {address: getAddress(gsnSettings.contractsDeployment?.relayHubAddress)},
+            paymaster: {address: getAddress(paymasterContract.address)},
+        }
+
+        const balancesAtRelayHub = {
+        }
+
+        for (const who of Object.keys(addressBalances)) {
+            addressBalances[who].before = await provider.getBalance(addressBalances[who].address);
+            balancesAtRelayHub[who] = {before: await relayHub.balanceOf(addressBalances[who].address)};
+        }
+
+        const txResponse = await managerUI.connect(gsnDeployer).register(
             third.address,
             "SN-12341234",
             "Bicycle", "Good bicycle", "https://example.com/bicycle.png",
         );
 
-        const balanceAfter = await deployer.getBalance();
+        console.log("Response:", txResponse);
 
-        console.log("Balance before: ", balanceBefore);
-        console.log("Balance after:  ", balanceAfter);
+        const txReceipt = await txResponse.wait();
+
+        console.log("Receipt:", txReceipt);
+
+        for (const who of Object.keys(addressBalances)) {
+            addressBalances[who].after = await provider.getBalance(addressBalances[who].address);
+            balancesAtRelayHub[who].after = await relayHub.balanceOf(addressBalances[who].address);
+
+            console.log(who, addressBalances[who].address);
+            console.log("Balance before (ETH):", BigInt(addressBalances[who].before));
+            console.log("Balance after  (ETH):", BigInt(addressBalances[who].after), "\t", "delta:", BigInt(addressBalances[who].after) - BigInt(addressBalances[who].before));
+
+            console.log("Balance before (@RH):", BigInt(balancesAtRelayHub[who].before));
+            console.log("Balance after  (@RH):", BigInt(balancesAtRelayHub[who].after), "\t", "delta:", BigInt(balancesAtRelayHub[who].after) - BigInt(balancesAtRelayHub[who].before));
+        }
+
+        // await expect(deployerBalanceAfter).to.be.equal(deployerBalanceBefore);
     });
 
+    it("waits...", async function () {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+    });
 });
