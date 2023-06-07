@@ -13,6 +13,11 @@ import {getAddress} from "ethers/lib/utils";
 import {silentLogger} from "../utils/utils";
 
 
+async function getSigHash(contract: any, methodName: string): Promise<string> {
+    const fragment = contract.interface.getFunction(methodName);
+    return contract.interface.getSighash(fragment);
+}
+
 async function deployPaymasterFixture(): Promise<any> {
     const {deployer, shop1} = await getSigners();
 
@@ -28,13 +33,14 @@ async function deployPaymasterFixture(): Promise<any> {
     await paymasterContract.connect(deployer).setOpsFundContract(opsFundContract.address);
 
     const whitelist = async (methodName: string) => {
-        const fragment = managerUI.interface.getFunction(methodName);
-        const sighash = managerUI.interface.getSighash(fragment);
+        const sighash = await getSigHash(managerUI, methodName);
         await paymasterContract.connect(deployer).whitelistMethod(managerUI.address, sighash, true);
     };
 
     await whitelist("register");
     await whitelist("transfer");
+    await whitelist("updateNFT");
+    // await whitelist("updateAddressInfo");  // not whitelisted (for testing)
 
     // HOW TO:
     // npx hardhat node --port 8484
@@ -57,7 +63,7 @@ async function deployPaymasterFixture(): Promise<any> {
     // Fund the relay
     await deployer.sendTransaction({to: paymasterContract.address, value: parseEther("1")});
 
-    return {provider, gsnSettings, paymasterContract, opsFundContract,  ...etc};
+    return {provider, gsnSettings, paymasterContract, opsFundContract, ...etc};
 }
 
 describe("BicycleComponentPaymaster", function () {
@@ -263,6 +269,71 @@ describe("BicycleComponentPaymaster", function () {
             // `third` has fewer ops tokens now
             const finalOpsTokens = await opsFundContract.allowanceOf(third.address);
             await expect(finalOpsTokens).to.equal(initialOpsTokens - 1);
+        });
+
+        it("Allows a gasless `updateNFT` in exchange for ops tokens", async function () {
+            const {deployer, shop2} = await getSigners();
+            const {managerUI, opsFundContract, relayProviderInput} = theSetup;
+
+            // grant the user some ops tokens
+            await opsFundContract.connect(deployer).addAllowance(shop2.address, 10);
+            const initialOpsTokens = await opsFundContract.allowanceOf(shop2.address);
+
+            // construct the relay client
+            const {gsnSigner: gsnShop2} =
+                await RelayProvider.newEthersV5Provider({...relayProviderInput, provider: shop2});
+
+            // user -> relay -> managerUI
+            const tx = await managerUI.connect(gsnShop2).updateNFT("SN-1234", "", "", "");
+            await expect(() => tx).to.changeEtherBalances([shop2], [0]);
+
+            // user has fewer ops tokens now
+            const finalOpsTokens = await opsFundContract.allowanceOf(shop2.address);
+            await expect(finalOpsTokens).to.equal(initialOpsTokens - 1);
+        });
+
+        it("Disallows a non-whitelisted method to be called gasless", async function () {
+            const {shop1} = await getSigners();
+            const {managerUI, opsFundContract, paymasterContract, relayProviderInput} = theSetup;
+
+            const methodName = "updateAddressInfo";
+
+            const sighash = getSigHash(managerUI, methodName);
+            await expect(await paymasterContract.methodWhitelist(managerUI.address, sighash)).to.be.false;
+
+            // direct call is okay
+            const tx1 = managerUI.connect(shop1).updateAddressInfo(shop1.address, "Info");
+            await expect(tx1).not.to.be.reverted;
+
+            // construct the relay client
+            const {gsnSigner: gsnShop1} =
+                await RelayProvider.newEthersV5Provider({...relayProviderInput, provider: shop1});
+
+            try {
+                // attempt a relayed call to the method
+                await managerUI.connect(gsnShop1)[methodName](shop1.address, "Info");
+                throw new Error("Expected the transaction to fail!");
+            } catch (e) {
+                expect(e.message).to.contain("Method not whitelisted");
+            }
+        });
+
+        it("Allows to call a newly whitelisted method gasless", async function () {
+            const {deployer, shop1} = await getSigners();
+            const {managerUI, opsFundContract, paymasterContract, relayProviderInput} = theSetup;
+
+            const methodName = "updateAddressInfo";
+
+            const sighash = getSigHash(managerUI, methodName);
+            await paymasterContract.connect(deployer).whitelistMethod(managerUI.address, sighash, true);
+
+            // construct the relay client
+            const {gsnSigner: gsnShop1} =
+                await RelayProvider.newEthersV5Provider({...relayProviderInput, provider: shop1});
+
+            // attempt a relayed call to the method
+            const tx = await managerUI.connect(gsnShop1)[methodName](shop1.address, "Info");
+            await expect(() => tx).to.changeEtherBalances([shop1], [0]);
         });
     });
 });

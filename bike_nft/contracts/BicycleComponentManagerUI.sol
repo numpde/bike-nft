@@ -65,6 +65,20 @@ contract BicycleComponentManagerUI is BaseUI {
         bicycleComponentManager.transferByUI(registerSerialNumber, transferToAddress, _msgSender());
     }
 
+    function updateNFT(
+        string memory registerSerialNumber,
+        string memory registerName,
+        string memory registerDescription,
+        string memory registerImageURL
+    )
+    public
+    {
+        string[] memory emptyArray;
+        string memory uri = string("").stringifyOnChainMetadata(registerName, registerDescription, registerImageURL, emptyArray, emptyArray).packJSON();
+
+        bicycleComponentManager.setComponentURIByUI(registerSerialNumber, uri, _msgSender());
+    }
+
     // Views
 
     function viewEntry(address userAddress)
@@ -187,19 +201,5 @@ contract BicycleComponentManagerUI is BaseUI {
             nftContractAddress, nftTokenId,
             "", "", ""
         );
-    }
-
-    function updateNFT(
-        string memory registerSerialNumber,
-        string memory registerName,
-        string memory registerDescription,
-        string memory registerImageURL
-    )
-    public
-    {
-        string[] memory emptyArray;
-        string memory uri = string("").stringifyOnChainMetadata(registerName, registerDescription, registerImageURL, emptyArray, emptyArray).packJSON();
-
-        bicycleComponentManager.setComponentURIByUI(registerSerialNumber, uri, _msgSender());
     }
 }
