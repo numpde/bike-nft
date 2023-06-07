@@ -248,7 +248,7 @@ describe("BicycleComponentPaymaster", function () {
             const initialOpsTokens = await opsFundContract.allowanceOf(third.address);
             await expect(initialOpsTokens).to.not.equal(0);
 
-            // // third -> managerUI doesn't fail because `third` can pay in ether
+            // // third -> managerUI doesn't fail because `third` can pay in ether:
             // const tx0 = await managerUI.connect(third).transfer("SN-1234", shop2.address);
             // await expect(tx0).to.be.revertedWith("?");
 
