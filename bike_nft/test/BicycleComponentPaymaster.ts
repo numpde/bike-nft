@@ -90,9 +90,8 @@ describe("BicycleComponentPaymaster", function () {
         let snapshotId;
 
         before(async function () {
-            const {shop1} = await getSigners();
             const things = await loadFixture(deployPaymasterFixture);
-            const {managerContract, paymasterContract, opsFundContract} = things;
+            const {paymasterContract} = things;
 
             const relayProviderInput: {
                 provider: any;
@@ -127,7 +126,7 @@ describe("BicycleComponentPaymaster", function () {
         });
 
         it("Performs a gasless call to the UI contract", async function () {
-            const {_, deployer} = await getSigners();
+            const {deployer} = await getSigners();
             const {
                 paymasterContract,
                 managerUI,
@@ -166,7 +165,7 @@ describe("BicycleComponentPaymaster", function () {
 
             // console.log("Response:", txResponse);
 
-            const txReceipt = await txResponse.wait();
+            await txResponse.wait();
 
             // console.log("Receipt:", txReceipt);
 
@@ -229,7 +228,7 @@ describe("BicycleComponentPaymaster", function () {
 
         it("Auto-mints ops tokens on `register` [pre-gasless]", async function () {
             const {shop1, third} = await getSigners();
-            const {managerContract, managerUI, opsFundContract, relayProviderInput} = theSetup;
+            const {managerContract, opsFundContract} = theSetup;
 
             // `third` has no ops tokens initially
             await expect(await opsFundContract.allowanceOf(third.address)).to.equal(0);
