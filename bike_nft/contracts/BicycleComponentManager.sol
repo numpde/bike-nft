@@ -9,6 +9,7 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 
 import "./BicycleComponents.sol";
 import "./Utils.sol";
+import "./BicycleComponentOpsFund.sol";
 
 
 /// @title Bicycle Component Manager Contract
@@ -33,6 +34,7 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
     // Upgraded
     bytes32 public constant UI_ROLE = keccak256("UI_ROLE");
     string public constant INSUFFICIENT_RIGHTS = "BCM: Insufficient rights";
+    BicycleComponentOpsFund public opsFundContract;
 
     event AccountInfoSet(address indexed account, string info);
     event ComponentRegistered(address indexed owner, string indexed serialNumber, uint256 indexed tokenId, string uri);
@@ -40,6 +42,7 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
     event ComponentTransferred(string indexed serialNumber, uint256 indexed tokenId, address indexed to);
     event UpdatedMissingStatus(string indexed serialNumber, uint256 indexed tokenId, bool indexed isMissing);
     event UpdatedComponentOperatorApproval(address indexed operator, string indexed serialNumber, uint256 indexed tokenId, bool approved);
+    event Message(string message);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -111,12 +114,39 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
     // Core functions.
     // These functions trust the caller that the registrar/operator is who they say they are.
 
+    function _grantOps(address operator, address owner) internal
+    {
+        // Call this function on mint and on transfer.
+
+        // If the OpsFund contract is not set, do nothing.
+        if (address(opsFundContract) == address(0)) {
+            emit Message("OpsFund not set");
+            return;
+        }
+
+        if (opsFundContract.hasRole(opsFundContract.CARTE_BLANCHE_ROLE(), owner)) {
+            return;
+        }
+
+        if (opsFundContract.hasRole(opsFundContract.CARTE_BLANCHE_ROLE(), operator)) {
+            // If `operator` has CARTE_BLANCHE_ROLE on the OpsFund but `owner` does not,
+            // grant `owner` the default allowance of ops tokens in the OpsFund.
+
+            opsFundContract.addAllowance(owner, opsFundContract.defaultAllowanceIncrement());
+        } else {
+            // Neither `operator` nor `owner` has CARTE_BLANCHE_ROLE on the OpsFund.
+            // We don't generate new ops tokens, as this could be used for infinite transfers.
+            // So, there are two options:
+            //  - do nothing;
+            //  - transfer some amount of ops tokens from `operator` to `owner`.
+        }
+    }
+
     function _register(address owner, string memory serialNumber, string memory uri, address registrar)
     internal
     whenNotPaused
     {
         require(canRegister(registrar), INSUFFICIENT_RIGHTS);
-
         require(msg.value >= minAmountOnRegister, "Insufficient payment");
 
         // Assume that `registrar` is a bike shop registering
@@ -129,13 +159,16 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
         bicycleComponents.safeMint(owner, tokenId);
         bicycleComponents.setTokenURI(tokenId, uri);
 
-        //
+        // Event
         emit ComponentRegistered(owner, serialNumber, tokenId, uri);
 
         // Grant the "bike shop" the right to handle the NFT on behalf of the "customer".
         // Can't use `setComponentOperatorApproval` here due to INSUFFICIENT_RIGHTS.
         _componentOperatorApproval[tokenId][registrar] = true;
         emit UpdatedComponentOperatorApproval(registrar, serialNumber, tokenId, true);
+
+        // Ops Fund
+        _grantOps(registrar, owner);
 
         // Return any excess amount to the original sender
         if (msg.value > maxAmountOnRegister) {
@@ -154,6 +187,9 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
 
         BicycleComponents(nftContractAddress).transfer(tokenId, to);
         emit ComponentTransferred(serialNumber, tokenId, to);
+
+        // Ops Fund
+        _grantOps(operator, to);
     }
 
     // Public-facing core functions
@@ -177,7 +213,7 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
     // Withdrawal
 
     function withdraw() public {
-        withdrawTo(_msgSender());
+        withdrawTo(_msgSender());  // delegates permission checks
     }
 
     function withdrawTo(address to) public onlyRole(DEFAULT_ADMIN_ROLE) {

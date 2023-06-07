@@ -12,10 +12,14 @@ import {GSNDependencies} from "@opengsn/provider/dist/GSNConfigurator";
 import {getAddress} from "ethers/lib/utils";
 
 const silentLogger = {
-    debug: () => {},
-    info: () => {},
-    warn: () => {},
-    error: () => {},
+    debug: () => {
+    },
+    info: () => {
+    },
+    warn: () => {
+    },
+    error: () => {
+    },
 };
 
 const localRelayUrl = "http://localhost:12345";
@@ -43,7 +47,7 @@ async function deployPaymasterFixture(): Promise<any> {
     const url = hre.network.config['url'];
 
     const provider = new JsonRpcProvider(url);
-    const gsnSettings: TestEnvironment = await GsnTestEnvironment.startGsn(url, "http://localhost", 12345, silentLogger);
+    const gsnSettings: TestEnvironment = await GsnTestEnvironment.startGsn(url, "http://localhost", 12345, silentLogger, true);
 
     await paymasterContract.connect(deployer).setRelayHub(gsnSettings.contractsDeployment?.relayHubAddress || "");
     await paymasterContract.connect(deployer).setTrustedForwarder(gsnSettings.contractsDeployment?.forwarderAddress || "");
@@ -80,7 +84,7 @@ describe("Fixture", function () {
 });
 
 describe("BicycleComponentPaymaster", function () {
-    it("Perform a gasless call to the UI", async function () {
+    it("Performs a gasless call to the UI contract", async function () {
         const {_, deployer, third} = await getSigners();
         const {paymasterContract, managerUI, provider, gsnSettings} = await loadFixture(deployPaymasterFixture);
 
@@ -94,7 +98,11 @@ describe("BicycleComponentPaymaster", function () {
             logger: silentLogger,
         };
 
-        const {gsnSigner: gsnDeployer, gsnProvider} = await RelayProvider.newEthersV5Provider({provider: deployer, config, overrideDependencies} as any);
+        const {gsnSigner: gsnDeployer, gsnProvider} = await RelayProvider.newEthersV5Provider({
+            provider: deployer,
+            config,
+            overrideDependencies
+        } as any);
 
         await expect(await gsnDeployer.getAddress()).to.equal(await deployer.getAddress());
 
@@ -108,8 +116,7 @@ describe("BicycleComponentPaymaster", function () {
             paymaster: {address: getAddress(paymasterContract.address)},
         }
 
-        const balancesAtRelayHub = {
-        }
+        const balancesAtRelayHub = {}
 
         for (const who of Object.keys(addressBalances)) {
             addressBalances[who].before = await provider.getBalance(addressBalances[who].address);
@@ -134,10 +141,10 @@ describe("BicycleComponentPaymaster", function () {
 
             console.log(who, addressBalances[who].address);
             console.log("Balance before (ETH):", BigInt(addressBalances[who].before));
-            console.log("Balance after  (ETH):", BigInt(addressBalances[who].after), "\t", "delta:", BigInt(addressBalances[who].after) - BigInt(addressBalances[who].before));
+            console.log("Balance after  (ETH):", BigInt(addressBalances[who].after), "delta:", BigInt(addressBalances[who].after) - BigInt(addressBalances[who].before));
 
             console.log("Balance before (@RH):", BigInt(balancesAtRelayHub[who].before));
-            console.log("Balance after  (@RH):", BigInt(balancesAtRelayHub[who].after), "\t", "delta:", BigInt(balancesAtRelayHub[who].after) - BigInt(balancesAtRelayHub[who].before));
+            console.log("Balance after  (@RH):", BigInt(balancesAtRelayHub[who].after), "delta:", BigInt(balancesAtRelayHub[who].after) - BigInt(balancesAtRelayHub[who].before));
         }
 
         // await expect(deployerBalanceAfter).to.be.equal(deployerBalanceBefore);

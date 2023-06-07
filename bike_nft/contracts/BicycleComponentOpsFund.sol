@@ -24,7 +24,7 @@ contract BicycleComponentOpsFund is AccessControl {
     bytes32 public constant OPS_MANAGER_ROLE = keccak256("OPS_MANAGER_ROLE");
     bytes32 public constant CARTE_BLANCHE_ROLE = keccak256("CARTE_BLANCHE_ROLE");
 
-    uint public defaultAllowanceIncrement = 5;
+    uint public defaultAllowanceIncrement = 3;
 
     mapping(address => uint) private _allowanceOf;
 
