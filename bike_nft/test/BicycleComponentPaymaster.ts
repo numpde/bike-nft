@@ -14,9 +14,10 @@ import {silentLogger} from "../utils/utils";
 
 
 async function deployPaymasterFixture(): Promise<any> {
-    const {deployer} = await getSigners();
+    const {deployer, shop1} = await getSigners();
 
-    const {managerUI, ...etc} = await loadFixture(deployAllAndUI);
+    const etc = await loadFixture(deployAllAndUI);
+    const {managerContract, managerUI} = etc;
 
     const {opsFundContract} = await loadFixture(deployOpsFundFixture);
 
@@ -26,9 +27,14 @@ async function deployPaymasterFixture(): Promise<any> {
     await opsFundContract.connect(deployer).grantRole(opsFundContract.PAYMASTER_ROLE(), paymasterContract.address);
     await paymasterContract.connect(deployer).setOpsFundContract(opsFundContract.address);
 
-    const fragment = managerUI.interface.getFunction("register");
-    const sighash = managerUI.interface.getSighash(fragment);
-    await paymasterContract.connect(deployer).whitelistMethod(managerUI.address, sighash, true);
+    const whitelist = async (methodName: string) => {
+        const fragment = managerUI.interface.getFunction(methodName);
+        const sighash = managerUI.interface.getSighash(fragment);
+        await paymasterContract.connect(deployer).whitelistMethod(managerUI.address, sighash, true);
+    };
+
+    await whitelist("register");
+    await whitelist("transfer");
 
     // HOW TO:
     // npx hardhat node --port 8484
@@ -43,9 +49,15 @@ async function deployPaymasterFixture(): Promise<any> {
 
     await managerUI.connect(deployer).setTrustedForwarder(gsnSettings.contractsDeployment?.forwarderAddress);
 
+    // Ops token management and funds
+    await managerContract.setOpsFundContractAddress(opsFundContract.address);
+    await opsFundContract.grantRole(await opsFundContract.OPS_MANAGER_ROLE(), managerContract.address);
+    await opsFundContract.grantRole(await opsFundContract.CARTE_BLANCHE_ROLE(), shop1.address);
+
+    // Fund the relay
     await deployer.sendTransaction({to: paymasterContract.address, value: parseEther("1")});
 
-    return {provider, gsnSettings, paymasterContract, opsFundContract, managerUI, ...etc};
+    return {provider, gsnSettings, paymasterContract, opsFundContract,  ...etc};
 }
 
 describe("BicycleComponentPaymaster", function () {
@@ -75,9 +87,12 @@ describe("BicycleComponentPaymaster", function () {
     describe("Gasless transactions", function () {
 
         let theSetup;
+        let snapshotId;
 
         before(async function () {
-            const {paymasterContract, ...things} = await loadFixture(deployPaymasterFixture);
+            const {shop1} = await getSigners();
+            const things = await loadFixture(deployPaymasterFixture);
+            const {managerContract, paymasterContract, opsFundContract} = things;
 
             const relayProviderInput: {
                 provider: any;
@@ -93,28 +108,26 @@ describe("BicycleComponentPaymaster", function () {
                 overrideDependencies: {logger: silentLogger},
             };
 
-            theSetup = {relayProviderInput, paymasterContract, ...things};
+            // console.log("Trusted forwarder: ", await things.managerUI.getTrustedForwarder());
+            // console.log("Trusted forwarder: ", await things.paymasterContract.getTrustedForwarder());
+            // console.log("Trusted forwarder: ", await things.gsnSettings.contractsDeployment?.forwarderAddress);
+
+            theSetup = {relayProviderInput, ...things};
+            snapshotId = await ethers.provider.send('evm_snapshot', []);
         });
 
-        let snapshotId;
-
         afterEach(async function () {
-            // Take a snapshot of the blockchain state after each test.
             snapshotId = await ethers.provider.send('evm_snapshot', []);
         });
 
         beforeEach(async function () {
             if (snapshotId) {
-                // Restore the blockchain state to the snapshot before each test.
                 await ethers.provider.send('evm_revert', [snapshotId]);
-                // Snapshot ids are not reusable. We need to take a new snapshot after reverting.
-                snapshotId = await ethers.provider.send('evm_snapshot', []);
             }
         });
 
-
         it("Performs a gasless call to the UI contract", async function () {
-            const {_, deployer, third} = await getSigners();
+            const {_, deployer} = await getSigners();
             const {
                 paymasterContract,
                 managerUI,
@@ -146,7 +159,7 @@ describe("BicycleComponentPaymaster", function () {
             }
 
             const txResponse = await managerUI.connect(gsnDeployer).register(
-                third.address,
+                deployer.address,
                 "SN-123",
                 "Bicycle", "Good bicycle", "https://example.com/bicycle.png",
             );
@@ -186,28 +199,71 @@ describe("BicycleComponentPaymaster", function () {
             await expect(tx).to.be.revertedWith("BCM: Insufficient rights");
         });
 
-        it("Metacheck: The blockchain state is not rolled back", async function () {
+        it("Metacheck: The blockchain state is not rolled back between gasless calls", async function () {
             const {managerContract} = theSetup;
             await expect(await managerContract.ownerOf("SN-123")).to.not.equal(ZeroAddress);
         });
 
         it("Allows a gasless `register` call for ops tokens", async function () {
-            const {third} = await getSigners();
+            const {shop2} = await getSigners();
             const {managerContract, managerUI, opsFundContract, relayProviderInput} = theSetup;
 
+            const {gsnSigner: gsnShop2} =
+                await RelayProvider.newEthersV5Provider({...relayProviderInput, provider: shop2});
+
+            // Check that `shop2` is a registrar.
+            await expect(await managerContract.hasRole(await managerContract.REGISTRAR_ROLE(), shop2.address)).to.be.true;
+
+            // Initially, `shop2` does not have the ops tokens to `register`.
+            await expect(await opsFundContract.allowanceOf(shop2.address)).to.equal(0);
+            // ... let's give those.
+            await opsFundContract.addAllowance(shop2.address, 1);
+            await expect(await opsFundContract.allowanceOf(shop2.address)).to.equal(1);
+
+            const tx = managerUI.connect(gsnShop2).register(shop2.address, "SN-321", "X", "Y", "Z");
+            await expect(() => tx).to.changeEtherBalances([shop2, managerUI], [0, 0]);
+
+            await expect(await managerContract.ownerOf("SN-321")).to.equal(shop2.address);
+            await expect(await opsFundContract.allowanceOf(shop2.address)).to.equal(0);
+        });
+
+        it("Auto-mints ops tokens on `register` [pre-gasless]", async function () {
+            const {shop1, third} = await getSigners();
+            const {managerContract, managerUI, opsFundContract, relayProviderInput} = theSetup;
+
+            // `third` has no ops tokens initially
+            await expect(await opsFundContract.allowanceOf(third.address)).to.equal(0);
+
+            // register a thing `shop1` -> `third`, auto-mint ops tokens
+            await managerContract.connect(shop1).register(third.address, "SN-1234", "URI");
+
+            // `third` has some ops tokens now
+            await expect(await opsFundContract.allowanceOf(third.address)).to.equal(await opsFundContract.defaultAllowanceIncrement());
+        });
+
+        it("Allows a gasless `transfer` in exchange for ops tokens", async function () {
+            const {third, shop2} = await getSigners();
+            const {managerUI, opsFundContract, relayProviderInput} = theSetup;
+
+            // `third` has some ops tokens from the previous test
+            const initialOpsTokens = await opsFundContract.allowanceOf(third.address);
+            await expect(initialOpsTokens).to.not.equal(0);
+
+            // // third -> managerUI doesn't fail because `third` can pay in ether
+            // const tx0 = await managerUI.connect(third).transfer("SN-1234", shop2.address);
+            // await expect(tx0).to.be.revertedWith("?");
+
+            // construct the relay client
             const {gsnSigner: gsnThird} =
                 await RelayProvider.newEthersV5Provider({...relayProviderInput, provider: third});
 
-            // Normally, third does not have the right or the ops tokens to `register`.
-            // Let's grant those.
-            await managerContract.grantRole(await managerContract.REGISTRAR_ROLE(), third.address);
-            await opsFundContract.addAllowance(third.address, 1);
+            // third -> relay -> managerUI
+            const tx = await managerUI.connect(gsnThird).transfer("SN-1234", shop2.address);
+            await expect(() => tx).to.changeEtherBalances([third], [0]);
 
-            const tx = managerUI.connect(gsnThird).register(third.address, "SN-321", "X", "Y", "Z");
-
-            await expect(() => tx).to.changeEtherBalances([third, managerUI], [0, 0]);
-
-            await expect(await managerContract.ownerOf("SN-321")).to.equal(third.address);
+            // `third` has fewer ops tokens now
+            const finalOpsTokens = await opsFundContract.allowanceOf(third.address);
+            await expect(finalOpsTokens).to.equal(initialOpsTokens - 1);
         });
     });
 });
