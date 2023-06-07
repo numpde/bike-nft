@@ -25,7 +25,7 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
     uint256 public minAmountOnRegister;
     uint256 public maxAmountOnRegister;
 
-    address public nftContractAddress;
+    BicycleComponents public nftContract;
 
     mapping(address => string) private _accountInfo;
     mapping(uint256 => bool) private _missingStatus;
@@ -76,7 +76,13 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
     {}
 
     function setNftContractAddress(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        nftContractAddress = newAddress;
+        nftContract = BicycleComponents(newAddress);
+        emit Message("NFT contract set");
+    }
+
+    function setOpsFundContractAddress(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        opsFundContract = BicycleComponentOpsFund(newAddress);
+        emit Message("OpsFund set");
     }
 
     // Convert a `serialNumber` string to a `tokenId` uint256
@@ -87,7 +93,7 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
     // Management rights
 
     function ownerOf(string memory serialNumber) public view returns (address) {
-        try BicycleComponents(nftContractAddress).ownerOf(generateTokenId(serialNumber)) returns (address owner) {
+        try nftContract.ownerOf(generateTokenId(serialNumber)) returns (address owner) {
             return owner;
         } catch {
             return address(0);
@@ -154,10 +160,8 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
 
         uint256 tokenId = generateTokenId(serialNumber);
 
-        BicycleComponents bicycleComponents = BicycleComponents(nftContractAddress);
-
-        bicycleComponents.safeMint(owner, tokenId);
-        bicycleComponents.setTokenURI(tokenId, uri);
+        nftContract.safeMint(owner, tokenId);
+        nftContract.setTokenURI(tokenId, uri);
 
         // Event
         emit ComponentRegistered(owner, serialNumber, tokenId, uri);
@@ -185,7 +189,7 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
 
         uint256 tokenId = generateTokenId(serialNumber);
 
-        BicycleComponents(nftContractAddress).transfer(tokenId, to);
+        nftContract.transfer(tokenId, to);
         emit ComponentTransferred(serialNumber, tokenId, to);
 
         // Ops Fund
@@ -241,7 +245,7 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
 
         uint256 tokenId = generateTokenId(serialNumber);
 
-        BicycleComponents(nftContractAddress).setTokenURI(tokenId, uri);
+        nftContract.setTokenURI(tokenId, uri);
 
         emit UpdatedComponentURI(serialNumber, tokenId, uri);
     }
@@ -284,7 +288,7 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
     // Public getters and setters
 
     function componentURI(string memory serialNumber) public view returns (string memory) {
-        return BicycleComponents(nftContractAddress).tokenURI(generateTokenId(serialNumber));
+        return nftContract.tokenURI(generateTokenId(serialNumber));
     }
 
     function setComponentURI(string memory serialNumber, string memory uri) public {
