@@ -75,7 +75,7 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
     override
     {}
 
-    function setNftContractAddress(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        function setNftContractAddress(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) {
         nftContract = BicycleComponents(newAddress);
         emit Message("NFT contract set");
     }
