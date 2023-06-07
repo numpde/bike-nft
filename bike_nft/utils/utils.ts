@@ -72,3 +72,14 @@ export async function sendAllBalance(from: SignerWithAddress, to: SignerWithAddr
         console.log("Insufficient balance to cover gas cost");
     }
 }
+
+export const silentLogger = {
+    debug: () => {
+    },
+    info: () => {
+    },
+    warn: () => {
+    },
+    error: () => {
+    },
+};

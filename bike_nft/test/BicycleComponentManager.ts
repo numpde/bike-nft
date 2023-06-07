@@ -6,7 +6,7 @@ import {expect} from "chai";
 import {Buffer} from 'buffer';
 
 import {getSigners} from "./signers";
-import {deployBicycleComponentManagerFixture} from "./fixtures";
+import {deployBicycleComponentManagerFixture, deployOpsFundFixture} from "./fixtures";
 
 async function registerComponent(): Promise<any> {
     const {managerContract, shop1, ...etc} = await loadFixture(deployBicycleComponentManagerFixture);
@@ -352,7 +352,7 @@ describe("BicycleComponentManager", function () {
             const referenceMetadata: BikeData = {
                 name: "Scalpel HT Carbon 4",
                 description: "A hardtail with razor-sharp precision, Shimano shifting & 100mm RockShox SID fork",
-                image: "https://embed.widencdn.net/img/`dorelrl/24egss6ejx/1700px@1x/C21_C25401U_Scalpel_HT_Crb_4_ARD_3Q.webp?color=f3f3f3&q=95",
+                image: "https://embed.widencdn.net/img/dorelrl/24egss6ejx/1700px@1x/C21_C25401U_Scalpel_HT_Crb_4_ARD_3Q.webp?color=f3f3f3&q=95",
             }
 
             const action = managerContract.connect(customer1).setOnChainComponentMetadata(
@@ -782,5 +782,59 @@ describe("BicycleComponentManager", function () {
                 await expect(action).to.emit(managerContract, "AccountInfoSet");
             }
         });
+    });
+
+    describe("Interaction with BicycleComponentOpsFund", async function () {
+        const setup = async function () {
+            const {shop1, customer1} = await getSigners();
+
+            const {managerContract} = await loadFixture(deployBicycleComponentManagerFixture);
+            const {opsFundContract} = await loadFixture(deployOpsFundFixture);
+
+            // Connect
+            await opsFundContract.grantRole(opsFundContract.OPS_MANAGER_ROLE(), managerContract.address);
+            await managerContract.setOpsFundContractAddress(opsFundContract.address);
+
+            // Check current allowance: carte blanche for `shop1` and zero for `customer1`
+            await expect(await opsFundContract.hasRole(opsFundContract.CARTE_BLANCHE_ROLE(), shop1.address)).to.be.true;
+            await expect(await opsFundContract.allowanceOf(customer1.address)).to.equal(0);
+
+            // shop1's allowance is maxed out
+            await expect(await opsFundContract.allowanceOf(shop1.address)).to.equal(ethers.constants.MaxUint256);
+
+            return {managerContract, opsFundContract, shop1, customer1};
+        }
+
+        let theSetup;
+
+        beforeEach(async function () {
+            theSetup = await loadFixture(setup);
+        });
+
+        it("Adds allowance on register", async function () {
+            const {managerContract, opsFundContract, shop1, customer1} = theSetup;
+
+            // Register for customer1 (should add allowance)
+            await managerContract.connect(shop1).register(customer1.address, "SN-1", "URI");
+
+            // Check new ops allowance of customer1
+            const allowance = await opsFundContract.allowanceOf(customer1.address);
+            await expect(allowance).to.equal(await opsFundContract.defaultAllowanceIncrement());
+        });
+
+        it("Adds allowance on transfer from a carte blanche holder", async function () {
+            const {managerContract, opsFundContract, shop1, customer1} = theSetup;
+
+            // Register for shop1 first
+            await managerContract.connect(shop1).register(shop1.address, "SN-1", "URI");
+
+            // Transfer to customer1 (should add allowance)
+            await managerContract.connect(shop1).transfer("SN-1", customer1.address);
+
+            // Check new ops allowance of customer1
+            const allowance = await opsFundContract.allowanceOf(customer1.address);
+            await expect(allowance).to.equal(await opsFundContract.defaultAllowanceIncrement());
+        });
+
     });
 });
