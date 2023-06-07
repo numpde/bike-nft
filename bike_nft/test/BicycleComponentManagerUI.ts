@@ -61,7 +61,7 @@ describe("BicycleComponentManagerUI", function () {
             const {managerUI} = await loadFixture(deployAllAndUI);
 
             const action = managerUI.connect(third).updateAddressInfo(shop1.address, "New address info");
-            await expect(action).to.be.revertedWith("Insufficient rights");
+            await expect(action).to.be.revertedWith("BCM: Insufficient rights");
         });
     });
 
@@ -172,7 +172,7 @@ describe("BicycleComponentManagerUI", function () {
 
             // shop2 attempts to transfer customer1 -> customer2
             const action2 = managerUI.connect(shop2).transfer(serialNumber, customer2.address);
-            await expect(action2).to.be.revertedWith("Insufficient rights");
+            await expect(action2).to.be.revertedWith("BCM: Insufficient rights");
         });
     });
 });

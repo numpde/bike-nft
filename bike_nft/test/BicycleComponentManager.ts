@@ -46,7 +46,7 @@ describe("BicycleComponentManager", function () {
         it("Should connect in fixture", async function () {
             const {managerContract, componentsContract} = await loadFixture(deployBicycleComponentManagerFixture);
 
-            await expect(await managerContract.nftContractAddress()).to.equal(componentsContract.address);
+            await expect(await managerContract.nftContract()).to.equal(componentsContract.address);
         });
 
         it("Should allow an admin to connect", async function () {
@@ -260,7 +260,7 @@ describe("BicycleComponentManager", function () {
             const serialNumber = "SN_ILLICIT";
 
             const action = managerContract.connect(third).register(third.address, serialNumber, "URI");
-            const reason = "Insufficient rights";
+            const reason = "BCM: Insufficient rights";
 
             await expect(action).to.be.revertedWith(reason);
         });
@@ -335,7 +335,7 @@ describe("BicycleComponentManager", function () {
             const uri = "https://example.com/" + serialNumber + "/" + third.address;
 
             const action = managerContract.connect(third).setComponentURI(serialNumber, uri);
-            const reason = "Insufficient rights";
+            const reason = "BCM: Insufficient rights";
 
             await expect(action).to.be.revertedWith(reason);
         });
@@ -437,7 +437,7 @@ describe("BicycleComponentManager", function () {
                 return managerContract.connect(third).setComponentOperatorApproval(serialNumber, address, true);
             }
 
-            const reason = "Insufficient rights";
+            const reason = "BCM: Insufficient rights";
 
             await expect(approve(shop1.address)).to.be.revertedWith(reason);
             await expect(approve(third.address)).to.be.revertedWith(reason);
@@ -526,7 +526,7 @@ describe("BicycleComponentManager", function () {
 
             // For example, `shop` can no longer mark the component as missing
             const action2 = managerContract.connect(shop1).setMissingStatus(serialNumber, true);
-            await expect(action2).to.be.revertedWith("Insufficient rights");
+            await expect(action2).to.be.revertedWith("BCM: Insufficient rights");
         });
 
         it("Should allow the operator to transfer the component", async function () {
@@ -632,7 +632,7 @@ describe("BicycleComponentManager", function () {
 
             const action = managerContract.connect(third).transfer(serialNumber, third.address)
 
-            await expect(action).to.be.revertedWith("Insufficient rights");
+            await expect(action).to.be.revertedWith("BCM: Insufficient rights");
         });
 
         it("Should allow an operator to transfer a token", async function () {
@@ -692,7 +692,7 @@ describe("BicycleComponentManager", function () {
 
             // Previous owner tries to set the missing status
             const action = managerContract.connect(customer1).setMissingStatus(serialNumber, true);
-            await expect(action).to.be.revertedWith("Insufficient rights");
+            await expect(action).to.be.revertedWith("BCM: Insufficient rights");
         });
 
         it("Should allow the minter to set the missing status even after transfer", async function () {
@@ -719,7 +719,7 @@ describe("BicycleComponentManager", function () {
             await expect(isApproved).to.be.false;
 
             const action = managerContract.connect(shop2).setMissingStatus(serialNumber, true);
-            await expect(action).to.be.revertedWith("Insufficient rights");
+            await expect(action).to.be.revertedWith("BCM: Insufficient rights");
         });
 
         it("Should not allow the minter to set status if the customer has revoked approval", async function () {
@@ -731,7 +731,7 @@ describe("BicycleComponentManager", function () {
 
             // Minter tries to set the missing status
             await expect(managerContract.connect(shop1).setMissingStatus(serialNumber, true))
-                .to.be.revertedWith("Insufficient rights");
+                .to.be.revertedWith("BCM: Insufficient rights");
 
             // But an admin can still set the missing status
             await expect(managerContract.connect(admin).setMissingStatus(serialNumber, true))
@@ -768,7 +768,7 @@ describe("BicycleComponentManager", function () {
             const info = `My account (${third.address})`;
             const action = managerContract.connect(customer1).setAccountInfo(third.address, info);
 
-            await expect(action).to.be.revertedWith("Insufficient rights");
+            await expect(action).to.be.revertedWith("BCM: Insufficient rights");
         });
 
         it("Should allow an admin or minter to set other's info", async function () {

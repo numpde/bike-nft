@@ -87,7 +87,7 @@ contract BicycleComponentManagerUI is BaseUI {
         if (ownerAddress != address(0)) {
             ownerInfo = bicycleComponentManager.accountInfo(ownerAddress); // possibly the empty string
 
-            nftContractAddress = bicycleComponentManager.nftContractAddress();
+            nftContractAddress = address(bicycleComponentManager.nftContract());
             nftTokenId = bicycleComponentManager.generateTokenId(registerSerialNumber);
 
             return (_composeWithBaseURI("viewIsNewSerialNumber.hasSerialNumber.returns.json"), ownerAddress, ownerInfo, nftContractAddress, nftTokenId);
@@ -178,7 +178,7 @@ contract BicycleComponentManagerUI is BaseUI {
     )
     {
         registerFor = bicycleComponentManager.ownerOf(registerSerialNumber);
-        nftContractAddress = bicycleComponentManager.nftContractAddress();
+        nftContractAddress = address(bicycleComponentManager.nftContract());
         nftTokenId = bicycleComponentManager.generateTokenId(registerSerialNumber);
 
         return (
