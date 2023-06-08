@@ -52,6 +52,9 @@ async function deployPaymasterFixture(): Promise<any> {
     // npx hardhat --network localhost test test/BicycleComponentPaymaster.ts
     const rpcUrl = hre.network.config['url'];
 
+    // For local live tests, launch the relay server like this:
+    // npx gsn start --network http://localhost:8484 --relayUrl http://localhost --port 12345
+
     const provider = new JsonRpcProvider(rpcUrl);
 
     let gsnSettings: TestEnvironment;
