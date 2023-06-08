@@ -778,14 +778,14 @@
   {
     "inputs": [
       {
-        "internalType": "string",
-        "name": "registerSerialNumber",
-        "type": "string"
-      },
-      {
         "internalType": "address",
         "name": "userAddress",
         "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "registerSerialNumber",
+        "type": "string"
       }
     ],
     "name": "viewTransfer",
@@ -849,6 +849,11 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "userAddress",
+        "type": "address"
+      },
+      {
         "internalType": "string",
         "name": "registerSerialNumber",
         "type": "string"
@@ -902,6 +907,11 @@
   },
   {
     "inputs": [
+      {
+        "internalType": "address",
+        "name": "userAddress",
+        "type": "address"
+      },
       {
         "internalType": "address",
         "name": "ownerAddress",

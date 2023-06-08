@@ -57,7 +57,8 @@
       "label": "Update",
       "onClick": {
         "default": "updateNFT",
-        "success": "viewRegisterOnSuccess"
+        "success": "viewRegisterOnSuccess",
+        "gasless": true
       }
     },
     {

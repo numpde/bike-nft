@@ -29,7 +29,8 @@
       "label": "Transfer",
       "onClick": {
         "default": "transfer",
-        "success": "viewIsNewSerialNumber"
+        "success": "viewIsNewSerialNumber",
+        "gasless": true
       }
     },
     {
