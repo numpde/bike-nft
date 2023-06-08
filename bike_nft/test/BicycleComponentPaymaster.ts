@@ -18,6 +18,11 @@ async function getSigHash(contract: any, methodName: string): Promise<string> {
     return contract.interface.getSighash(fragment);
 }
 
+const localRelay = {
+    url: "http://localhost",
+    port: 12345,
+}
+
 async function deployPaymasterFixture(): Promise<any> {
     const {deployer, shop1} = await getSigners();
 
@@ -45,10 +50,10 @@ async function deployPaymasterFixture(): Promise<any> {
     // HOW TO:
     // npx hardhat node --port 8484
     // npx hardhat --network localhost test test/BicycleComponentPaymaster.ts
-    const url = hre.network.config['url'];
+    const rpcUrl = hre.network.config['url'];
 
-    const provider = new JsonRpcProvider(url);
-    const gsnSettings: TestEnvironment = await GsnTestEnvironment.startGsn(url, "http://localhost", 12345, silentLogger, true);
+    const provider = new JsonRpcProvider(rpcUrl);
+    const gsnSettings: TestEnvironment = await GsnTestEnvironment.startGsn(rpcUrl, localRelay.url, localRelay.port, silentLogger, true);
 
     await paymasterContract.connect(deployer).setRelayHub(gsnSettings.contractsDeployment?.relayHubAddress || "");
     await paymasterContract.connect(deployer).setTrustedForwarder(gsnSettings.contractsDeployment?.forwarderAddress || "");
@@ -109,6 +114,11 @@ describe("BicycleComponentPaymaster", function () {
                     paymasterAddress: paymasterContract.address,
                     performDryRunViewRelayCall: false,
                     maxRelayNonceGap: 5,
+                    preferredRelays: [
+                    ],
+                    blacklistedRelays: [
+                        // "http://localhost:12345",
+                    ],
                 },
                 overrideDependencies: {logger: silentLogger},
             };
