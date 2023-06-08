@@ -1,7 +1,7 @@
 import {HardhatUserConfig} from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 
-// suggested by GPT-4 for upgradability
+// for upgradeability
 import '@nomiclabs/hardhat-ethers';
 import '@openzeppelin/hardhat-upgrades';
 
@@ -51,6 +51,16 @@ const config: HardhatUserConfig = {
     networks: {
         localhost: {
             url: "http://localhost:8484",
+            accounts: [getEnvVariable("GANACHE_PRIVATE_KEY")],
+        },
+
+        hardhat: {
+            accounts: [
+                {
+                    privateKey: getEnvVariable("GANACHE_PRIVATE_KEY"),
+                    balance: "1000000000000000000000000",
+                },
+            ],
         },
 
         ganache: {
@@ -74,7 +84,6 @@ const config: HardhatUserConfig = {
         },
     },
 };
-
 
 
 export default config;

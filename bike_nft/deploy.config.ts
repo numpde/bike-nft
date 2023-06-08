@@ -19,6 +19,7 @@ const deploymentParams: {
         };
 
         gsnTrustedForwarder?: string;
+        gsnRelayHub?: string;
     };
 } = {
     polygon: {
@@ -29,6 +30,7 @@ const deploymentParams: {
 
         // https://docs.opengsn.org/networks/polygon/polygon.html
         gsnTrustedForwarder: "0xB2b5841DBeF766d4b521221732F9B618fCf34A87",
+        gsnRelayHub: "0xfCEE9036EDc85cD5c12A9De6b267c4672Eb4bA1B",
     },
 
     mumbai: {
@@ -39,6 +41,7 @@ const deploymentParams: {
 
         // https://docs.opengsn.org/networks/polygon/mumbai.html
         gsnTrustedForwarder: "0xB2b5841DBeF766d4b521221732F9B618fCf34A87",
+        gsnRelayHub: "0x3232f21A6E08312654270c78A773f00dd61d60f5",
     },
 
     ganache: {
@@ -48,6 +51,7 @@ const deploymentParams: {
         },
 
         gsnTrustedForwarder: ZeroAddress,
+        gsnRelayHub: ZeroAddress,
     },
 
     hardhat: {
@@ -57,6 +61,7 @@ const deploymentParams: {
         },
 
         gsnTrustedForwarder: ZeroAddress,
+        gsnRelayHub: ZeroAddress,
     },
 
     localhost: {
@@ -65,8 +70,10 @@ const deploymentParams: {
             BicycleComponentManagerUI: "http://0.0.0.0:6001/contract-ui/BicycleComponentManagerUI/v1/",
         },
 
-        //
-        gsnTrustedForwarder: "0x31676919335252527965da74b8dfff589e23ec81",
+        // these are provided by `GsnTestEnvironment.startGsn` or by
+        // npx gsn start --network http://localhost:8484 --relayUrl http://localhost --port 12345
+        gsnTrustedForwarder: require("./build/gsn/Forwarder.json").address,
+        gsnRelayHub: require("./build/gsn/RelayHub.json").address,
     },
 }
 

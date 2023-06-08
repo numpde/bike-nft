@@ -2,6 +2,12 @@
   "elements": [
     {
       "type": "input",
+      "label": "Updating the address/account info requires a transaction to be sent to the blockchain. You can pay yourself or use the 'ops fund'. The number of pre-paid transactions you can do :",
+      "id": "userOpsBalance",
+      "readOnly": true
+    },
+    {
+      "type": "input",
       "label": "Please note, all data are publicly visible on the blockchain. Do not save any sensitive information. Serial number (must be unique):",
       "id": "registerSerialNumber",
       "readOnly": true

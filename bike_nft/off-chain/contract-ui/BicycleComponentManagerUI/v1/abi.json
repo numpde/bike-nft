@@ -909,6 +909,11 @@
         "internalType": "string",
         "name": "addressInfo",
         "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "userOpsBalance",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -938,6 +943,11 @@
         "internalType": "string",
         "name": "addressInfo",
         "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "userOpsBalance",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",

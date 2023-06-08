@@ -53,7 +53,19 @@ async function deployPaymasterFixture(): Promise<any> {
     const rpcUrl = hre.network.config['url'];
 
     const provider = new JsonRpcProvider(rpcUrl);
-    const gsnSettings: TestEnvironment = await GsnTestEnvironment.startGsn(rpcUrl, localRelay.url, localRelay.port, silentLogger, true);
+
+    let gsnSettings: TestEnvironment;
+    gsnSettings = await GsnTestEnvironment.startGsn(rpcUrl, localRelay.url, localRelay.port, silentLogger, true);
+
+    // try {
+    // } catch (e) {
+    //     gsnSettings = new TestEnvironment(
+    //         await GsnTestEnvironment.loadDeployment(rpcUrl, __dirname + "/../build/gsn"),
+    //         null,
+    //         null,
+    //         `${localRelay.url}:${localRelay.port}`
+    //     );
+    // }
 
     await paymasterContract.connect(deployer).setRelayHub(gsnSettings.contractsDeployment?.relayHubAddress || "");
     await paymasterContract.connect(deployer).setTrustedForwarder(gsnSettings.contractsDeployment?.forwarderAddress || "");
@@ -68,6 +80,12 @@ async function deployPaymasterFixture(): Promise<any> {
     // Fund the relay
     await deployer.sendTransaction({to: paymasterContract.address, value: parseEther("1")});
 
+    // Fund the ganache address for testing from MetaMask
+    // Also, give it a carte blanche
+    const defaultGanacheAddress = "0x87dfc978e6104EcB7A1A992C22a520A55722F238";
+    await deployer.sendTransaction({to: defaultGanacheAddress, value: parseEther("1")});
+    await opsFundContract.grantRole(await opsFundContract.CARTE_BLANCHE_ROLE(), defaultGanacheAddress);
+
     return {provider, gsnSettings, paymasterContract, opsFundContract, ...etc};
 }
 
@@ -76,6 +94,8 @@ describe("BicycleComponentPaymaster", function () {
         describe("GsnTestEnvironment", function () {
             it("Should deploy GsnTestEnvironment", async function () {
                 const {gsnSettings, provider} = await loadFixture(deployPaymasterFixture);
+
+                console.log(gsnSettings.contractsDeployment);
 
                 await expect(await provider.getCode(gsnSettings.contractsDeployment?.relayHubAddress)).to.not.equal("0x");
                 await expect(await provider.getCode(gsnSettings.contractsDeployment?.forwarderAddress)).to.not.equal("0x");

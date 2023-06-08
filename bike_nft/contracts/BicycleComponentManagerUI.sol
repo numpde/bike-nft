@@ -25,6 +25,18 @@ contract BicycleComponentManagerUI is BaseUI {
         bicycleComponentManager = BicycleComponentManager(bcmAddress);
     }
 
+    // Helpers
+
+    function _getOpsBalance(address who) internal view returns (uint256) {
+        BicycleComponentOpsFund opsFundContract = bicycleComponentManager.opsFundContract();
+
+        try opsFundContract.allowanceOf(who) returns (uint256 allowance) {
+            return allowance;
+        } catch {
+            return 0;
+        }
+    }
+
     // "Write" functions
 
     function updateAddressInfo(
@@ -134,40 +146,42 @@ contract BicycleComponentManagerUI is BaseUI {
         return _composeWithBaseURI("viewRegisterOnSuccess.returns.json");
     }
 
-    function viewTransfer(string memory registerSerialNumber)
+    function viewTransfer(string memory registerSerialNumber, address userAddress)
     external view
-    returns (string memory, address transferFromAddress)
+    returns (string memory, address transferFromAddress, uint256 userOpsBalance)
     {
         transferFromAddress = bicycleComponentManager.ownerOf(registerSerialNumber);
 
         if (transferFromAddress != address(0)) {
-            return (_composeWithBaseURI("viewTransfer.hasSerialNumber.returns.json"), transferFromAddress);
+            return (_composeWithBaseURI("viewTransfer.hasSerialNumber.returns.json"), transferFromAddress, _getOpsBalance(userAddress));
         } else {
-            return (_composeWithBaseURI("viewTransfer.newSerialNumber.returns.json"), transferFromAddress);
+            return (_composeWithBaseURI("viewTransfer.newSerialNumber.returns.json"), transferFromAddress, _getOpsBalance(userAddress));
         }
     }
 
     // userAddress: connected address as provided by the front-end
     function viewUpdateUserAddressInfo(address userAddress)
     public view
-    returns (string memory, address infoAddress, string memory addressInfo)
+    returns (string memory, address infoAddress, string memory addressInfo, uint256 userOpsBalance)
     {
         return (
             _composeWithBaseURI("viewUpdateAddressInfo.returns.json"),
             userAddress,
-            bicycleComponentManager.accountInfo(userAddress)
+            bicycleComponentManager.accountInfo(userAddress),
+            _getOpsBalance(userAddress)
         );
     }
 
     // ownerAddress: address of the owner of the serial number
     function viewUpdateOwnerAddressInfo(address ownerAddress)
     public view
-    returns (string memory, address infoAddress, string memory addressInfo)
+    returns (string memory, address infoAddress, string memory addressInfo, uint256 userOpsBalance)
     {
         return (
             _composeWithBaseURI("viewUpdateAddressInfo.returns.json"),
             ownerAddress,
-            bicycleComponentManager.accountInfo(ownerAddress)
+            bicycleComponentManager.accountInfo(ownerAddress),
+            _getOpsBalance(ownerAddress)
         );
     }
 
@@ -188,7 +202,8 @@ contract BicycleComponentManagerUI is BaseUI {
         string memory,
         address registerFor,
         address nftContractAddress, uint256 nftTokenId,
-        string memory registerName, string memory registerDescription, string memory registerImageURL
+        string memory registerName, string memory registerDescription, string memory registerImageURL,
+        uint256 userOpsBalance
     )
     {
         registerFor = bicycleComponentManager.ownerOf(registerSerialNumber);
@@ -199,7 +214,8 @@ contract BicycleComponentManagerUI is BaseUI {
             _composeWithBaseURI("viewUpdateNFT.returns.json"),
             registerFor,
             nftContractAddress, nftTokenId,
-            "", "", ""
+            "", "", "",
+            _getOpsBalance(registerFor)
         );
     }
 }

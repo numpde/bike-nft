@@ -34,21 +34,30 @@ function isUpgradeable(Contract: ContractFactory): boolean {
     return contractABI.some((entry) => entry.type === 'function' && entry.name === 'initialize');
 }
 
-type DeployParams = { contractName: string, args: any[], deployer: any, chainId: number, saveAbiTo?: string };
+type DeployParams = {
+    contractName: string,
+    args?: any[],
+    deployer?: any,
+    chainId: number,
+    saveAbiTo?: string,
+    onlyFetch?: boolean,
+};
 
-export async function deploy({contractName, args, deployer, chainId, saveAbiTo}: DeployParams): Promise<{ contract: Contract }> {
+export async function deploy({contractName, args, deployer, chainId, saveAbiTo, onlyFetch}: DeployParams): Promise<{
+    contract: Contract
+}> {
+    let contract: Contract | undefined = undefined;
+    const deployedAddress = deployed[getNetworkName(chainId)]?.[contractName];
+
+    if (onlyFetch) {
+        console.log(`Fetching ${contractName} from:`, deployedAddress);
+        contract = await ethers.getContractAt(contractName, deployedAddress);
+        return {contract};
+    }
+
     console.log("========================================");
     console.info(`Deploying ${contractName} on "${getNetworkName(chainId)}"...`);
     console.log("========================================");
-
-    if (!deployer) {
-        throw new Error(`Deployer is undefined.`);
-    }
-
-    let contract: Contract | undefined = undefined;
-
-    const deployedAddress = deployed[getNetworkName(chainId)]?.[contractName];
-    const Factory = (await ethers.getContractFactory(contractName) as ContractFactory).connect(deployer);
 
     if (deployedAddress) {
         console.log(`Deployed ${contractName} found at:`, deployedAddress);
@@ -56,6 +65,12 @@ export async function deploy({contractName, args, deployer, chainId, saveAbiTo}:
     } else {
         console.log(`No deployed ${contractName} found.`);
     }
+
+    if (!deployer) {
+        throw new Error(`Deployer is undefined.`);
+    }
+
+    const Factory = (await ethers.getContractFactory(contractName) as ContractFactory).connect(deployer);
 
     if (isUpgradeable(Factory)) {
         console.log(`${contractName} seems to be upgradeable.`);

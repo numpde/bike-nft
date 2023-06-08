@@ -1,17 +1,19 @@
 {
   "elements": [
     {
-      "type": "text",
-      "label": "Updating the address/account info requires a transaction to be sent to the blockchain."
+      "type": "input",
+      "label": "Updating the address/account info requires a transaction to be sent to the blockchain. You can pay yourself or use the 'ops fund'. The number of pre-paid transactions you can do :",
+      "id": "userOpsBalance",
+      "readOnly": true
     },
     {
       "type": "address",
-      "label": "Address:",
+      "label": "Address to update the info of:",
       "id": "infoAddress"
     },
     {
       "type": "input",
-      "label": "Address info:",
+      "label": "Type the new address info:",
       "id": "addressInfo"
     },
     {
@@ -19,7 +21,8 @@
       "label": "Update info",
       "onClick": {
         "default": "updateAddressInfo",
-        "success": "viewUpdateAddressInfoOnSuccess"
+        "success": "viewUpdateAddressInfoOnSuccess",
+        "gasless": true
       }
     },
     {
