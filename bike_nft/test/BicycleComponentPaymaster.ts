@@ -95,7 +95,7 @@ describe("BicycleComponentPaymaster", function () {
             it("Should deploy GsnTestEnvironment", async function () {
                 const {gsnSettings, provider} = await loadFixture(deployPaymasterFixture);
 
-                console.log(gsnSettings.contractsDeployment);
+                // console.log(gsnSettings.contractsDeployment);
 
                 await expect(await provider.getCode(gsnSettings.contractsDeployment?.relayHubAddress)).to.not.equal("0x");
                 await expect(await provider.getCode(gsnSettings.contractsDeployment?.forwarderAddress)).to.not.equal("0x");

@@ -51,17 +51,17 @@ const config: HardhatUserConfig = {
     networks: {
         localhost: {
             url: "http://localhost:8484",
-            accounts: [getEnvVariable("GANACHE_PRIVATE_KEY")],
+            // accounts: [getEnvVariable("GANACHE_PRIVATE_KEY")],
         },
 
-        hardhat: {
-            accounts: [
-                {
-                    privateKey: getEnvVariable("GANACHE_PRIVATE_KEY"),
-                    balance: "1000000000000000000000000",
-                },
-            ],
-        },
+        // hardhat: {
+        //     accounts: [
+        //         {
+        //             privateKey: getEnvVariable("GANACHE_PRIVATE_KEY"),
+        //             balance: "1000000000000000000000000",
+        //         },
+        //     ],
+        // },
 
         ganache: {
             url: "http://127.0.0.1:8545",
