@@ -1,13 +1,10 @@
 import {ethers} from "hardhat";
 import {getAddress} from "ethers/lib/utils";
 
-import path from 'path';
-import fs from "fs";
-
 import {execute, getNetworkName, getMostRecent, packJSON} from "../utils/utils";
 import {deployed, deploymentParams} from "../deploy.config";
 import {ipfsBasePath} from "../hardhat.config";
-import {deploy} from "./deployment";
+import {deploy} from "./utils";
 
 
 async function main() {

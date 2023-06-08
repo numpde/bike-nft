@@ -30,7 +30,7 @@ async function deployPaymasterFixture(): Promise<any> {
     const paymasterContract = await Contract.connect(deployer).deploy();
 
     await opsFundContract.connect(deployer).grantRole(opsFundContract.PAYMASTER_ROLE(), paymasterContract.address);
-    await paymasterContract.connect(deployer).setOpsFundContract(opsFundContract.address);
+    await paymasterContract.connect(deployer).setOpsFundContractAddress(opsFundContract.address);
 
     const whitelist = async (methodName: string) => {
         const sighash = await getSigHash(managerUI, methodName);

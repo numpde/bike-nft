@@ -1,3 +1,5 @@
+import {ZeroAddress} from "ethers-v6";
+
 function safeRequire(path: string): any | undefined {
     try {
         return require(path);
@@ -15,6 +17,8 @@ const deploymentParams: {
         baseURI?: {
             [contractName: string]: string;
         };
+
+        gsnTrustedForwarder?: string;
     };
 } = {
     polygon: {
@@ -22,30 +26,47 @@ const deploymentParams: {
             BlanksUI: "https://raw.githubusercontent.com/numpde/bike-nft/main/bike_nft/off-chain/contract-ui/BlanksUI/v1/",
             BicycleComponentManagerUI: "https://raw.githubusercontent.com/numpde/bike-nft/main/bike_nft/off-chain/contract-ui/BicycleComponentManagerUI/v1/",
         },
+
+        // https://docs.opengsn.org/networks/polygon/polygon.html
+        gsnTrustedForwarder: "0xB2b5841DBeF766d4b521221732F9B618fCf34A87",
     },
+
     mumbai: {
         baseURI: {
             BlanksUI: "https://raw.githubusercontent.com/numpde/bike-nft/main/bike_nft/off-chain/contract-ui/BlanksUI/v1/",
             BicycleComponentManagerUI: "https://raw.githubusercontent.com/numpde/bike-nft/main/bike_nft/off-chain/contract-ui/BicycleComponentManagerUI/v1/",
         },
+
+        // https://docs.opengsn.org/networks/polygon/mumbai.html
+        gsnTrustedForwarder: "0xB2b5841DBeF766d4b521221732F9B618fCf34A87",
     },
+
     ganache: {
         baseURI: {
             BlanksUI: "http://0.0.0.0:6001/contract-ui/BlanksUI/v1/",
             BicycleComponentManagerUI: "http://0.0.0.0:6001/contract-ui/BicycleComponentManagerUI/v1/",
         },
+
+        gsnTrustedForwarder: ZeroAddress,
     },
+
     hardhat: {
         baseURI: {
             BlanksUI: "http://0.0.0.0:6001/contract-ui/BlanksUI/v1/",
             BicycleComponentManagerUI: "http://0.0.0.0:6001/contract-ui/BicycleComponentManagerUI/v1/",
         },
+
+        gsnTrustedForwarder: ZeroAddress,
     },
+
     localhost: {
         baseURI: {
             BlanksUI: "http://0.0.0.0:6001/contract-ui/BlanksUI/v1/",
             BicycleComponentManagerUI: "http://0.0.0.0:6001/contract-ui/BicycleComponentManagerUI/v1/",
         },
+
+        //
+        gsnTrustedForwarder: "0x31676919335252527965da74b8dfff589e23ec81",
     },
 }
 
@@ -75,11 +96,20 @@ class DeployedContracts {
     // and returns the address
     private get contract() {
         return new Proxy({}, {
-            get: (_, contractName: string): string => {
+            get: (_, contractName: string): (string | undefined) => {
                 const path = `../deployed/network/${this.currentNetwork}/${contractName}.json`;
-                // console.log("Getting contract address from", path);
-                const contractData = require(path);
-                return contractData.address;
+
+                try {
+                    // console.log("Getting contract address from", path);
+                    const contractData = require(path);
+                    return contractData.address;
+                } catch (err: any) {
+                    if (err.code === 'MODULE_NOT_FOUND') {
+                        console.debug(`No file found at ${path}`);
+                        return undefined;
+                    }
+                    throw err;
+                }
             }
         });
     }

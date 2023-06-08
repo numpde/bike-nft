@@ -3,7 +3,7 @@ import {getAddress} from "ethers/lib/utils";
 
 import {execute, getNetworkName} from "../utils/utils";
 import {deploymentParams} from "../deploy.config";
-import {deploy} from "./deployment";
+import {deploy} from "./utils";
 
 
 async function main() {

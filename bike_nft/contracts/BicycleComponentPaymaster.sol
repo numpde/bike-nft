@@ -24,7 +24,11 @@ contract BicycleComponentPaymaster is BasePaymaster {
         return "3.0.0-beta.3+opengsn.bcm.paymaster";
     }
 
-    function setOpsFundContract(address opsFundAddress) public onlyOwner {
+    function opsFundContractAddress() public view returns (address) {
+        return address(opsFundContract);
+    }
+
+    function setOpsFundContractAddress(address opsFundAddress) public onlyOwner {
         opsFundContract = BicycleComponentOpsFund(opsFundAddress);
     }
 
