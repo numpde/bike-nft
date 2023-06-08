@@ -781,6 +781,11 @@
         "internalType": "string",
         "name": "registerSerialNumber",
         "type": "string"
+      },
+      {
+        "internalType": "address",
+        "name": "userAddress",
+        "type": "address"
       }
     ],
     "name": "viewTransfer",
@@ -794,6 +799,11 @@
         "internalType": "address",
         "name": "transferFromAddress",
         "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "userOpsBalance",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -880,6 +890,11 @@
         "internalType": "string",
         "name": "registerImageURL",
         "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "userOpsBalance",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",

@@ -146,7 +146,7 @@ contract BicycleComponentManagerUI is BaseUI {
         return _composeWithBaseURI("viewRegisterOnSuccess.returns.json");
     }
 
-    function viewTransfer(string memory registerSerialNumber, address userAddress)
+    function viewTransfer(address userAddress, string memory registerSerialNumber)
     external view
     returns (string memory, address transferFromAddress, uint256 userOpsBalance)
     {
@@ -173,7 +173,7 @@ contract BicycleComponentManagerUI is BaseUI {
     }
 
     // ownerAddress: address of the owner of the serial number
-    function viewUpdateOwnerAddressInfo(address ownerAddress)
+    function viewUpdateOwnerAddressInfo(address userAddress, address ownerAddress)
     public view
     returns (string memory, address infoAddress, string memory addressInfo, uint256 userOpsBalance)
     {
@@ -181,7 +181,7 @@ contract BicycleComponentManagerUI is BaseUI {
             _composeWithBaseURI("viewUpdateAddressInfo.returns.json"),
             ownerAddress,
             bicycleComponentManager.accountInfo(ownerAddress),
-            _getOpsBalance(ownerAddress)
+            _getOpsBalance(userAddress)
         );
     }
 
@@ -196,7 +196,7 @@ contract BicycleComponentManagerUI is BaseUI {
         );
     }
 
-    function viewUpdateNFT(string memory registerSerialNumber)
+    function viewUpdateNFT(address userAddress, string memory registerSerialNumber)
     public view
     returns (
         string memory,
@@ -215,7 +215,7 @@ contract BicycleComponentManagerUI is BaseUI {
             registerFor,
             nftContractAddress, nftTokenId,
             "", "", "",
-            _getOpsBalance(registerFor)
+            _getOpsBalance(userAddress)
         );
     }
 }
