@@ -34,6 +34,7 @@ async function main() {
         ],
         chainId,
         deployer,
+        saveAbiTo: "../off-chain/contract-ui",
     });
 
     // Set the base URI if necessary
@@ -47,16 +48,22 @@ async function main() {
         if (!(getAddress(await blanksContract.bicycleComponentManager()) == getAddress(managerContract.address))) {
             console.log("Linking BlanksOpenSea to BicycleComponentManager...");
             await execute(await blanksContract.setBicycleComponentManager(managerContract.address));
+        } else {
+            console.log("BlanksOpenSea already linked to BicycleComponentManager.");
         }
 
         if (!(await managerContract.hasRole(await managerContract.REGISTRAR_ROLE(), blanksContract.address))) {
             console.log("Granting BlanksOpenSea the registrar role...");
             await execute(await managerContract.grantRole(await managerContract.REGISTRAR_ROLE(), blanksContract.address));
+        } else {
+            console.log("BlanksOpenSea already has the registrar role.");
         }
 
         if (!(await blanksContract.hasRole(await blanksContract.PROXY_ROLE(), uiContract.address))) {
             console.log("Registering BlanksUI as proxy for BlanksOpenSea...");
             await execute(await blanksContract.grantRole(await blanksContract.PROXY_ROLE(), uiContract.address));
+        } else {
+            console.log("BlanksUI already registered as proxy for BlanksOpenSea.");
         }
     }
 
@@ -88,6 +95,8 @@ async function main() {
 
             if ((await blanksContract.uri(tokenId)) != uri) {
                 await execute(await blanksContract.setCustomTokenURI(tokenId, uri));
+            } else {
+                console.log(`URI for token ${tokenId} is already set.`);
             }
 
             // deployer balance
@@ -96,6 +105,8 @@ async function main() {
             if (balance == 0) {
                 const amount = isPrivileged ? 1000 : 10_000;
                 await execute(await blanksContract.mint(deployer.address, tokenId, amount, "0x"));
+            } else {
+                console.log(`Token ${tokenId} already minted to ${deployer.address}.`);
             }
         }
     }

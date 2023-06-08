@@ -10,10 +10,12 @@ export function getNetworkName(chainId: number): string {
             return 'polygon';
         case 1337:
             return 'ganache';
+        case 31337:
+            return 'localhost';  // npx hardhat node --network hardhat
         case 80001:
             return 'mumbai';
         default:
-            throw new Error('Unknown network');
+            throw new Error(`Unknown network chainId: ${chainId}`);
     }
 }
 

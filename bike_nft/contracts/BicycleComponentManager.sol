@@ -75,9 +75,17 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
     override
     {}
 
-        function setNftContractAddress(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    function nftContractAddress() public view returns (address) {
+        return address(nftContract);
+    }
+
+    function setNftContractAddress(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) {
         nftContract = BicycleComponents(newAddress);
         emit Message("NFT contract set");
+    }
+
+    function opsFundContractAddress() public view returns (address) {
+        return address(opsFundContract);
     }
 
     function setOpsFundContractAddress(address newAddress) public onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -217,7 +225,7 @@ contract BicycleComponentManager is Initializable, PausableUpgradeable, AccessCo
     // Withdrawal
 
     function withdraw() public {
-        withdrawTo(_msgSender());  // delegates permission checks
+        withdrawTo(_msgSender()); // delegates permission checks
     }
 
     function withdrawTo(address to) public onlyRole(DEFAULT_ADMIN_ROLE) {

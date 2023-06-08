@@ -41,39 +41,50 @@ const deploymentParams: {
             BicycleComponentManagerUI: "http://0.0.0.0:6001/contract-ui/BicycleComponentManagerUI/v1/",
         },
     },
+    localhost: {
+        baseURI: {
+            BlanksUI: "http://0.0.0.0:6001/contract-ui/BlanksUI/v1/",
+            BicycleComponentManagerUI: "http://0.0.0.0:6001/contract-ui/BicycleComponentManagerUI/v1/",
+        },
+    },
 }
 
-const deployed: {
-    [network: string]: {
-        [contractName: string]: string;
-    };
-} = {
-    polygon: {
-        BicycleComponentManager: "0xd7334783B80B31Cf039fE615169B1f513d8d84ED",
-        BicycleComponents: "0x8DdF2e56DbBE7cF86e6cC2EA2c473Ca66654dCAA",
-        BlanksOpenSea: safeRequire("../deployed/network/polygon/BlanksOpenSea.json")?.address || "0xa5a281d3EE4840c984d82e7B8fe4E28800D38655",
 
-        BicycleComponentManagerUI: safeRequire("../deployed/network/polygon/BicycleComponentManagerUI.json")?.address,
-        BlanksUI: safeRequire("../deployed/network/polygon/BlanksUI.json")?.address,
-    },
+class DeployedContracts {
+    private currentNetwork: string;
 
-    mumbai: {
-        BicycleComponentManager: "0x5aec9a71fd38a6234ce6a2fade9b693dd8466c9b",
-        BicycleComponents: "0x52b371e38cdcd877e347e45d7d231f384d68599c",
-        BlanksOpenSea: safeRequire("../deployed/network/mumbai/BlanksOpenSea.json")?.address || "0x025b85a56c9b495785171c64c44a65f0abfe1e7c",
+    constructor() {
+        this.currentNetwork = '';
+    }
 
-        BicycleComponentManagerUI: safeRequire("../deployed/network/mumbai/BicycleComponentManagerUI.json")?.address,
-        BlanksUI: safeRequire("../deployed/network/mumbai/BlanksUI.json")?.address,
-    },
+    // Accessor that returns a Proxy object. When a property is accessed on this object,
+    // it sets the current network to the accessed property name, and returns another Proxy object representing the contracts
+    public get network() {
+        return new Proxy({}, {
+            get: (_, networkName: string): any => {
+                // Set the current network
+                this.currentNetwork = networkName;
+                // Return a Proxy object for the contracts
+                return this.contract;
+            }
+        });
+    }
 
-    ganache: {
-        BicycleComponentManager: "0x7ba471Ea78a94f180605165db6D11E38A831175B",
-        BicycleComponents: "0xA7Dc946c20166416CA7a880cCa79157c55d8966C",
-        BlanksOpenSea: safeRequire("../deployed/network/ganache/BlanksOpenSea.json")?.address,
+    // Accessor that returns a Proxy object. When a property is accessed on this object,
+    // it reads the address of the contract with the accessed property name from a JSON file,
+    // and returns the address
+    private get contract() {
+        return new Proxy({}, {
+            get: (_, contractName: string): string => {
+                const path = `../deployed/network/${this.currentNetwork}/${contractName}.json`;
+                // console.log("Getting contract address from", path);
+                const contractData = require(path);
+                return contractData.address;
+            }
+        });
+    }
+}
 
-        BicycleComponentManagerUI: safeRequire("../deployed/network/ganache/BicycleComponentManagerUI.json")?.address,
-        BlanksUI: safeRequire("../deployed/network/ganache/BlanksUI.json")?.address,
-    },
-};
+const deployed = (new DeployedContracts()).network;
 
 export {deployed, deploymentParams};

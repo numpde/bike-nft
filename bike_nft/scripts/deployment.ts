@@ -22,9 +22,17 @@ export async function report(contract: Contract) {
     // console.log("Admin Address:", adminAddress);
 }
 
-type DeployParams = { contractName: string, args: any[], deployer: any, chainId: number };
+function isUpgradeable(Contract: ContractFactory): boolean {
+    const contractABI = Contract.interface.fragments;
+    const hasInitializer = contractABI.some((entry) => entry.type === 'function' && entry.name === 'initialize');
+    return hasInitializer;
+}
 
-export async function deploy({contractName, args, deployer, chainId}: DeployParams): Promise<{ contract: Contract }> {
+type DeployParams = { contractName: string, args: any[], deployer: any, chainId: number, saveAbiTo?: string };
+
+export async function deploy({contractName, args, deployer, chainId, saveAbiTo}: DeployParams): Promise<{ contract: Contract }> {
+    console.log("========================================");
+    console.info(`Deploying ${contractName} on "${getNetworkName(chainId)}"...`);
     console.log("========================================");
 
     let contract: Contract | undefined = undefined;
@@ -35,6 +43,14 @@ export async function deploy({contractName, args, deployer, chainId}: DeployPara
     if (deployedAddress) {
         console.log(`Deployed ${contractName} found at:`, deployedAddress);
         contract = await ethers.getContractAt(contractName, deployedAddress);
+    } else {
+        console.log(`No deployed ${contractName} found.`);
+    }
+
+    if (isUpgradeable(Factory)) {
+        console.log(`${contractName} seems to be upgradeable.`);
+    } else {
+        console.log(`${contractName} does not seem to be upgradeable.`);
     }
 
     // What to do?
@@ -43,12 +59,17 @@ export async function deploy({contractName, args, deployer, chainId}: DeployPara
 
         const prompt = readlineSync.keyInSelect(
             options,
-            `The contract ${contractName} has already been deployed. What would you like to do?`,
+            `What would you like to do?`,
         );
 
         switch (prompt) {
             case 0:
                 console.log(`Upgrading ${contractName}...`);
+
+                if (!deployedAddress) {
+                    console.error(`Cannot upgrade ${contractName} without a "deployed" address.`);
+                    return deploy({contractName, args, deployer, chainId});
+                }
 
                 await upgrades.prepareUpgrade(deployedAddress, Factory);
 
@@ -97,14 +118,15 @@ export async function deploy({contractName, args, deployer, chainId}: DeployPara
     }
 
     // Copy ABI to off-chain
-    {
+    if (saveAbiTo) {
         const artifactsPath = path.join(__dirname, `../artifacts/contracts/${contractName}.sol/${contractName}.json`);
         const abi = require(artifactsPath).abi;
 
-        const outputPath = path.join(__dirname, `../off-chain/contract-ui/${contractName}/v1/abi.json`);
+        const outputPath = path.join(__dirname, `${saveAbiTo}/${contractName}/v1/abi.json`);
 
         try {
             fs.writeFileSync(outputPath, JSON.stringify(abi, null, 2));
+            console.log("ABI written to", outputPath);
         } catch (e) {
             console.log("Error writing ABI to", outputPath);
         }
