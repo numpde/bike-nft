@@ -18,7 +18,7 @@
     "chai": "^4.3.7",
     "ethereum-waffle": "^2.2.0",
     "ethers": "^5.7.2",
-    "ethers-v6": "npm:ethers@latest",
+    "ethers-v6": "npm:ethers@^6.5.1",
     "hardhat-contract-sizer": "^2.8.0",
     "typescript": "^5.1.3"
   }

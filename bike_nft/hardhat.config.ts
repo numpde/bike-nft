@@ -54,14 +54,18 @@ const config: HardhatUserConfig = {
             // accounts: [getEnvVariable("GANACHE_PRIVATE_KEY")],
         },
 
-        // hardhat: {
-        //     accounts: [
-        //         {
-        //             privateKey: getEnvVariable("GANACHE_PRIVATE_KEY"),
-        //             balance: "1000000000000000000000000",
-        //         },
-        //     ],
-        // },
+        hardhat: {
+            accounts: {
+                // From the Ganache project
+                mnemonic: "festival memory quit swim bargain slogan tissue height lumber gasp twenty music",
+            }
+            // accounts: [
+            //     {
+            //         privateKey: getEnvVariable("GANACHE_PRIVATE_KEY"),
+            //         balance: "1000000000000000000000000",
+            //     },
+            // ],
+        },
 
         ganache: {
             url: "http://127.0.0.1:8545",
