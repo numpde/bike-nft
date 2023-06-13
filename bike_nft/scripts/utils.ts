@@ -13,7 +13,7 @@ import {DeployProxyOptions} from "@openzeppelin/hardhat-upgrades/dist/utils";
 
 
 interface ContractMetadata {
-    [filename: string]: {
+    [buildInfoFilename: string]: {
         [contractName: string]: any;
     };
 }
@@ -39,8 +39,7 @@ export async function fetchContractMetadata(contractPath: string): Promise<Contr
                     throw new Error(`Contract name ${contractName} is ambiguous.`);
                 }
 
-                const contractMetadata: string = contracts[contractFile][contractName].metadata;
-                metadata[fileName][contractName] = contractMetadata;
+                metadata[fileName][contractName] = contracts[contractFile][contractName].metadata;
             }
         }
     }
