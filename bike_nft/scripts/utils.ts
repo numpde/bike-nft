@@ -3,11 +3,50 @@ import {ethers, upgrades} from "hardhat";
 import readlineSync from "readline-sync";
 import path from "path";
 import fs from "fs";
+import util from 'util';
+import glob from 'glob';
 
 import {deployed} from "../deploy.config";
 import {getNetworkName} from "../utils/utils";
 import {saveAddress} from "./utils";
 import {DeployProxyOptions} from "@openzeppelin/hardhat-upgrades/dist/utils";
+
+
+interface ContractMetadata {
+    [filename: string]: {
+        [contractName: string]: any;
+    };
+}
+
+export async function fetchContractMetadata(contractPath: string): Promise<ContractMetadata> {
+    const globAsync = util.promisify(glob);
+    const readFileAsync = util.promisify(fs.readFile);
+
+    const files: string[] = await globAsync(path.join(contractPath, '*.json'));
+    const metadata: ContractMetadata = {};
+
+    for (const file of files) {
+        const data: any = JSON.parse((await readFileAsync(file)).toString());
+        const contracts: any = data.output.contracts;
+
+        const fileName = path.basename(file);
+
+        for (const contractFile in contracts) {
+            for (const contractName in contracts[contractFile]) {
+                if (!metadata[fileName]) {
+                    metadata[fileName] = {};
+                } else if (metadata[fileName][contractName]) {
+                    throw new Error(`Contract name ${contractName} is ambiguous.`);
+                }
+
+                const contractMetadata: string = contracts[contractFile][contractName].metadata;
+                metadata[fileName][contractName] = contractMetadata;
+            }
+        }
+    }
+
+    return metadata;
+}
 
 
 export function saveAddress(chainId: number, contractName: string, address: string) {
